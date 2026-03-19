@@ -1,0 +1,11 @@
+# Node.js dependencies
+node_modules/
+
+# Prisma generation and ERD
+generated/
+
+# Javascript files
+dist/
+
+# Environment variables
+.env

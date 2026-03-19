@@ -1,0 +1,22 @@
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
+  "devDependencies": {
+    "@types/morgan": "^1.9.10",
+    "morgan": "^1.10.1",
+    "prettier": "^3.8.1",
+    "prisma": "^6.19.2",
+    "prisma-erd-generator": "2.4.2",
+    "tsx": "^4.21.0"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  }
+}
