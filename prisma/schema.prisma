@@ -1,0 +1,209 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD.svg"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model refresh_token {
+  refresh_token_id    Int @id @default(autoincrement())
+  user_id             Int
+  token               String
+  created_at          DateTime @default(now())
+  expires_at          DateTime
+  revoked_at          DateTime
+  user_agent          String
+  ip                  String
+  
+  user                user @relation(fields: [user_id], references: [user_id])
+}
+
+model oauth_account {
+  oauth_account_id    Int @id @default(autoincrement())
+  user_id             Int
+  provider_user_id    Int @unique
+  provider            String
+  access_token        String
+
+  user                user @relation(fields: [user_id], references: [user_id])
+}
+
+model comment {
+  comment_id          Int @id @default(autoincrement())
+  user_id             Int
+  post_id             Int
+  parent_comment_id   Int?
+  message             String
+  likes               Int
+
+  user                user @relation(fields: [user_id], references: [user_id])
+  post                post @relation(fields: [post_id], references: [post_id])
+  parent_comment      comment? @relation("CommentReplies", fields: [parent_comment_id], references: [comment_id])
+  replies             comment[] @relation("CommentReplies")
+}
+
+model user {
+  user_id             Int @id @default(autoincrement())
+  email               String @unique
+  password            String
+  username            String
+  profile_image       String
+  banner_image        String?
+  background_image    String?
+  role                UserRole @default(USER)
+  created_at          DateTime @default(now())
+
+  refresh_tokens      refresh_token[]
+  oauth_accounts      oauth_account[]
+  comments            comment[]
+  posts               post[]
+  user_like_post      user_like_post[]
+  user_like_anime     user_like_anime[]
+  user_rate_anime     user_rate_anime[]
+  user_watch_anime    user_watch_anime[]
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+model post {
+  post_id             Int @id @default(autoincrement())
+  user_id             Int
+  title               String
+  description         String?
+  photo               String?
+  likes               Int
+
+  comments            comment[]
+  user_like_post      user_like_post[]
+  animes              anime_post[]
+
+  user                user @relation(fields: [user_id], references: [user_id])
+}
+
+model anime {
+  anime_id            Int @id @default(autoincrement())
+  mal_id              Int @unique
+  broadcast_id        Int @unique
+  name                String
+  synopsis            String
+  img_medium          String
+  img_large           String
+  start_date          DateTime
+  end_date            DateTime
+  mal_mean            Float
+  mal_rank            Int
+  mean                Float
+  rank                Int
+  num_episodes        Int
+  status              String
+  next_update         DateTime
+  likes               Int
+  genres              String[]
+  studios             String[]
+
+  challenges          challenge[]
+  animes              anime_post[]
+  user_like_anime     user_like_anime[]
+  user_rate_anime     user_rate_anime[]
+  user_watch_anime    user_watch_anime[]
+
+  broadcast           broadcast @relation(fields: [broadcast_id], references: [broadcast_id])
+}
+
+model broadcast {
+  broadcast_id        Int @id @default(autoincrement())
+  day_of_week         String
+  start_time          String
+
+  anime               anime?
+}
+
+model challenge {
+  challenge_id        Int @id @default(autoincrement())
+  type_id             Int
+  day_id              Int
+  anime_id            Int
+  data                Json @db.JsonB
+
+  type                type @relation(fields: [type_id], references: [type_id])
+  day                 day @relation(fields: [day_id], references: [day_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
+}
+
+model type {
+  type_id             Int @id @default(autoincrement())
+  name                String
+  challenges          challenge[]
+}
+
+model day {
+  day_id              Int @id @default(autoincrement())
+  date                String
+  challenges          challenge[]
+}
+
+model user_like_post {
+  user_like_post_id   Int @id @default(autoincrement())
+  user_id             Int
+  post_id             Int
+
+  user                user @relation(fields: [user_id], references: [user_id])
+  post                post @relation(fields: [post_id], references: [post_id])
+}
+
+model anime_post {
+  anime_post_id       Int @id @default(autoincrement())
+  anime_id            Int
+  post_id             Int
+
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
+  post                post @relation(fields: [post_id], references: [post_id])
+}
+
+model user_like_anime {
+  user_like_anime_id  Int @id @default(autoincrement())
+  user_id             Int
+  anime_id            Int
+
+  user                user @relation(fields: [user_id], references: [user_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
+}
+
+model user_rate_anime {
+  user_rate_anime_id  Int @id @default(autoincrement())
+  user_id             Int
+  anime_id            Int
+  rate                Float
+
+  user                user @relation(fields: [user_id], references: [user_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
+}
+
+model user_watch_anime {
+  user_watch_anime_id Int @id @default(autoincrement())
+  user_id             Int
+  anime_id            Int
+  num_episodes        Int
+  state               String
+
+  user                user @relation(fields: [user_id], references: [user_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
+}
