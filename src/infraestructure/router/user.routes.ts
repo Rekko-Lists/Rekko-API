@@ -8,7 +8,7 @@ import {
   changePassword,
   getUsers,
   changeEmailConfirm
-} from '../controllers/user.controller';
+} from '../../controllers/user.controller';
 
 const router = Router();
 

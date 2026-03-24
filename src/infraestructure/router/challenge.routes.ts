@@ -3,7 +3,7 @@ import {
   dailyChallenges,
   dateChallenges,
   historyChallenges
-} from '../controllers/challenge.controller';
+} from '../../controllers/challenge.controller';
 
 const router = Router();
 

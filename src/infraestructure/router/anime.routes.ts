@@ -5,7 +5,7 @@ import {
   getAnimes,
   patchAnime,
   postAnime
-} from '../controllers/anime.controller';
+} from '../../controllers/anime.controller';
 
 const router = Router();
 

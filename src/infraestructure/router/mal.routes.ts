@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getMalAnime,
   getMalAnimes
-} from './../controllers/mal.controller';
+} from './../../controllers/mal.controller';
 
 const router = Router();
 

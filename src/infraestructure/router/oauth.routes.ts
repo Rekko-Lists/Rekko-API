@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   oauth,
   callback
-} from '../controllers/oauth.controller';
+} from '../../controllers/oauth.controller';
 
 const router = Router();
 
