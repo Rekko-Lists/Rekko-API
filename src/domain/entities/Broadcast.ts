@@ -3,7 +3,7 @@ export class Broadcast {
     private dayOfWeek: string;
     private startTime: string;
 
-    constructor(
+    private constructor(
         broadcastId: number,
         dayOfWeek: string,
         startTime: string
@@ -11,6 +11,18 @@ export class Broadcast {
         this.broadcastId = broadcastId;
         this.dayOfWeek = dayOfWeek;
         this.startTime = startTime;
+    }
+
+    public static fromPersistence(data: {
+        broadcastId: number;
+        dayOfWeek: string;
+        startTime: string;
+    }): Broadcast {
+        return new Broadcast(
+            data.broadcastId,
+            data.dayOfWeek,
+            data.startTime
+        );
     }
 
     getBroadcastId(): number {

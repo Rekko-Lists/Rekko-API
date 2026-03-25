@@ -5,14 +5,15 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
+/**
 generator erd {
   provider = "prisma-erd-generator"
   output   = "./ERD.svg"
 }
+*/
 
 datasource db {
   provider = "postgresql"

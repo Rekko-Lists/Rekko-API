@@ -6,7 +6,7 @@ export class Post {
     private photo: string;
     private likes: number;
 
-    public constructor(
+    private constructor(
         postId: number,
         userId: number,
         title: string,
@@ -20,6 +20,24 @@ export class Post {
         this.description = description;
         this.photo = photo;
         this.likes = likes;
+    }
+
+    public static fromPersistence(data: {
+        postId: number;
+        userId: number;
+        title: string;
+        description: string;
+        photo: string;
+        likes: number;
+    }): Post {
+        return new Post(
+            data.postId,
+            data.userId,
+            data.title,
+            data.description,
+            data.photo,
+            data.likes
+        );
     }
 
     getPostId(): number {

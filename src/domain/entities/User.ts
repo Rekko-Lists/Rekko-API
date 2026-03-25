@@ -9,7 +9,7 @@ export class User {
     private role: UserRole = UserRole.USER;
     private readonly createdAt: Date;
 
-    public constructor(
+    private constructor(
         userId: number,
         email: string,
         passwordHash: string,
@@ -31,6 +31,30 @@ export class User {
         this.createdAt = createdAt;
     }
 
+    public static fromPersistence(data: {
+        userId: number;
+        email: string;
+        passwordHash: string;
+        username: string;
+        profileImage: string;
+        bannerImage: string;
+        backgroundImage: string;
+        role?: UserRole;
+        createdAt: Date;
+    }): User {
+        return new User(
+            data.userId,
+            data.email,
+            data.passwordHash,
+            data.username,
+            data.profileImage,
+            data.bannerImage,
+            data.backgroundImage,
+            data.role ?? UserRole.USER,
+            data.createdAt
+        );
+    }
+
     getUserId(): number {
         return this.userId;
     }
@@ -41,6 +65,22 @@ export class User {
 
     getUsername(): string {
         return this.username;
+    }
+
+    getPasswordHash(): string {
+        return this.passwordHash;
+    }
+
+    getProfileImage(): string {
+        return this.profileImage;
+    }
+
+    getBannerImage(): string {
+        return this.bannerImage;
+    }
+
+    getBackgroundImage(): string {
+        return this.backgroundImage;
     }
 
     getRole(): string {

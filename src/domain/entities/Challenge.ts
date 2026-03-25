@@ -5,7 +5,7 @@ export class Challenge {
     private readonly animeId: number;
     private data: JSON;
 
-    constructor(
+    private constructor(
         challengeId: number,
         typeId: number,
         dayId: number,
@@ -17,6 +17,22 @@ export class Challenge {
         this.dayId = dayId;
         this.animeId = animeId;
         this.data = data;
+    }
+
+    public static fromPersistence(data: {
+        challengeId: number;
+        typeId: number;
+        dayId: number;
+        animeId: number;
+        data: JSON;
+    }): Challenge {
+        return new Challenge(
+            data.challengeId,
+            data.typeId,
+            data.dayId,
+            data.animeId,
+            data.data
+        );
     }
 
     getChallengeId(): number {

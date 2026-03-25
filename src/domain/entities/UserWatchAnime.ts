@@ -5,7 +5,7 @@ export class UserWatchAnime {
     private numEpisodes: number;
     private state: string;
 
-    constructor(
+    private constructor(
         userWatchAnimeId: number,
         userId: number,
         animeId: number,
@@ -17,6 +17,22 @@ export class UserWatchAnime {
         this.animeId = animeId;
         this.numEpisodes = numEpisodes;
         this.state = state;
+    }
+
+    public static fromPersistence(data: {
+        userWatchAnimeId: number;
+        userId: number;
+        animeId: number;
+        numEpisodes: number;
+        state: string;
+    }): UserWatchAnime {
+        return new UserWatchAnime(
+            data.userWatchAnimeId,
+            data.userId,
+            data.animeId,
+            data.numEpisodes,
+            data.state
+        );
     }
 
     getUserWatchAnimeId(): number {

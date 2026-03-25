@@ -4,7 +4,7 @@ export class UserRateAnime {
     private readonly animeId: number;
     private rate: number;
 
-    constructor(
+    private constructor(
         userRateAnimeId: number,
         userId: number,
         animeId: number,
@@ -14,6 +14,20 @@ export class UserRateAnime {
         this.userId = userId;
         this.animeId = animeId;
         this.rate = rate;
+    }
+
+    public static fromPersistence(data: {
+        userRateAnimeId: number;
+        userId: number;
+        animeId: number;
+        rate: number;
+    }): UserRateAnime {
+        return new UserRateAnime(
+            data.userRateAnimeId,
+            data.userId,
+            data.animeId,
+            data.rate
+        );
     }
 
     getUserRateAnimeId(): number {

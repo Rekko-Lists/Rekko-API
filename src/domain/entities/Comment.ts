@@ -6,11 +6,11 @@ export class Comment {
     private message: string;
     private likes: number;
 
-    public constructor(
+    private constructor(
         commentId: number,
         userId: number,
         postId: number,
-        parentCommentId: number,
+        parentCommentId: number | null,
         message: string,
         likes: number
     ) {
@@ -20,6 +20,24 @@ export class Comment {
         this.parentCommentId = parentCommentId;
         this.message = message;
         this.likes = likes;
+    }
+
+    public static fromPersistence(data: {
+        commentId: number;
+        userId: number;
+        postId: number;
+        parentCommentId: number | null;
+        message: string;
+        likes: number;
+    }): Comment {
+        return new Comment(
+            data.commentId,
+            data.userId,
+            data.postId,
+            data.parentCommentId,
+            data.message,
+            data.likes
+        );
     }
 
     getCommentId() {
