@@ -14,6 +14,4 @@ export interface Repository<T, F extends string = string> {
     update(id: number, entity: T): Promise<T | null>;
 
     delete(id: number): Promise<boolean>;
-
-    exists(id: number): Promise<boolean>;
 }
