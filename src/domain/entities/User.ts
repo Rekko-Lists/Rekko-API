@@ -67,6 +67,22 @@ export class User {
         return this.username;
     }
 
+    getPasswordHash(): string {
+        return this.passwordHash;
+    }
+
+    getProfileImage(): string {
+        return this.profileImage;
+    }
+
+    getBannerImage(): string {
+        return this.bannerImage;
+    }
+
+    getBackgroundImage(): string {
+        return this.backgroundImage;
+    }
+
     getRole(): string {
         return this.role;
     }
