@@ -8,7 +8,7 @@ export class RefreshToken {
     private userAgent: string;
     private ip: string;
 
-    constructor(
+    private constructor(
         refreshTokenId: number,
         userId: number,
         token: string,
@@ -26,6 +26,28 @@ export class RefreshToken {
         this.revokedAt = revokedAt;
         this.userAgent = userAgent;
         this.ip = ip;
+    }
+
+    public static fromPersistence(data: {
+        refreshTokenId: number;
+        userId: number;
+        token: string;
+        createdAt: Date;
+        expiresAt: Date;
+        revokedAt: Date;
+        userAgent: string;
+        ip: string;
+    }): RefreshToken {
+        return new RefreshToken(
+            data.refreshTokenId,
+            data.userId,
+            data.token,
+            data.createdAt,
+            data.expiresAt,
+            data.revokedAt,
+            data.userAgent,
+            data.ip
+        );
     }
 
     getRefreshTokenId() {

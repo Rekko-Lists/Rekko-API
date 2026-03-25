@@ -9,7 +9,7 @@ export class User {
     private role: UserRole = UserRole.USER;
     private readonly createdAt: Date;
 
-    public constructor(
+    private constructor(
         userId: number,
         email: string,
         passwordHash: string,
@@ -29,6 +29,30 @@ export class User {
         this.backgroundImage = backgroundImage;
         this.role = role;
         this.createdAt = createdAt;
+    }
+
+    public static fromPersistence(data: {
+        userId: number;
+        email: string;
+        passwordHash: string;
+        username: string;
+        profileImage: string;
+        bannerImage: string;
+        backgroundImage: string;
+        role?: UserRole;
+        createdAt: Date;
+    }): User {
+        return new User(
+            data.userId,
+            data.email,
+            data.passwordHash,
+            data.username,
+            data.profileImage,
+            data.bannerImage,
+            data.backgroundImage,
+            data.role ?? UserRole.USER,
+            data.createdAt
+        );
     }
 
     getUserId(): number {

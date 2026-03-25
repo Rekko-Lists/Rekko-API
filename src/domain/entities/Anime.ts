@@ -19,7 +19,7 @@ export class Anime {
     private genres: string[];
     private studios: string[];
 
-    constructor(
+    private constructor(
         animeId: number,
         malId: number,
         broadcastId: number,
@@ -59,6 +59,50 @@ export class Anime {
         this.likes = likes;
         this.genres = genres;
         this.studios = studios;
+    }
+
+    public static fromPersistence(data: {
+        animeId: number;
+        malId: number;
+        broadcastId: number;
+        name: string;
+        synopsis: string;
+        imgMedium: string;
+        imgLarge: string;
+        startDate: Date;
+        endDate: Date;
+        malMean: number;
+        malRank: number;
+        mean: number;
+        rank: number;
+        numEpisodes: number;
+        status: AnimeStatus;
+        nextUpdate: Date;
+        likes: number;
+        genres: string[];
+        studios: string[];
+    }): Anime {
+        return new Anime(
+            data.animeId,
+            data.malId,
+            data.broadcastId,
+            data.name,
+            data.synopsis,
+            data.imgMedium,
+            data.imgLarge,
+            data.startDate,
+            data.endDate,
+            data.malMean,
+            data.malRank,
+            data.mean,
+            data.rank,
+            data.numEpisodes,
+            data.status,
+            data.nextUpdate,
+            data.likes,
+            data.genres,
+            data.studios
+        );
     }
 
     getAnimeId(): number {
