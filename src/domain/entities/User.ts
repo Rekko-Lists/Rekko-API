@@ -3,32 +3,38 @@ export class User {
     private email: string;
     private passwordHash: string;
     private username: string;
+    private reputation: number;
     private profileImage: string;
     private bannerImage: string;
     private backgroundImage: string;
     private role: UserRole = UserRole.USER;
     private readonly createdAt: Date;
+    private biography?: string;
 
     private constructor(
         userId: number,
         email: string,
         passwordHash: string,
         username: string,
+        reputation: number,
         profileImage: string,
         bannerImage: string,
         backgroundImage: string,
         role: UserRole = UserRole.USER,
-        createdAt: Date
+        createdAt: Date,
+        biography?: string
     ) {
         this.userId = userId;
         this.email = email;
         this.passwordHash = passwordHash;
         this.username = username;
+        this.reputation = reputation;
         this.profileImage = profileImage;
         this.bannerImage = bannerImage;
         this.backgroundImage = backgroundImage;
         this.role = role;
         this.createdAt = createdAt;
+        this.biography = biography;
     }
 
     public static fromPersistence(data: {
@@ -36,22 +42,26 @@ export class User {
         email: string;
         passwordHash: string;
         username: string;
+        reputation: number;
         profileImage: string;
         bannerImage: string;
         backgroundImage: string;
         role?: UserRole;
         createdAt: Date;
+        biography?: string;
     }): User {
         return new User(
             data.userId,
             data.email,
             data.passwordHash,
             data.username,
+            data.reputation,
             data.profileImage,
             data.bannerImage,
             data.backgroundImage,
             data.role ?? UserRole.USER,
-            data.createdAt
+            data.createdAt,
+            data.biography
         );
     }
 
@@ -65,6 +75,10 @@ export class User {
 
     getUsername(): string {
         return this.username;
+    }
+
+    getReputation(): number {
+        return this.reputation;
     }
 
     getPasswordHash(): string {
@@ -85,6 +99,10 @@ export class User {
 
     getRole(): string {
         return this.role;
+    }
+
+    getBiography(): string | undefined {
+        return this.biography;
     }
 
     toString(): string {

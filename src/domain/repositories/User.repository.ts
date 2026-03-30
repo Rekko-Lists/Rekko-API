@@ -24,4 +24,9 @@ export interface UserRepository<User> extends Repository<User> {
         userId: number,
         role: string
     ): Promise<User | null>;
+
+    updateReputation(
+        userId: number,
+        increment: number
+    ): Promise<User | null>;
 }

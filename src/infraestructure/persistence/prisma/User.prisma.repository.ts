@@ -77,4 +77,11 @@ export class UserPrismaRepository implements UserRepository<User> {
     ): Promise<User | null> {
         throw new Error('Method not implemented.');
     }
+
+    updateReputation(
+        userId: number,
+        increment: number
+    ): Promise<User | null> {
+        throw new Error('Method not implemented.');
+    }
 }

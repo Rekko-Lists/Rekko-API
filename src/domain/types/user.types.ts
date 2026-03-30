@@ -2,6 +2,7 @@ export type UserUpdateProfile = {
     profileImage?: string;
     bannerImage?: string;
     backgroundImage?: string;
+    biography?: string;
 };
 
 export type CreateUserInput = {
