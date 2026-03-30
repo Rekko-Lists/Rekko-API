@@ -24,17 +24,3 @@ export interface OAuthAccountRepository extends Repository<OAuthAccount> {
         accessToken: string
     ): Promise<void>;
 }
-
-/**
- * OAuthAccountRepository
-
-findByProviderAndProviderUserId(provider, providerUserId): Promise<OAuthAccount | null>
-
-findByUserId(userId): Promise<OAuthAccount[]>
-
-linkAccount(account): Promise<OAuthAccount>
-
-unlinkAccount(userId, provider): Promise<boolean>
-
-updateAccessToken(accountId, accessToken): Promise<void>
- */

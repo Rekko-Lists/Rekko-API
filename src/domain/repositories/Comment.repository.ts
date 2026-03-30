@@ -16,17 +16,3 @@ export interface CommentRepository extends Repository<Comment> {
 
     decrementLikes(commentId: number): Promise<void>;
 }
-
-/**
- *CommentRepository
-
-findByPostId(postId, pagination): Promise<Comment[]>
-
-findReplies(parentCommentId): Promise<Comment[]>
-
-countByPostId(postId): Promise<number>
-
-incrementLikes(commentId): Promise<void>
-
-deleteThread(commentId): Promise<number>
- */

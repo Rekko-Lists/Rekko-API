@@ -1,5 +1,3 @@
-import { Repository } from './repository';
-
 export interface UserLikeAnimeRepository {
     exists(userId: number, animeId: number): Promise<boolean>;
 

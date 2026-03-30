@@ -6,13 +6,3 @@ export interface BroadcastRepository extends Repository<Broadcast> {
 
     findByDay(dayOfWeek: Date): Promise<Broadcast[]>;
 }
-
-/**
- * BroadcastRepository
-
-findByAnimeId(animeId): Promise<Broadcast | null>
-
-findByDay(dayOfWeek): Promise<Broadcast[]>
-
-upsertByAnimeId(animeId, dayOfWeek, startTime): Promise<Broadcast>
- */
