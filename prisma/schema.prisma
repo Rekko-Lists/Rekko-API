@@ -24,7 +24,7 @@ model RefreshToken {
   refreshTokenId    Int @id @default(autoincrement()) @map("refresh_token_id")
   userId            Int @map("user_id")
   token             String
-  createdAt         DateTime @map("created_at")
+  createdAt         DateTime @default(now()) @map("created_at")
   expiresAt         DateTime @map("expires_at")
   revokedAt         DateTime @map("revoked_at")
   userAgent         String @map("user_agent")
@@ -74,7 +74,7 @@ model User {
   bannerImage       String? @map("banner_image")
   backgroundImage   String? @map("background_image")
   role              UserRole @default(USER)
-  createdAt         DateTime @map("created_at")
+  createdAt         DateTime @default(now()) @map("created_at")
 
   refreshTokens     RefreshToken[]
   oauthAccounts     OAuthAccount[]
