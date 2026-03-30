@@ -5,88 +5,76 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
-/**
 generator erd {
   provider = "prisma-erd-generator"
   output   = "./ERD.svg"
 }
-*/
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model RefreshToken {
-  refreshTokenId    Int @id @default(autoincrement()) @map("refresh_token_id")
-  userId            Int @map("user_id")
-  token             String
-  createdAt         DateTime @default(now()) @map("created_at")
-  expiresAt         DateTime @map("expires_at")
-  revokedAt         DateTime @map("revoked_at")
-  userAgent         String @map("user_agent")
-  ip                String
-
-  user              User @relation(fields: [userId], references: [userId])
-
-  @@map("refresh_token")
+model refresh_token {
+  refresh_token_id    Int @id @default(autoincrement())
+  user_id             Int
+  token               String
+  created_at          DateTime @default(now())
+  expires_at          DateTime
+  revoked_at          DateTime
+  user_agent          String
+  ip                  String
+  
+  user                user @relation(fields: [user_id], references: [user_id])
 }
 
-model OAuthAccount {
-  oauthAccountId    Int @id @default(autoincrement()) @map("oauth_account_id")
-  userId            Int @map("user_id")
-  providerUserId    Int @unique @map("provider_user_id")
-  provider          String
-  accessToken       String @map("access_token")
+model oauth_account {
+  oauth_account_id    Int @id @default(autoincrement())
+  user_id             Int
+  provider_user_id    Int @unique
+  provider            String
+  access_token        String
 
-  user              User @relation(fields: [userId], references: [userId])
-
-  @@map("oauth_account")
+  user                user @relation(fields: [user_id], references: [user_id])
 }
 
-model Comment {
-  commentId         Int @id @default(autoincrement()) @map("comment_id")
-  userId            Int @map("user_id")
-  postId            Int @map("post_id")
-  parentCommentId   Int? @map("parent_comment_id")
-  message           String
-  likes             Int
+model comment {
+  comment_id          Int @id @default(autoincrement())
+  user_id             Int
+  post_id             Int
+  parent_comment_id   Int?
+  message             String
+  likes               Int
 
-  user              User @relation(fields: [userId], references: [userId])
-  post              Post @relation(fields: [postId], references: [postId])
-  parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId])
-  replies           Comment[] @relation("CommentReplies")
-
-  @@map("comment")
+  user                user @relation(fields: [user_id], references: [user_id])
+  post                post @relation(fields: [post_id], references: [post_id])
+  parent_comment      comment? @relation("CommentReplies", fields: [parent_comment_id], references: [comment_id])
+  replies             comment[] @relation("CommentReplies")
 }
 
-model User {
-  userId            Int @id @default(autoincrement()) @map("user_id")
-  email             String @unique
-  password          String
-  username          String
-  biography         String?
-  reputation        Int @default(0)
-  profileImage      String @map("profile_image")
-  bannerImage       String? @map("banner_image")
-  backgroundImage   String? @map("background_image")
-  role              UserRole @default(USER)
-  createdAt         DateTime @default(now()) @map("created_at")
+model user {
+  user_id             Int @id @default(autoincrement())
+  email               String @unique
+  password            String
+  username            String
+  profile_image       String
+  banner_image        String?
+  background_image    String?
+  role                UserRole @default(USER)
+  created_at          DateTime @default(now())
 
-  refreshTokens     RefreshToken[]
-  oauthAccounts     OAuthAccount[]
-  comments          Comment[]
-  posts             Post[]
-  userLikePost      UserLikePost[]
-  userLikeAnime     UserLikeAnime[]
-  userRateAnime     UserRateAnime[]
-  userWatchAnime    UserWatchAnime[]
-  userSocialAccount UserSocialAccount[]
-
-  @@map("user")
+  refresh_tokens      refresh_token[]
+  oauth_accounts      oauth_account[]
+  comments            comment[]
+  posts               post[]
+  user_like_post      user_like_post[]
+  user_like_anime     user_like_anime[]
+  user_rate_anime     user_rate_anime[]
+  user_watch_anime    user_watch_anime[]
 }
 
 enum UserRole {
@@ -95,170 +83,127 @@ enum UserRole {
   ADMIN
 }
 
-model SocialAccount {
-  socialAccountId   Int @id @default(autoincrement()) @map("social_account_id")
-  name              String
+model post {
+  post_id             Int @id @default(autoincrement())
+  user_id             Int
+  title               String
+  description         String?
+  photo               String?
+  likes               Int
 
-  userSocialAccount UserSocialAccount[]
+  comments            comment[]
+  user_like_post      user_like_post[]
+  animes              anime_post[]
 
-  @@map("social_account")
+  user                user @relation(fields: [user_id], references: [user_id])
 }
 
-model Post {
-  postId            Int @id @default(autoincrement()) @map("post_id")
-  userId            Int @map("user_id")
-  title             String
-  description       String?
-  photo             String?
-  likes             Int
+model anime {
+  anime_id            Int @id @default(autoincrement())
+  mal_id              Int @unique
+  broadcast_id        Int @unique
+  name                String
+  synopsis            String
+  img_medium          String
+  img_large           String
+  start_date          DateTime
+  end_date            DateTime
+  mal_mean            Float
+  mal_rank            Int
+  mean                Float
+  rank                Int
+  num_episodes        Int
+  status              String
+  next_update         DateTime
+  likes               Int
+  genres              String[]
+  studios             String[]
 
-  comments          Comment[]
-  userLikePost      UserLikePost[]
-  animes            AnimePost[]
+  challenges          challenge[]
+  animes              anime_post[]
+  user_like_anime     user_like_anime[]
+  user_rate_anime     user_rate_anime[]
+  user_watch_anime    user_watch_anime[]
 
-  user              User @relation(fields: [userId], references: [userId])
-
-  @@map("post")
+  broadcast           broadcast @relation(fields: [broadcast_id], references: [broadcast_id])
 }
 
-model Anime {
-  animeId           Int @id @default(autoincrement()) @map("anime_id")
-  malId             Int @unique @map("mal_id")
-  broadcastId       Int @unique @map("broadcast_id")
-  name              String
-  synopsis          String
-  imgMedium         String @map("img_medium")
-  imgLarge          String @map("img_large")
-  startDate         DateTime @map("start_date")
-  endDate           DateTime @map("end_date")
-  malMean           Float @map("mal_mean")
-  malRank           Int @map("mal_rank")
-  mean              Float
-  rank              Int
-  numEpisodes       Int @map("num_episodes")
-  status            String
-  nextUpdate        DateTime @map("next_update")
-  likes             Int
-  genres            String[]
-  studios           String[]
+model broadcast {
+  broadcast_id        Int @id @default(autoincrement())
+  day_of_week         String
+  start_time          String
 
-  challenges        Challenge[]
-  animes            AnimePost[]
-  userLikeAnime     UserLikeAnime[]
-  userRateAnime     UserRateAnime[]
-  userWatchAnime    UserWatchAnime[]
-
-  broadcast         Broadcast @relation(fields: [broadcastId], references: [broadcastId])
-
-  @@map("anime")
+  anime               anime?
 }
 
-model Broadcast {
-  broadcastId       Int @id @default(autoincrement()) @map("broadcast_id")
-  dayOfWeek         String @map("day_of_week")
-  startTime         String @map("start_time")
+model challenge {
+  challenge_id        Int @id @default(autoincrement())
+  type_id             Int
+  day_id              Int
+  anime_id            Int
+  data                Json @db.JsonB
 
-  anime             Anime?
-
-  @@map("broadcast")
+  type                type @relation(fields: [type_id], references: [type_id])
+  day                 day @relation(fields: [day_id], references: [day_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
 }
 
-model Challenge {
-  challengeId       Int @id @default(autoincrement()) @map("challenge_id")
-  typeId            Int @map("type_id")
-  dayId             Int @map("day_id")
-  animeId           Int @map("anime_id")
-  data              Json @db.JsonB
-
-  type              Type @relation(fields: [typeId], references: [typeId])
-  day               Day @relation(fields: [dayId], references: [dayId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
-
-  @@map("challenge")
+model type {
+  type_id             Int @id @default(autoincrement())
+  name                String
+  challenges          challenge[]
 }
 
-model Type {
-  typeId            Int @id @default(autoincrement()) @map("type_id")
-  name              String
-  challenges        Challenge[]
-
-  @@map("type")
+model day {
+  day_id              Int @id @default(autoincrement())
+  date                String
+  challenges          challenge[]
 }
 
-model Day {
-  dayId             Int @id @default(autoincrement()) @map("day_id")
-  date              String
-  challenges        Challenge[]
+model user_like_post {
+  user_like_post_id   Int @id @default(autoincrement())
+  user_id             Int
+  post_id             Int
 
-  @@map("day")
+  user                user @relation(fields: [user_id], references: [user_id])
+  post                post @relation(fields: [post_id], references: [post_id])
 }
 
-model UserLikePost {
-  userLikePostId    Int @id @default(autoincrement()) @map("user_like_post_id")
-  userId            Int @map("user_id")
-  postId            Int @map("post_id")
+model anime_post {
+  anime_post_id       Int @id @default(autoincrement())
+  anime_id            Int
+  post_id             Int
 
-  user              User @relation(fields: [userId], references: [userId])
-  post              Post @relation(fields: [postId], references: [postId])
-
-  @@map("user_like_post")
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
+  post                post @relation(fields: [post_id], references: [post_id])
 }
 
-model AnimePost {
-  animePostId       Int @id @default(autoincrement()) @map("anime_post_id")
-  animeId           Int @map("anime_id")
-  postId            Int @map("post_id")
+model user_like_anime {
+  user_like_anime_id  Int @id @default(autoincrement())
+  user_id             Int
+  anime_id            Int
 
-  anime             Anime @relation(fields: [animeId], references: [animeId])
-  post              Post @relation(fields: [postId], references: [postId])
-
-  @@map("anime_post")
+  user                user @relation(fields: [user_id], references: [user_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
 }
 
-model UserLikeAnime {
-  userLikeAnimeId   Int @id @default(autoincrement()) @map("user_like_anime_id")
-  userId            Int @map("user_id")
-  animeId           Int @map("anime_id")
+model user_rate_anime {
+  user_rate_anime_id  Int @id @default(autoincrement())
+  user_id             Int
+  anime_id            Int
+  rate                Float
 
-  user              User @relation(fields: [userId], references: [userId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
-
-  @@map("user_like_anime")
+  user                user @relation(fields: [user_id], references: [user_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
 }
 
-model UserRateAnime {
-  userRateAnimeId   Int @id @default(autoincrement()) @map("user_rate_anime_id")
-  userId            Int @map("user_id")
-  animeId           Int @map("anime_id")
-  rate              Float
+model user_watch_anime {
+  user_watch_anime_id Int @id @default(autoincrement())
+  user_id             Int
+  anime_id            Int
+  num_episodes        Int
+  state               String
 
-  user              User @relation(fields: [userId], references: [userId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
-
-  @@map("user_rate_anime")
-}
-
-model UserWatchAnime {
-  userWatchAnimeId  Int @id @default(autoincrement()) @map("user_watch_anime_id")
-  userId            Int @map("user_id")
-  animeId           Int @map("anime_id")
-  numEpisodes       Int @map("num_episodes")
-  state             String
-
-  user              User @relation(fields: [userId], references: [userId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
-
-  @@map("user_watch_anime")
-}
-
-model UserSocialAccount {
-  userSocialAccountId   Int @id @default(autoincrement()) @map("user_social_account_id")
-  userId                Int @map("user_id")
-  socialAccountId       Int @map("social_account_id")
-  socialUrl             String @map("social_url")
-
-  user                  User @relation(fields: [userId], references: [userId])
-  socialAccount         SocialAccount @relation(fields: [socialAccountId], references: [socialAccountId])
-
-  @@map("user_social_account")
+  user                user @relation(fields: [user_id], references: [user_id])
+  anime               anime @relation(fields: [anime_id], references: [anime_id])
 }
