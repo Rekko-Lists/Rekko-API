@@ -45,8 +45,13 @@ export class UserPrismaRepository implements UserRepository<User> {
         throw new Error('Method not implemented.');
     }
 
-    findByUsername(username: string): Promise<User | null> {
-        throw new Error('Method not implemented.');
+    async findByUsername(
+        username: string
+    ): Promise<User | null> {
+        const user = await this.db.user.findUnique({
+            where: { username }
+        });
+        return user;
     }
 
     existsByEmail(email: string): Promise<boolean> {
