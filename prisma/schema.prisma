@@ -67,7 +67,7 @@ model User {
   userId            Int @id @default(autoincrement()) @map("user_id")
   email             String @unique
   password          String
-  username          String
+  username          String @unique
   biography         String?
   reputation        Int @default(0)
   profileImage      String @map("profile_image")
@@ -125,7 +125,7 @@ model Anime {
   animeId           Int @id @default(autoincrement()) @map("anime_id")
   malId             Int @unique @map("mal_id")
   broadcastId       Int @unique @map("broadcast_id")
-  name              String
+  name              String @unique
   synopsis          String
   imgMedium         String @map("img_medium")
   imgLarge          String @map("img_large")
@@ -187,7 +187,7 @@ model Type {
 
 model Day {
   dayId             Int @id @default(autoincrement()) @map("day_id")
-  date              String
+  date              String @unique
   challenges        Challenge[]
 
   @@map("day")
