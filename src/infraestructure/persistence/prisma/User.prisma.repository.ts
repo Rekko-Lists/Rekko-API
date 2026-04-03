@@ -1,4 +1,5 @@
 import { User } from '../../../domain/entities/User';
+import { handlePrismaError } from '../../../domain/errors/prisma.errors';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserRepository } from '../../../domain/repositories/User.repository';
 import { Pagination } from '../../../domain/types/pagination';
@@ -9,17 +10,22 @@ export class UserPrismaRepository implements UserRepository<User> {
     constructor(private readonly db = prisma) {}
 
     async create(entity: User): Promise<void> {
-        await this.db.user.create({
-            data: {
-                email: entity.getEmail(),
-                username: entity.getUsername(),
-                password: entity.getPasswordHash(),
-                profileImage: entity.getProfileImage() ?? null,
-                bannerImage: entity.getBannerImage() ?? null,
-                backgroundImage:
-                    entity.getBackgroundImage() ?? null
-            }
-        });
+        try {
+            await this.db.user.create({
+                data: {
+                    email: entity.getEmail(),
+                    username: entity.getUsername(),
+                    password: entity.getPasswordHash(),
+                    profileImage:
+                        entity.getProfileImage() ?? null,
+                    bannerImage: entity.getBannerImage() ?? null,
+                    backgroundImage:
+                        entity.getBackgroundImage() ?? null
+                }
+            });
+        } catch (error) {
+            handlePrismaError(error);
+        }
     }
 
     findById(id: number): Promise<User | null> {
@@ -48,10 +54,15 @@ export class UserPrismaRepository implements UserRepository<User> {
     async findByUsername(
         username: string
     ): Promise<User | null> {
-        const user = await this.db.user.findUnique({
-            where: { username }
-        });
-        return user;
+        try {
+            const user = await this.db.user.findUnique({
+                where: { username }
+            });
+
+            return user;
+        } catch (error) {
+            handlePrismaError(error);
+        }
     }
 
     existsByEmail(email: string): Promise<boolean> {
