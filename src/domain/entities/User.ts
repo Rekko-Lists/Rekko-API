@@ -3,7 +3,7 @@ export class User {
     private email: string;
     private passwordHash: string;
     private username: string;
-    private reputation: number;
+    private reputation: number = 0;
     private profileImage: string;
     private bannerImage: string;
     private backgroundImage: string;
@@ -42,7 +42,7 @@ export class User {
         email: string;
         passwordHash: string;
         username: string;
-        reputation: number;
+        reputation?: number;
         profileImage: string;
         bannerImage: string;
         backgroundImage: string;
@@ -55,7 +55,7 @@ export class User {
             data.email,
             data.passwordHash,
             data.username,
-            data.reputation,
+            data.reputation ?? 0,
             data.profileImage,
             data.bannerImage,
             data.backgroundImage,
