@@ -25,7 +25,6 @@ export async function getUser(req: Request, res: Response) {
 
         if (!username) {
             throw new BadRequestError(
-                undefined,
                 'Username not valid.'
             );
         }
@@ -35,7 +34,6 @@ export async function getUser(req: Request, res: Response) {
 
         if (!user) {
             throw new NotFoundError(
-                undefined,
                 'User not found.'
             );
         }
@@ -63,7 +61,6 @@ export async function postUser(req: Request, res: Response) {
 
     if (!email || !password || !username) {
         throw new BadRequestError(
-            undefined,
             'Email, Password and Username are required.'
         );
     }

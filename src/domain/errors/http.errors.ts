@@ -1,56 +1,56 @@
 export class HttpError extends Error {
     public status: number;
     public details: any;
+    public stack?: string;
 
     constructor(
         message: string,
         status: number,
-        details: any = null
+        details: any = null,
+        stack: any = null
     ) {
         super(message);
         this.status = status;
         this.details = details;
+
+        if (stack) {
+            this.stack = stack;
+        }
     }
 }
 
 export class BadRequestError extends HttpError {
-    constructor(message = 'Bad Request', details: any = null) {
-        super(message, 400, details);
+    constructor(details: any = null, stack: any = null) {
+        super('Bad Request', 400, details, stack);
     }
 }
 
 export class UnauthorizedError extends HttpError {
-    constructor(message = 'Unauthorized', details: any = null) {
-        super(message, 401, details);
+    constructor(details: any = null, stack: any = null) {
+        super('Unauthorized', 401, details, stack);
     }
 }
 
 export class ForbiddenError extends HttpError {
-    constructor(message = 'Forbidden', details: any = null) {
-        super(message, 403, details);
+    constructor(details: any = null, stack: any = null) {
+        super('Forbidden', 403, details, stack);
     }
 }
 
 export class NotFoundError extends HttpError {
-    constructor(message = 'Not Found', details: any = null) {
-        super(message, 404, details);
+    constructor(details: any = null, stack: any = null) {
+        super('Not Found', 404, details, stack);
     }
 }
 
 export class DuplicateDataError extends HttpError {
-    constructor(
-        message = 'Duplicated Data',
-        details: any = null
-    ) {
-        super(message, 409, details);
+    constructor(details: any = null, stack: any = null) {
+        super('Duplicated Data', 409, details, stack);
     }
 }
 
 export class InternalServerError extends HttpError {
-    constructor(
-        message = 'Internal Server',
-        details: any = null
-    ) {
-        super(message, 500, details);
+    constructor(details: any = null, stack: any = null) {
+        super('Internal Server', 500, details, stack);
     }
 }
