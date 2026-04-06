@@ -1,18 +1,27 @@
-import { UserUpdateProfile } from '../types/user.types';
+import {
+    UserUpdateProfile,
+    UserWhereUnique
+} from '../types/user.types';
 import { Repository } from './repository';
 
-export interface UserRepository<User> extends Repository<User> {
+export interface UserRepository<User> extends Repository<
+    User,
+    string,
+    UserWhereUnique,
+    UserUpdateProfile
+> {
     findByEmail(email: string): Promise<User | null>;
 
     findByUsername(username: string): Promise<User | null>;
 
-    existsByEmail(email: string): Promise<boolean>;
-
-    existsByUsername(username: string): Promise<boolean>;
-
-    updateProfile(
+    updateEmail(
         userId: number,
-        data: UserUpdateProfile
+        newEmail: string
+    ): Promise<User | null>;
+
+    updateUsername(
+        userId: number,
+        username: string
     ): Promise<User | null>;
 
     updatePassword(

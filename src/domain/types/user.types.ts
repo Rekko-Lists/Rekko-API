@@ -12,4 +12,10 @@ export type CreateUserInput = {
     profileImage?: string;
     bannerImage?: string;
     backgroundImage?: string;
+    biography?: string;
 };
+
+export type UserWhereUnique =
+    | { userId: number }
+    | { username: string }
+    | { email: string };
