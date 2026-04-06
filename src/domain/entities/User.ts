@@ -61,7 +61,7 @@ export class User {
             data.backgroundImage,
             data.role ?? UserRole.USER,
             data.createdAt,
-            data.biography
+            data.biography ?? ''
         );
     }
 
