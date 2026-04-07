@@ -2,11 +2,11 @@ import { User } from '../../../domain/entities/User';
 import { handlePrismaError } from '../../../domain/errors/prisma.errors';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserRepository } from '../../../domain/repositories/User.repository';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 import {
     UserUpdateProfile,
     UserWhereUnique
-} from '../../../domain/types/user.types';
+} from '../../../domain/schemas/user.schemas';
 import { prisma } from './../../database/prisma.client';
 
 export class UserPrismaRepository implements UserRepository<User> {
@@ -62,26 +62,8 @@ export class UserPrismaRepository implements UserRepository<User> {
         entity: UserUpdateProfile
     ): Promise<User | null> {
         try {
-            const data: UserUpdateProfile = {};
-
-            if (entity.biography !== undefined) {
-                data.biography = entity.biography;
-            }
-
-            if (entity.profileImage !== undefined) {
-                data.profileImage = entity.profileImage;
-            }
-
-            if (entity.bannerImage !== undefined) {
-                data.bannerImage = entity.bannerImage;
-            }
-
-            if (entity.backgroundImage !== undefined) {
-                data.backgroundImage = entity.backgroundImage;
-            }
-
             const user = await this.db.user.update({
-                data,
+                data: entity,
                 where
             });
 

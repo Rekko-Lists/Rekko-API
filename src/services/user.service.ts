@@ -4,7 +4,10 @@ import {
     NotFoundError
 } from '../domain/errors/http.errors';
 import { UserRepository } from '../domain/repositories/User.repository';
-import { CreateUserInput } from '../domain/types/user.types';
+import {
+    CreateUserInput,
+    UserUpdateProfile
+} from '../domain/schemas/user.schemas';
 
 export class UserService {
     constructor(
@@ -34,13 +37,21 @@ export class UserService {
         await this.userRepository.create(user);
     }
 
-    async updateUser(username?: string): Promise<User> {
+    async updateUser(
+        userProfile: UserUpdateProfile,
+        username?: string
+    ): Promise<User> {
         if (!username)
             throw new BadRequestError('Username not valid.');
 
-        const user = await this.userRepository.update({
-            username
-        });
+        const user = await this.userRepository.update(
+            {
+                username
+            },
+            userProfile
+        );
+
+        if (!user) throw new NotFoundError('User not found.');
 
         return user;
     }

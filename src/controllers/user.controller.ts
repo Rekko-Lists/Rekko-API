@@ -1,10 +1,13 @@
 import { Request, Response } from 'express';
 
-import { CreateUserInput } from '../domain/types/user.types';
 import { userService } from '../infraestructure/container/user.container';
 
 import { created, ok } from '../utils/response.handler';
 import { catchAsync } from '../utils/catchAsync';
+import {
+    createUserSchema,
+    userUpdateProfileSchema
+} from '../domain/schemas/user.schemas';
 
 export const getUser = catchAsync(
     async (req: Request, res: Response) => {
@@ -30,9 +33,9 @@ export const getUsers = catchAsync(
 
 export const postUser = catchAsync(
     async (req: Request, res: Response) => {
-        await userService.createUser(
-            req.body as CreateUserInput
-        );
+        const validatedInput = createUserSchema.parse(req.body);
+
+        await userService.createUser(validatedInput);
 
         created(res, 'User created succesfully.');
     }
@@ -45,9 +48,14 @@ export const patchUser = catchAsync(
                 ? req.params.username
                 : undefined;
 
-        const 
+        const validatedProfile = userUpdateProfileSchema.parse(
+            req.body
+        );
 
-        const updated = await userService.updateUser(username);
+        const updated = await userService.updateUser(
+            validatedProfile,
+            username
+        );
 
         ok(res, 'User profile updated succesfully.', updated);
     }
@@ -67,18 +75,26 @@ export const deleteUser = catchAsync(
     }
 );
 
-export function changeEmail(req: Request, res: Response) {
-    res.status(200).send(
-        `USER EMAIL REQUEST ${req.params.username}`
-    );
-}
+export const changeEmail = catchAsync(
+    async (req: Request, res: Response) => {
+        res.status(200).send(
+            `USER EMAIL REQUEST ${req.params.username}`
+        );
+    }
+);
 
-export function changeEmailConfirm(req: Request, res: Response) {
-    res.status(200).send(
-        `USER EMAIL CONFIRM ${req.params.username}`
-    );
-}
+export const changeEmailConfirm = catchAsync(
+    async (req: Request, res: Response) => {
+        res.status(200).send(
+            `USER EMAIL CONFIRM ${req.params.username}`
+        );
+    }
+);
 
-export function changePassword(req: Request, res: Response) {
-    res.status(200).send(`USER PASSWORD ${req.params.username}`);
-}
+export const changePassword = catchAsync(
+    async (req: Request, res: Response) => {
+        res.status(200).send(
+            `USER PASSWORD ${req.params.username}`
+        );
+    }
+);
