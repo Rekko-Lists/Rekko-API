@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 import {
     HttpError,
     NotFoundError
@@ -27,6 +28,23 @@ export const errorHandler = (
     next: NextFunction
 ): void => {
     const stack = isDevelopment ? err.stack : undefined;
+
+    if (err instanceof ZodError) {
+        const message = err.issues
+            .map((issue) => {
+                return `${issue.message}`;
+            })
+            .join('; ');
+
+        res.status(400).json({
+            error: {
+                message: 'Validation error',
+                details: message,
+                stack
+            }
+        });
+        return;
+    }
 
     if (err instanceof HttpError) {
         res.status(err.status).json({
