@@ -1,7 +1,7 @@
 import { Comment } from '../../../domain/entities/Comment';
 import { CommentRepository } from '../../../domain/repositories/Comment.repository';
 import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class CommentPrismaRepository implements CommentRepository {
     create(entity: Comment): Promise<void> {

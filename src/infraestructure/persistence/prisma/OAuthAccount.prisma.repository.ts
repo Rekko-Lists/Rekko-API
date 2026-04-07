@@ -1,8 +1,8 @@
 import { OAuthAccount } from '../../../domain/entities/OAuthAccount';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { OAuthAccountRepository } from '../../../domain/repositories/OAuthAccount.repository';
-import { LinkOAuthAccount } from '../../../domain/types/oauthaccount.types';
-import { Pagination } from '../../../domain/types/pagination';
+import { LinkOAuthAccount } from '../../../domain/schemas/oauth.schemas';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class OAuthAccountPrismaRepository implements OAuthAccountRepository {
     create(entity: OAuthAccount): Promise<void> {

@@ -1,7 +1,7 @@
 import { RefreshToken } from '../../../domain/entities/RefreshToken';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { RefreshTokenRepository } from '../../../domain/repositories/RefreshToken.repository';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class RefreshTokenPrismaRepository implements RefreshTokenRepository {
     create(entity: RefreshToken): Promise<void> {

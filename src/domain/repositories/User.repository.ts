@@ -1,7 +1,7 @@
 import {
     UserUpdateProfile,
     UserWhereUnique
-} from '../types/user.types';
+} from '../schemas/user.schemas';
 import { Repository } from './repository';
 
 export interface UserRepository<User> extends Repository<

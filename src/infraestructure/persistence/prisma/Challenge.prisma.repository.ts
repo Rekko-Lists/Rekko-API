@@ -1,7 +1,7 @@
 import { Challenge } from '../../../domain/entities/Challenge';
 import { ChallengeRepository } from '../../../domain/repositories/Challenge.repository';
 import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class ChallengePrismaRepository implements ChallengeRepository {
     create(entity: Challenge): Promise<void> {
