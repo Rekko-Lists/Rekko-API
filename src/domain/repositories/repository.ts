@@ -1,20 +1,18 @@
-import { Pagination } from '../types/pagination';
-import { Filter } from './filters/filter';
+import {
+    FindOptions,
+    FindRepository
+} from '../schemas/find.schemas';
 
 export interface Repository<
     T,
-    F extends string = string,
     WUnique = unknown,
     UpdateDTO = unknown
 > {
-    create(entity: T): Promise<void>;
+    create(entity: T): Promise<T | null>;
 
-    findById(id: number): Promise<T | null>;
+    findById(id: number, fields?: string[]): Promise<T | null>;
 
-    find(
-        filters?: Filter<F>[],
-        pagination?: Pagination
-    ): Promise<T[]>;
+    find(findOptions: FindOptions): Promise<FindRepository<T>>;
 
     update(where: WUnique, entity: UpdateDTO): Promise<T | null>;
 
