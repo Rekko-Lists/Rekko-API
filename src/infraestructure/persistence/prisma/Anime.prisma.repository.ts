@@ -1,7 +1,7 @@
 import { Anime } from '../../../domain/entities/Anime';
 import { AnimeRepository } from '../../../domain/repositories/Anime.repository';
 import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class AnimePrismaRepository implements AnimeRepository {
     create(entity: Anime): Promise<void> {

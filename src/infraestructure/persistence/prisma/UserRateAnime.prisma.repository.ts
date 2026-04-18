@@ -1,7 +1,7 @@
 import { UserRateAnime } from '../../../domain/entities/UserRateAnime';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserRateAnimeRepository } from '../../../domain/repositories/UserRateAnime.repository';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class UserRateAnimePrismaRepository implements UserRateAnimeRepository {
     create(entity: UserRateAnime): Promise<void> {

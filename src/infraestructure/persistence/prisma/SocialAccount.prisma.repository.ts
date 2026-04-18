@@ -1,7 +1,7 @@
 import { SocialAccount } from '../../../domain/entities/SocialAccount';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { Repository } from '../../../domain/repositories/repository';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class SocialAccountPrismaRepository implements Repository<SocialAccount> {
     create(entity: SocialAccount): Promise<void> {

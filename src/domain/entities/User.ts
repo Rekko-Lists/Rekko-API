@@ -1,3 +1,9 @@
+import { hashPassword } from '../../utils/password.util';
+import {
+    CreateUserInput,
+    SocialAccount
+} from '../schemas/user.schemas';
+
 export class User {
     private readonly userId: number;
     private email: string;
@@ -8,8 +14,10 @@ export class User {
     private bannerImage: string;
     private backgroundImage: string;
     private role: UserRole = UserRole.USER;
+    private emailVerified: boolean = false;
     private readonly createdAt: Date;
     private biography?: string;
+    private socialAccounts: SocialAccount[] = [];
 
     private constructor(
         userId: number,
@@ -21,6 +29,7 @@ export class User {
         bannerImage: string,
         backgroundImage: string,
         role: UserRole = UserRole.USER,
+        emailVerified: boolean = false,
         createdAt: Date,
         biography?: string
     ) {
@@ -33,6 +42,7 @@ export class User {
         this.bannerImage = bannerImage;
         this.backgroundImage = backgroundImage;
         this.role = role;
+        this.emailVerified = emailVerified;
         this.createdAt = createdAt;
         this.biography = biography;
     }
@@ -47,10 +57,12 @@ export class User {
         bannerImage: string;
         backgroundImage: string;
         role?: UserRole;
+        emailVerified?: boolean;
         createdAt: Date;
         biography?: string;
+        userSocialAccount?: any[];
     }): User {
-        return new User(
+        const user = new User(
             data.userId,
             data.email,
             data.passwordHash,
@@ -60,9 +72,46 @@ export class User {
             data.bannerImage,
             data.backgroundImage,
             data.role ?? UserRole.USER,
+            data.emailVerified ?? false,
             data.createdAt,
-            data.biography
+            data.biography ?? ''
         );
+
+        if (
+            data.userSocialAccount &&
+            Array.isArray(data.userSocialAccount)
+        ) {
+            user.socialAccounts = data.userSocialAccount.map(
+                (usa) => ({
+                    name: usa.socialAccount.name,
+                    url: usa.socialUrl
+                })
+            );
+        }
+
+        return user;
+    }
+
+    public static async fromInput(
+        input: CreateUserInput
+    ): Promise<User> {
+        const hashedPassword = await hashPassword(
+            input.password
+        );
+
+        return User.fromPersistence({
+            userId: 0,
+            email: input.email,
+            passwordHash: hashedPassword,
+            username: input.username,
+            reputation: 0,
+            profileImage: input.profileImage ?? '',
+            bannerImage: input.bannerImage ?? '',
+            backgroundImage: input.backgroundImage ?? '',
+            emailVerified: false,
+            createdAt: new Date(),
+            biography: input.biography ?? ''
+        });
     }
 
     getUserId(): number {
@@ -101,8 +150,20 @@ export class User {
         return this.role;
     }
 
+    getEmailVerified(): boolean {
+        return this.emailVerified;
+    }
+
+    getCreatedAt(): Date {
+        return this.createdAt;
+    }
+
     getBiography(): string | undefined {
         return this.biography;
+    }
+
+    getSocialAccounts(): SocialAccount[] {
+        return this.socialAccounts;
     }
 
     toString(): string {

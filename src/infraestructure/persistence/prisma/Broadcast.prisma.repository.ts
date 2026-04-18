@@ -1,7 +1,7 @@
 import { Broadcast } from '../../../domain/entities/Broadcast';
 import { BroadcastRepository } from '../../../domain/repositories/Broadcast.repository';
 import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class BroadcastPrismaRepository implements BroadcastRepository {
     create(entity: Broadcast): Promise<void> {

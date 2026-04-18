@@ -1,0 +1,29 @@
+import { prisma } from '../database/prisma.client';
+import { UserPrismaRepository } from '../persistence/prisma/user/User.prisma.repository';
+import { UserService } from '../../services/user/user.service';
+import { EmailAuthPrismaRepository } from '../persistence/prisma/user/EmailAuth.repository';
+import { PasswordAuthPrismaRepository } from '../persistence/prisma/user/PasswordAuth.repository';
+import { EmailAuthService } from '../../services/user/emailAuth.service';
+import { PasswordAuthService } from '../../services/user/passwordAuth.service';
+import { EmailHandler } from '../../utils/handlers/email.handler';
+
+const userRepository = new UserPrismaRepository(prisma);
+const emailAuthRepository = new EmailAuthPrismaRepository(
+    prisma
+);
+const passwordAuthRepository = new PasswordAuthPrismaRepository(
+    prisma
+);
+
+const emailHandler = new EmailHandler();
+
+export const userService = new UserService(userRepository);
+export const emailAuthService = new EmailAuthService(
+    userRepository,
+    emailAuthRepository,
+    emailHandler
+);
+export const passwordAuthService = new PasswordAuthService(
+    userRepository,
+    passwordAuthRepository
+);

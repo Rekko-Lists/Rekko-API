@@ -3,7 +3,7 @@ import { Response } from 'express';
 export const ok = <T>(
     res: Response,
     message: string,
-    data: T
+    data?: T | null
 ) => {
     res.status(200).json({
         success: true,

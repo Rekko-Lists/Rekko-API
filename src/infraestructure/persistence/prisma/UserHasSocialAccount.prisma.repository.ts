@@ -2,7 +2,7 @@ import { SocialAccount } from '../../../domain/entities/SocialAccount';
 import { UserHasSocialAccount } from '../../../domain/entities/UserHasSocialAccount';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserHasSocialAccountRepository } from '../../../domain/repositories/UserHasSocialAccount.repository';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class UserHasSocialAccountPrismaRepository implements UserHasSocialAccountRepository {
     create(entity: UserHasSocialAccount): Promise<void> {

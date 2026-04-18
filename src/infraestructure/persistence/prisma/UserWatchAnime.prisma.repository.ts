@@ -1,7 +1,7 @@
 import { UserWatchAnime } from '../../../domain/entities/UserWatchAnime';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserWatchAnimeRepository } from '../../../domain/repositories/UserWatchAnime.repository';
-import { Pagination } from '../../../domain/types/pagination';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
 
 export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository {
     create(entity: UserWatchAnime): Promise<void> {

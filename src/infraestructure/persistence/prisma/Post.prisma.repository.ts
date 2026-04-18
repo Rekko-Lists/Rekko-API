@@ -1,8 +1,8 @@
 import { Post } from '../../../domain/entities/Post';
 import { Filter } from '../../../domain/repositories/filters/filter';
 import { PostRepository } from '../../../domain/repositories/Post.repository';
-import { Pagination } from '../../../domain/types/pagination';
-import { PostWithComments } from '../../../domain/types/post.types';
+import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { PostWithComments } from '../../../domain/schemas/post.schemas';
 
 export class PostPrismaRepository implements PostRepository {
     create(entity: Post): Promise<void> {
