@@ -10,7 +10,7 @@ import malRouter from './mal.routes';
 
 const router = Router();
 
-router.use('/', authRouter);
+router.use('/auth', authRouter);
 router.use('/oauth', oauthRouter);
 router.use('/user', userRouter);
 router.use('/post', postRouter);
