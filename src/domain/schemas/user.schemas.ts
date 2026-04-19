@@ -3,14 +3,49 @@ import { z } from 'zod';
 export const createUserSchema = z
     .object({
         email: z.string().email('Email must be valid'),
-        password: z.string().min(1, 'Password is required'),
+        password: z
+            .string()
+            .min(8, 'Password must be at least 8 characters')
+            .max(128, 'Password must not exceed 128 characters')
+            .regex(
+                /[A-Z]/,
+                'Password must contain at least one uppercase letter'
+            )
+            .regex(
+                /[a-z]/,
+                'Password must contain at least one lowercase letter'
+            )
+            .regex(
+                /[0-9]/,
+                'Password must contain at least one number'
+            ),
+        passwordRepeat: z
+            .string()
+            .min(8, 'Password must be at least 8 characters')
+            .max(128, 'Password must not exceed 128 characters')
+            .regex(
+                /[A-Z]/,
+                'Password must contain at least one uppercase letter'
+            )
+            .regex(
+                /[a-z]/,
+                'Password must contain at least one lowercase letter'
+            )
+            .regex(
+                /[0-9]/,
+                'Password must contain at least one number'
+            ),
         username: z.string().min(1, 'Username is required'),
         profileImage: z.string().optional(),
         bannerImage: z.string().optional(),
         backgroundImage: z.string().optional(),
         biography: z.string().optional()
     })
-    .strict();
+    .strict()
+    .refine((data) => data.password === data.passwordRepeat, {
+        message: "Passwords don't match",
+        path: ['passwordRepeat']
+    });
 
 export const userUpdateProfileSchema = z
     .object({
@@ -138,6 +173,41 @@ export const userSelectableField = z.enum([
     'oauthAccounts'
 ]);
 
+export const loginSchema = z
+    .object({
+        email: z.string().email('Email must be valid'),
+        password: z
+            .string()
+            .min(8, 'Password must be at least 8 characters')
+    })
+    .strict();
+
+export const refreshTokenSchema = z
+    .object({
+        refreshToken: z
+            .string()
+            .min(1, 'Refresh token is required')
+    })
+    .strict();
+
+export const tokenPairSchema = z
+    .object({
+        accessToken: z.string(),
+        refreshToken: z.string()
+    })
+    .strict();
+
+export const sessionInfoSchema = z
+    .object({
+        sessionId: z.number(),
+        userId: z.number(),
+        userAgent: z.string(),
+        ip: z.string(),
+        createdAt: z.date(),
+        expiresAt: z.date()
+    })
+    .strict();
+
 export const reputationReasons = {
     good_post: 10,
     helpful_comment: 5,
@@ -191,3 +261,9 @@ export type UserSocialAccounts = z.infer<
     typeof userSocialAccounts
 >;
 export type UpdateReputation = z.infer<typeof updateReputation>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type RefreshTokenInput = z.infer<
+    typeof refreshTokenSchema
+>;
+export type TokenPair = z.infer<typeof tokenPairSchema>;
+export type SessionInfo = z.infer<typeof sessionInfoSchema>;
