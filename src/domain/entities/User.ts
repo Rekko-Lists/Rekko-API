@@ -7,7 +7,7 @@ import {
 export class User {
     private readonly userId: number;
     private email: string;
-    private passwordHash: string;
+    private password: string;
     private username: string;
     private reputation: number = 0;
     private profileImage: string;
@@ -22,7 +22,7 @@ export class User {
     private constructor(
         userId: number,
         email: string,
-        passwordHash: string,
+        password: string,
         username: string,
         reputation: number,
         profileImage: string,
@@ -35,7 +35,7 @@ export class User {
     ) {
         this.userId = userId;
         this.email = email;
-        this.passwordHash = passwordHash;
+        this.password = password;
         this.username = username;
         this.reputation = reputation;
         this.profileImage = profileImage;
@@ -50,7 +50,7 @@ export class User {
     public static fromPersistence(data: {
         userId: number;
         email: string;
-        passwordHash: string;
+        password: string;
         username: string;
         reputation?: number;
         profileImage: string;
@@ -65,7 +65,7 @@ export class User {
         const user = new User(
             data.userId,
             data.email,
-            data.passwordHash,
+            data.password,
             data.username,
             data.reputation ?? 0,
             data.profileImage,
@@ -102,7 +102,7 @@ export class User {
         return User.fromPersistence({
             userId: 0,
             email: input.email,
-            passwordHash: hashedPassword,
+            password: hashedPassword,
             username: input.username,
             reputation: 0,
             profileImage: input.profileImage ?? '',
@@ -131,7 +131,7 @@ export class User {
     }
 
     getPasswordHash(): string {
-        return this.passwordHash;
+        return this.password;
     }
 
     getProfileImage(): string {
