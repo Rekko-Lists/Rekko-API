@@ -3,7 +3,8 @@ import { NotFoundError } from '../../domain/errors/http.errors';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
 import {
     TokenExpiredError,
-    UserNotFoundError
+    UserNotFoundError,
+    InvalidTokenError
 } from '../../domain/errors/auth.errors';
 import {
     UserUpdateEmail,
@@ -15,6 +16,7 @@ import {
     sign10MinToken,
     verifyToken
 } from '../../utils/jwt.util';
+import { comparePassword } from '../../utils/password.util';
 
 export class EmailAuthService {
     constructor(
@@ -28,6 +30,33 @@ export class EmailAuthService {
             await this.emailAuthRepository.findByEmail(email);
 
         if (!user) throw new NotFoundError('User not found.');
+
+        return user;
+    }
+
+    async authenticateByEmailAndPassword(
+        email: string,
+        password: string
+    ): Promise<User> {
+        const user = await this.getUserByEmail(email);
+
+        const passwordHash = user.getPasswordHash();
+        if (!passwordHash) {
+            throw new InvalidTokenError(
+                'Invalid email or password'
+            );
+        }
+
+        const passwordMatch = await comparePassword(
+            password,
+            passwordHash
+        );
+
+        if (!passwordMatch) {
+            throw new InvalidTokenError(
+                'Invalid email or password'
+            );
+        }
 
         return user;
     }
