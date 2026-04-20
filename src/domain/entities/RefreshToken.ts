@@ -36,20 +36,17 @@ export class RefreshToken {
         ip: string
     ): RefreshToken {
         return new RefreshToken(
-            0, // ID will be assigned by DB
+            0,
             userId,
             token,
             new Date(),
             expiresAt,
-            null, // Not revoked yet
+            null,
             userAgent,
             ip
         );
     }
 
-    /**
-     * Create instance from database persistence
-     */
     public static fromPersistence(data: {
         refreshTokenId: number;
         userId: number;
