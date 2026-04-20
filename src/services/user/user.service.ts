@@ -17,7 +17,7 @@ import { emailAuthService } from '../../infraestructure/container/user.container
 
 export class UserService {
     constructor(
-        private readonly userRepository: UserRepository<User>,
+        private readonly userRepository: UserRepository<User>
     ) {}
 
     async createUser(input: CreateUserInput): Promise<void> {
@@ -84,6 +84,14 @@ export class UserService {
             await this.userRepository.findByUsername(username);
 
         if (!user) throw new NotFoundError('User not found.');
+
+        return user;
+    }
+
+    async getUserById(id: number): Promise<User> {
+        const user = await this.userRepository.findById(id);
+
+        if (!user) throw new NotFoundError('User not found');
 
         return user;
     }
