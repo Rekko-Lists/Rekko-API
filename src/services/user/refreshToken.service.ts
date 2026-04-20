@@ -2,19 +2,17 @@ import { RefreshToken } from '../../domain/entities/RefreshToken';
 import { User } from '../../domain/entities/User';
 import { RefreshTokenRepository } from '../../domain/repositories/user/RefreshToken.repository';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
-import {
-    signAccessToken,
-    signRefreshToken,
-    verifyRefreshToken
-} from '../../utils/jwt.util';
+import { signAccessToken } from '../../utils/jwt.util';
 import {
     InvalidTokenError,
+    TokenExpiredError,
     UserNotFoundError
 } from '../../domain/errors/auth.errors';
 import {
     TokenPair,
     SessionInfo
 } from '../../domain/schemas/user.schemas';
+import { encodeRefreshToken } from '../../utils/refreshToken.util';
 
 export class RefreshTokenService {
     constructor(
@@ -37,65 +35,27 @@ export class RefreshTokenService {
         return { accessToken, refreshToken };
     }
 
-    async refreshAccessToken(
-        refreshTokenString: string,
-        userAgent: string,
-        ip: string
-    ): Promise<TokenPair> {
+    async revokeSessionByToken(
+        tokenString: string
+    ): Promise<void> {
         const now = new Date();
 
-        const decoded = verifyRefreshToken(refreshTokenString);
-
-        const storedToken =
-            await this.refreshTokenRepository.findActiveSessionByToken(
-                refreshTokenString,
-                now
-            );
-
-        if (!storedToken) {
-            throw new InvalidTokenError(
-                'Refresh token not found or expired'
-            );
-        }
-
-        const userId = decoded.userId;
-
-        const { accessToken, refreshToken, tokenEntity } =
-            await this.generateTokens(userId, userAgent, ip);
-
-        const rotated =
-            await this.refreshTokenRepository.atomicRotateSession(
-                refreshTokenString,
-                tokenEntity,
-                now
-            );
-
-        if (!rotated) {
-            throw new InvalidTokenError(
-                'Failed to rotate refresh token'
-            );
-        }
-
-        return {
-            accessToken,
-            refreshToken
-        };
-    }
-
-    async revokeTokenById(sessionId: number): Promise<void> {
         const token =
-            await this.refreshTokenRepository.findSessionById(
-                sessionId
+            await this.refreshTokenRepository.findActiveSessionByToken(
+                tokenString,
+                now
             );
 
         if (!token) {
-            throw new InvalidTokenError('Session not found');
+            throw new InvalidTokenError(
+                'Refresh token not found or already expired'
+            );
         }
 
         const revoked =
             await this.refreshTokenRepository.revokeSessionById(
-                sessionId,
-                new Date()
+                token.getRefreshTokenId(),
+                now
             );
 
         if (!revoked) {
@@ -105,6 +65,81 @@ export class RefreshTokenService {
         }
     }
 
+    async refreshAccessToken(
+        refreshTokenString: string
+    ): Promise<{ accessToken: string }> {
+        const now = new Date();
+
+        const storedToken =
+            await this.refreshTokenRepository.findSessionByToken(
+                refreshTokenString
+            );
+
+        if (
+            !storedToken ||
+            storedToken.getRevokedAt() !== null
+        ) {
+            throw new InvalidTokenError(
+                'Refresh token is invalid'
+            );
+        }
+
+        if (storedToken.getExpiresAt() < now) {
+            throw new TokenExpiredError(
+                'Refresh token has expired'
+            );
+        }
+
+        const user = await this.userRepository.findById(
+            storedToken.getUserId()
+        );
+
+        if (!user) {
+            throw new UserNotFoundError('User not found');
+        }
+
+        const accessToken = signAccessToken(
+            storedToken.getUserId()
+        );
+
+        return { accessToken };
+    }
+
+    private async generateTokens(
+        userId: number,
+        userAgent: string,
+        ip: string
+    ) {
+        const user = await this.userRepository.findById(userId);
+        if (!user) throw new UserNotFoundError('User not found');
+
+        const accessToken = signAccessToken(userId);
+        const refreshToken = await encodeRefreshToken({
+            username: user.getUsername(),
+            userAgent,
+            ip,
+            timestamp: Math.floor(Date.now() / 1000)
+        });
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        const tokenEntity = RefreshToken.create(
+            userId,
+            refreshToken,
+            expiresAt,
+            userAgent,
+            ip
+        );
+
+        return { accessToken, refreshToken, tokenEntity };
+    }
+
+    /**
+     * Estas funciones se usaran mas para adelante si al final
+     * da tiempo de hacer mas cositas con las sesiones y porque
+     * por tema de seguridad son interesantes.
+     */
     async revokeDevice(
         userId: number,
         userAgent: string,
@@ -180,30 +215,5 @@ export class RefreshTokenService {
             createdAt: token.getCreatedAt(),
             expiresAt: token.getExpiresAt()
         };
-    }
-
-    private async generateTokens(
-        userId: number,
-        userAgent: string,
-        ip: string
-    ) {
-        const user = await this.userRepository.findById(userId);
-        if (!user) throw new UserNotFoundError('User not found');
-
-        const accessToken = signAccessToken(userId);
-        const refreshToken = signRefreshToken(userId);
-
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
-
-        const tokenEntity = RefreshToken.create(
-            userId,
-            refreshToken,
-            expiresAt,
-            userAgent,
-            ip
-        );
-
-        return { accessToken, refreshToken, tokenEntity };
     }
 }
