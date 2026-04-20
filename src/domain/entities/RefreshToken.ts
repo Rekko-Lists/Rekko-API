@@ -4,7 +4,7 @@ export class RefreshToken {
     private token: string;
     private createdAt: Date;
     private expiresAt: Date;
-    private revokedAt: Date;
+    private revokedAt: Date | null;
     private userAgent: string;
     private ip: string;
 
@@ -14,7 +14,7 @@ export class RefreshToken {
         token: string,
         createdAt: Date,
         expiresAt: Date,
-        revokedAt: Date,
+        revokedAt: Date | null,
         userAgent: string,
         ip: string
     ) {
@@ -28,13 +28,32 @@ export class RefreshToken {
         this.ip = ip;
     }
 
+    public static create(
+        userId: number,
+        token: string,
+        expiresAt: Date,
+        userAgent: string,
+        ip: string
+    ): RefreshToken {
+        return new RefreshToken(
+            0,
+            userId,
+            token,
+            new Date(),
+            expiresAt,
+            null,
+            userAgent,
+            ip
+        );
+    }
+
     public static fromPersistence(data: {
         refreshTokenId: number;
         userId: number;
         token: string;
         createdAt: Date;
         expiresAt: Date;
-        revokedAt: Date;
+        revokedAt: Date | null;
         userAgent: string;
         ip: string;
     }): RefreshToken {
@@ -56,6 +75,30 @@ export class RefreshToken {
 
     getUserId() {
         return this.userId;
+    }
+
+    getToken() {
+        return this.token;
+    }
+
+    getCreatedAt() {
+        return this.createdAt;
+    }
+
+    getExpiresAt() {
+        return this.expiresAt;
+    }
+
+    getRevokedAt() {
+        return this.revokedAt;
+    }
+
+    getUserAgent() {
+        return this.userAgent;
+    }
+
+    getIp() {
+        return this.ip;
     }
 
     toString(): string {

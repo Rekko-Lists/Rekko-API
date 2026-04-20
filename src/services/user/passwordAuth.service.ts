@@ -3,7 +3,7 @@ import { UserRepository } from '../../domain/repositories/user/User.repository';
 import { UserNotFoundError } from '../../domain/errors/auth.errors';
 import { UserResetPassword } from '../../domain/schemas/user.schemas';
 import { EmailHandler } from '../../utils/handlers/email.handler';
-import { hashPassword } from '../../utils/password.util';
+import { hashBcrypt } from '../../utils/bcrypt.util';
 import { PasswordAuthRepository } from '../../domain/repositories/user/PasswordAuth.repository';
 import {
     sign10MinToken,
@@ -50,7 +50,7 @@ export class PasswordAuthService {
 
         if (!id) throw new UserNotFoundError('User not found');
 
-        const passwordHash = await hashPassword(
+        const passwordHash = await hashBcrypt(
             resetPassword.password
         );
 

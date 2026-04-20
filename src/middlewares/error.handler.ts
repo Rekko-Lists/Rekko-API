@@ -4,6 +4,7 @@ import {
     HttpError,
     NotFoundError
 } from '../domain/errors/http.errors';
+import { AuthError } from '../domain/errors/auth.errors';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -54,12 +55,24 @@ export const errorHandler = (
                 stack
             }
         });
-    } else {
-        res.status(500).json({
+        return;
+    }
+
+    if (err instanceof AuthError) {
+        res.status(err.status).json({
             error: {
-                message: 'Internal Server Error',
+                message: err.message,
+                details: err.details,
                 stack
             }
         });
+        return;
     }
+
+    res.status(500).json({
+        error: {
+            message: 'Internal Server Error',
+            stack
+        }
+    });
 };
