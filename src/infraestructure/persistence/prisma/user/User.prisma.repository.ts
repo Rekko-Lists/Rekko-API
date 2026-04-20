@@ -60,7 +60,7 @@ export class UserPrismaRepository implements UserRepository<User> {
 
             if (!user) return null;
 
-            return this.formatUserSocialAccounts(user);
+            return User.fromPersistence(user);
         } catch (error) {
             handlePrismaError(error);
         }
@@ -96,7 +96,7 @@ export class UserPrismaRepository implements UserRepository<User> {
             ]);
 
             const formattedUsers = users.map((user: any) => {
-                return this.formatUserSocialAccounts(user);
+                return User.fromPersistence(user);
             });
 
             return {
@@ -106,20 +106,6 @@ export class UserPrismaRepository implements UserRepository<User> {
         } catch (error) {
             handlePrismaError(error);
         }
-    }
-
-    private formatUserSocialAccounts(user: any) {
-        if (user.userSocialAccount) {
-            user.socialAccounts = user.userSocialAccount.map(
-                (usa: any) => ({
-                    name: usa.socialAccount.name,
-                    url: usa.socialUrl
-                })
-            );
-            delete user.userSocialAccount;
-        }
-
-        return user;
     }
 
     async update(
