@@ -42,6 +42,22 @@ export class RefreshTokenPrismaRepository implements RefreshTokenRepository {
         }
     }
 
+    async findSessionByToken(
+        tokenString: string
+    ): Promise<RefreshToken | null> {
+        try {
+            const refreshToken =
+                await this.db.refreshToken.findFirst({
+                    where: { token: tokenString }
+                });
+
+            if (!refreshToken) return null;
+            return RefreshToken.fromPersistence(refreshToken);
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async findActiveSessionByToken(
         tokenString: string,
         currentTimestamp: Date
@@ -58,36 +74,6 @@ export class RefreshTokenPrismaRepository implements RefreshTokenRepository {
 
             if (!refreshToken) return null;
             return RefreshToken.fromPersistence(refreshToken);
-        } catch (error) {
-            handlePrismaError(error);
-        }
-    }
-
-    async atomicRotateSession(
-        expiredTokenString: string,
-        newRefreshToken: RefreshToken,
-        revocationTimestamp: Date
-    ): Promise<boolean> {
-        try {
-            await this.db.$transaction(async (tx: any) => {
-                await tx.refreshToken.updateMany({
-                    where: { token: expiredTokenString },
-                    data: { revokedAt: revocationTimestamp }
-                });
-
-                await tx.refreshToken.create({
-                    data: {
-                        userId: newRefreshToken.getUserId(),
-                        token: newRefreshToken.getToken(),
-                        expiresAt:
-                            newRefreshToken.getExpiresAt(),
-                        userAgent:
-                            newRefreshToken.getUserAgent(),
-                        ip: newRefreshToken.getIp()
-                    }
-                });
-            });
-            return true;
         } catch (error) {
             handlePrismaError(error);
         }

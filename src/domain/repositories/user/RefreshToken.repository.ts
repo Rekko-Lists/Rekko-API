@@ -5,16 +5,14 @@ export interface RefreshTokenRepository {
         tokenEntity: RefreshToken
     ): Promise<RefreshToken | null>;
 
+    findSessionByToken(
+        tokenString: string
+    ): Promise<RefreshToken | null>;
+
     findActiveSessionByToken(
         tokenString: string,
         currentTimestamp: Date
     ): Promise<RefreshToken | null>;
-
-    atomicRotateSession(
-        expiredTokenString: string,
-        newRefreshToken: RefreshToken,
-        revocationTimestamp: Date
-    ): Promise<boolean>;
 
     revokeSessionsByDevice(
         userId: number,
