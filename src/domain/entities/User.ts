@@ -1,4 +1,4 @@
-import { hashPassword } from '../../utils/password.util';
+import { hashBcrypt } from '../../utils/bcrypt.util';
 import {
     CreateUserInput,
     SocialAccount
@@ -95,9 +95,7 @@ export class User {
     public static async fromInput(
         input: CreateUserInput
     ): Promise<User> {
-        const hashedPassword = await hashPassword(
-            input.password
-        );
+        const hashedPassword = await hashBcrypt(input.password);
 
         return User.fromPersistence({
             userId: 0,

@@ -16,7 +16,7 @@ import {
     sign10MinToken,
     verifyToken
 } from '../../utils/jwt.util';
-import { comparePassword } from '../../utils/password.util';
+import { comparePassword } from '../../utils/bcrypt.util';
 
 export class EmailAuthService {
     constructor(
