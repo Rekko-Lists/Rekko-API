@@ -5,7 +5,10 @@ import {
     emailAuthService
 } from '../../infraestructure/container/user.container';
 import { ok } from '../../utils/handlers/response.handler';
-import { loginSchema } from '../../domain/schemas/user.schemas';
+import {
+    loginSchema,
+    refreshTokenSchema
+} from '../../domain/schemas/user.schemas';
 
 export const login = catchAsync(
     async (req: Request, res: Response) => {
@@ -38,24 +41,49 @@ export const login = catchAsync(
     }
 );
 
-export function register(req: Request, res: Response) {
-    res.status(200).send('Register');
-}
+export const logout = catchAsync(
+    async (req: Request, res: Response) => {
+        const validatedInput = refreshTokenSchema.parse(
+            req.body
+        );
 
-export function logout(req: Request, res: Response) {
-    res.status(200).send('Logout');
-}
+        await refreshTokenService.revokeSessionByToken(
+            validatedInput.refreshToken
+        );
 
-export function refreshToken(req: Request, res: Response) {
-    res.status(200).send('Refresh Token');
-}
+        ok(res, 'Logout successful');
+    }
+);
+
+export const refreshToken = catchAsync(
+    async (req: Request, res: Response) => {
+        const validatedInput = refreshTokenSchema.parse(
+            req.body
+        );
+
+        const tokens =
+            await refreshTokenService.refreshAccessToken(
+                validatedInput.refreshToken
+            );
+
+        ok(res, 'Token refreshed successfully', {
+            accessToken: tokens.accessToken
+        });
+    }
+);
 
 export function getSessions(req: Request, res: Response) {
-    res.status(200).send('Forgot Password');
+    res.status(501).json({
+        message: 'Not implemented',
+        details: 'GET Sessions'
+    });
 }
 
 export function revokeSession(req: Request, res: Response) {
-    res.status(200).send('Forgot Password');
+    res.status(501).json({
+        message: 'Not implemented',
+        details: 'Revoke Session'
+    });
 }
 
 function getClientInfo(req: Request): {

@@ -4,15 +4,12 @@ import {
     login,
     logout,
     refreshToken,
-    register,
     revokeSession
 } from '../../controllers/user/auth.controller';
 
 const router = Router();
 
 router.route('/login').post(login);
-
-router.route('/register').post(register);
 
 router.route('/logout').post(logout);
 
