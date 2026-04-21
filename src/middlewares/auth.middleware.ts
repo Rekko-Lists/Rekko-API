@@ -50,7 +50,10 @@ export const authAuthMiddleware = (
     res: Response,
     next: NextFunction
 ): void => {
-    if (req.path === '/login' && req.method === 'POST')
+    if (
+        (req.path === '/login' || req.path === '/refresh') &&
+        req.method === 'POST'
+    )
         return next();
-    authAuthMiddleware(req, res, next);
+    authMiddleware(req, res, next);
 };
