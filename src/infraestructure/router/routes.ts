@@ -7,12 +7,16 @@ import commentRouter from './comment.routes';
 import animeRouter from './anime.routes';
 import challengeRouter from './challenge.routes';
 import malRouter from './mal.routes';
+import {
+    authAuthMiddleware,
+    userAuthMiddleware
+} from '../../middlewares/auth.middleware';
 
 const router = Router();
 
-router.use('/auth', authRouter);
+router.use('/auth', authAuthMiddleware, authRouter);
 router.use('/oauth', oauthRouter);
-router.use('/user', userRouter);
+router.use('/user', userAuthMiddleware, userRouter);
 router.use('/post', postRouter);
 router.use('/comment', commentRouter);
 router.use('/anime', animeRouter);
