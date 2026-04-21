@@ -129,3 +129,13 @@ export const patchReputation = catchAsync(
         ok(res, 'Reputation updated succesfully.');
     }
 );
+
+export const getUserById = catchAsync(
+    async (req: Request, res: Response) => {
+        const id = Number(req.params.id);
+
+        const user = await userService.getUserById(id);
+
+        ok(res, 'User found', user);
+    }
+);

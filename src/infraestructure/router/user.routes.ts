@@ -7,7 +7,8 @@ import {
     getUsers,
     changeUsername,
     socialAccounts,
-    patchReputation
+    patchReputation,
+    getUserById
 } from '../../controllers/user/user.controller';
 import {
     changeEmail,
@@ -32,6 +33,8 @@ router
     .route('/')
     .get(parseQueryOptions, validateUserQuery, getUsers)
     .post(postUser);
+
+router.route('/:id').get(getUserById);
 
 router.use('/:username', validateUsername);
 
