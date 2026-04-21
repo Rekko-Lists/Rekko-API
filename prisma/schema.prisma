@@ -30,7 +30,7 @@ model RefreshToken {
   userAgent         String @map("user_agent")
   ip                String
 
-  user              User @relation(fields: [userId], references: [userId])
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("refresh_token")
 }
@@ -42,7 +42,7 @@ model OAuthAccount {
   provider          String
   accessToken       String @map("access_token")
 
-  user              User @relation(fields: [userId], references: [userId])
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("oauth_account")
 }
@@ -55,8 +55,8 @@ model Comment {
   message           String
   likes             Int
 
-  user              User @relation(fields: [userId], references: [userId])
-  post              Post @relation(fields: [postId], references: [postId])
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
   parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId])
   replies           Comment[] @relation("CommentReplies")
 
