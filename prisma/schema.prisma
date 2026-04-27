@@ -38,24 +38,24 @@ model RefreshToken {
 model OAuthAccount {
   oauthAccountId    Int @id @default(autoincrement()) @map("oauth_account_id")
   userId            Int @map("user_id")
-  providerUserId    Int @unique @map("provider_user_id")
+  providerUserId    String @map("provider_user_id")
   provider          String
-  accessToken       String @map("access_token")
 
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("oauth_account")
+  @@unique([provider, providerUserId])
 }
 
 model Comment {
   commentId         Int @id @default(autoincrement()) @map("comment_id")
-  userId            Int @map("user_id")
+  userId            Int? @map("user_id")
   postId            Int @map("post_id")
   parentCommentId   Int? @map("parent_comment_id")
   message           String
   likes             Int
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user              User? @relation(fields: [userId], references: [userId], onDelete: SetNull)
   post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
   parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId])
   replies           Comment[] @relation("CommentReplies")
@@ -110,7 +110,7 @@ model SocialAccount {
 
 model Post {
   postId            Int @id @default(autoincrement()) @map("post_id")
-  userId            Int @map("user_id")
+  userId            Int? @map("user_id")
   title             String
   description       String?
   photo             String?
@@ -120,7 +120,7 @@ model Post {
   userLikePost      UserLikePost[]
   animes            AnimePost[]
 
-  user              User @relation(fields: [userId], references: [userId])
+  user              User? @relation(fields: [userId], references: [userId], onDelete: SetNull)
 
   @@map("post")
 }
@@ -202,8 +202,8 @@ model UserLikePost {
   userId            Int @map("user_id")
   postId            Int @map("post_id")
 
-  user              User @relation(fields: [userId], references: [userId])
-  post              Post @relation(fields: [postId], references: [postId])
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
 
   @@map("user_like_post")
 }
@@ -224,8 +224,8 @@ model UserLikeAnime {
   userId            Int @map("user_id")
   animeId           Int @map("anime_id")
 
-  user              User @relation(fields: [userId], references: [userId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@map("user_like_anime")
 }
@@ -236,8 +236,8 @@ model UserRateAnime {
   animeId           Int @map("anime_id")
   rate              Float
 
-  user              User @relation(fields: [userId], references: [userId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@map("user_rate_anime")
 }
@@ -249,8 +249,8 @@ model UserWatchAnime {
   numEpisodes       Int @map("num_episodes")
   state             String
 
-  user              User @relation(fields: [userId], references: [userId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@map("user_watch_anime")
 }
@@ -261,7 +261,7 @@ model UserSocialAccount {
   socialAccountId       Int @map("social_account_id")
   socialUrl             String @map("social_url")
 
-  user                  User @relation(fields: [userId], references: [userId])
+  user                  User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   socialAccount         SocialAccount @relation(fields: [socialAccountId], references: [socialAccountId])
 
   @@map("user_social_account")
