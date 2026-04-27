@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 
-import { userService } from '../../infraestructure/container/user.container';
+import {
+    emailAuthService,
+    userService
+} from '../../infraestructure/container/user.container';
 
 import {
     created,
@@ -21,7 +24,12 @@ export const postUser = catchAsync(
     async (req: Request, res: Response) => {
         const validatedInput = createUserSchema.parse(req.body);
 
-        await userService.createUser(validatedInput);
+        const user =
+            await userService.createUser(validatedInput);
+
+        await emailAuthService.verifyEmailRequest(
+            user!.getUsername()
+        );
 
         created(
             res,

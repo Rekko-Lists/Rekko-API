@@ -9,6 +9,7 @@ import {
     loginSchema,
     refreshTokenSchema
 } from '../../domain/schemas/user.schemas';
+import { getClientInfo } from '../../utils/http.util';
 
 export const login = catchAsync(
     async (req: Request, res: Response) => {
@@ -72,26 +73,20 @@ export const refreshToken = catchAsync(
     }
 );
 
-export function getSessions(req: Request, res: Response) {
-    res.status(501).json({
-        message: 'Not implemented',
-        details: 'GET Sessions'
-    });
-}
+export const getSessions = catchAsync(
+    async (req: Request, res: Response) => {
+        res.status(501).json({
+            message: 'Not implemented',
+            details: 'GET Sessions'
+        });
+    }
+);
 
-export function revokeSession(req: Request, res: Response) {
-    res.status(501).json({
-        message: 'Not implemented',
-        details: 'Revoke Session'
-    });
-}
-
-function getClientInfo(req: Request): {
-    userAgent: string;
-    ip: string;
-} {
-    const userAgent = req.get('user-agent') || 'Unknown';
-    const ip = req.ip || req.socket.remoteAddress || '0.0.0.0';
-
-    return { userAgent, ip };
-}
+export const revokeSession = catchAsync(
+    async (req: Request, res: Response) => {
+        res.status(501).json({
+            message: 'Not implemented',
+            details: 'Revoke Session'
+        });
+    }
+);
