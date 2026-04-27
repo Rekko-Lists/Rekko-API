@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import {
-  oauth,
-  callback
-} from '../../controllers/oauth.controller';
+    oauthDiscord,
+    oauthGoogle
+} from './../../controllers/user/oauth.controller';
 
 const router = Router();
 
-router.route('/:provider').get(oauth);
+router.route('/google').post(oauthGoogle);
 
-router.route('/:provider/callback').get(callback);
+router.route('/discord').post(oauthDiscord);
 
 export default router;

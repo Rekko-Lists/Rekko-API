@@ -112,6 +112,25 @@ export class User {
         });
     }
 
+    public static fromOAuth(data: {
+        email: string;
+        username?: string;
+    }): User {
+        return User.fromPersistence({
+            userId: 0,
+            email: data.email,
+            password: '',
+            username: data.username || data.email.split('@')[0],
+            reputation: 0,
+            profileImage: '',
+            bannerImage: '',
+            backgroundImage: '',
+            emailVerified: false,
+            createdAt: new Date(),
+            biography: ''
+        });
+    }
+
     getUserId(): number {
         return this.userId;
     }

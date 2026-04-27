@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createUserSchema = z
     .object({
-        email: z.string().email('Email must be valid'),
+        email: z.email('Email must be valid'),
         password: z
             .string()
             .min(8, 'Password must be at least 8 characters')
@@ -64,7 +64,7 @@ export const userWhereUniqueSchema = z.union([
 
 export const userUpdateUsername = z
     .object({
-        email: z.string().email('Email must be valid'),
+        email: z.email('Email must be valid'),
         username: z.string().min(1, 'Username is required')
     })
     .strict();
@@ -72,7 +72,7 @@ export const userUpdateUsername = z
 export const userUpdateEmail = z
     .object({
         username: z.string().min(1, 'Username is required'),
-        newEmail: z.string().email('New Email must be valid.')
+        newEmail: z.email('New Email must be valid.')
     })
     .strict();
 
@@ -134,7 +134,7 @@ export const userUpdateSocialAccounts = z
                     .string()
                     .min(1, 'name is required')
                     .transform((val) => val.toLowerCase()),
-                url: z.string().url('url must be valid')
+                url: z.url('url must be valid')
             })
         )
     })
@@ -143,7 +143,7 @@ export const userUpdateSocialAccounts = z
 export const socialAccount = z
     .object({
         name: z.string(),
-        url: z.string().url()
+        url: z.url()
     })
     .strict();
 
@@ -175,7 +175,7 @@ export const userSelectableField = z.enum([
 
 export const loginSchema = z
     .object({
-        email: z.string().email('Email must be valid'),
+        email: z.email('Email must be valid'),
         password: z
             .string()
             .min(8, 'Password must be at least 8 characters')
@@ -207,6 +207,46 @@ export const sessionInfoSchema = z
         expiresAt: z.date()
     })
     .strict();
+
+export const oauthDataSchema = z.object({
+    provider: z.enum(['google', 'discord']),
+    providerUserId: z
+        .string()
+        .min(1, 'providerUserId is required'),
+    email: z.email('Invalid email'),
+    username: z.string().optional()
+});
+
+export const oauthFirebaseSchema = z
+    .object({
+        tokenId: z.string().min(1, 'tokenId is required')
+    })
+    .strict();
+
+export const userFirebaseSchema = z
+    .object({
+        uid: z.string(),
+        email: z.email()
+    })
+    .strict();
+
+export const oauthDiscordSchema = z
+    .object({
+        code: z.string().min(1, 'code is required')
+    })
+    .strict();
+
+export const userDiscordSchema = z
+    .object({
+        id: z.string(),
+        email: z.email(),
+        username: z.string().optional()
+    })
+    .strict();
+
+export const discordAccessToken = z.object({
+    accessToken: z.string()
+});
 
 export const reputationReasons = {
     good_post: 10,
@@ -267,3 +307,11 @@ export type RefreshTokenInput = z.infer<
 >;
 export type TokenPair = z.infer<typeof tokenPairSchema>;
 export type SessionInfo = z.infer<typeof sessionInfoSchema>;
+export type OAuthData = z.infer<typeof oauthDataSchema>;
+export type OAuthFirebase = z.infer<typeof oauthFirebaseSchema>;
+export type FirebaseUser = z.infer<typeof userFirebaseSchema>;
+export type OAuthDiscord = z.infer<typeof oauthDiscordSchema>;
+export type DiscordUser = z.infer<typeof userDiscordSchema>;
+export type DiscordAccessToken = z.infer<
+    typeof discordAccessToken
+>;
