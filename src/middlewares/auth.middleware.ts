@@ -41,7 +41,27 @@ export const userAuthMiddleware = (
     res: Response,
     next: NextFunction
 ): void => {
-    if (req.path === '/' && req.method === 'POST') return next();
+    if (req.method === 'GET') {
+        if (
+            req.path === '/' ||
+            /^\/[^/]+$/.test(req.path) ||
+            /^\/[^/]+\/verify-email\/confirm$/.test(req.path) ||
+            /^\/[^/]+\/change-email\/confirm$/.test(req.path)
+        ) {
+            return next();
+        }
+    }
+
+    if (req.method === 'POST') {
+        if (
+            req.path === '/' ||
+            /^\/[^/]+\/forgot-password$/.test(req.path) ||
+            /^\/[^/]+\/reset-password$/.test(req.path)
+        ) {
+            return next();
+        }
+    }
+
     authMiddleware(req, res, next);
 };
 
@@ -50,10 +70,9 @@ export const authAuthMiddleware = (
     res: Response,
     next: NextFunction
 ): void => {
-    if (
-        (req.path === '/login' || req.path === '/refresh') &&
-        req.method === 'POST'
-    )
+    const paths = ['/login', '/refresh'];
+
+    if (paths.includes(req.path) && req.method === 'POST')
         return next();
     authMiddleware(req, res, next);
 };
