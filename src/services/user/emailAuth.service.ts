@@ -38,7 +38,10 @@ export class EmailAuthService {
         email: string,
         password: string
     ): Promise<User> {
-        const user = await this.getUserByEmail(email);
+        const user =
+            await this.emailAuthRepository.findByEmail(email);
+
+        if (!user) throw new NotFoundError('User not found');
 
         const passwordHash = user.getPasswordHash();
         if (!passwordHash) {

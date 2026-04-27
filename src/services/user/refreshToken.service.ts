@@ -16,8 +16,8 @@ import { encodeRefreshToken } from '../../utils/refreshToken.util';
 
 export class RefreshTokenService {
     constructor(
-        private readonly refreshTokenRepository: RefreshTokenRepository,
-        private readonly userRepository: UserRepository<User>
+        private readonly userRepository: UserRepository<User>,
+        private readonly refreshTokenRepository: RefreshTokenRepository
     ) {}
 
     async generateTokenPair(
