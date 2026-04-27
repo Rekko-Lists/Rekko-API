@@ -13,19 +13,21 @@ import {
     FindOptions,
     PaginatedResponse
 } from '../../domain/schemas/find.schemas';
-import { emailAuthService } from '../../infraestructure/container/user.container';
+import { UserNotFoundError } from '../../domain/errors/auth.errors';
 
 export class UserService {
     constructor(
         private readonly userRepository: UserRepository<User>
     ) {}
 
-    async createUser(input: CreateUserInput): Promise<void> {
+    async createUser(input: CreateUserInput): Promise<User> {
         const userInput = await User.fromInput(input);
+
         const user = await this.userRepository.create(userInput);
-        await emailAuthService.verifyEmailRequest(
-            user!.getUsername()
-        );
+
+        if (!user) throw new UserNotFoundError();
+
+        return user;
     }
 
     async updateUser(

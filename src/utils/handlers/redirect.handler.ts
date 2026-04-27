@@ -1,13 +1,3 @@
-/**
- * REDIRECT STATUS VALUES:
- *  - success
- *  - expired
- *  - invalid
- *  - user_not_found
- *  - token_used
- *  - email_taken
- */
-
 interface BuildUrlOptions {
     domain: string;
     path: string;
