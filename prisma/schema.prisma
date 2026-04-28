@@ -64,18 +64,22 @@ model Comment {
 }
 
 model User {
-  userId            Int @id @default(autoincrement()) @map("user_id")
-  email             String @unique
-  password          String
-  username          String @unique
-  biography         String?
-  reputation        Int @default(0)
-  profileImage      String @map("profile_image")
-  bannerImage       String? @map("banner_image")
-  backgroundImage   String? @map("background_image")
-  role              UserRole @default(USER)
-  emailVerified     Boolean @default(false) @map("email_verified")
-  createdAt         DateTime @default(now()) @map("created_at")
+  userId                    Int @id @default(autoincrement()) @map("user_id")
+  email                     String @unique
+  password                  String
+  username                  String @unique
+  biography                 String?
+  reputation                Int @default(0)
+  profileImage              String @map("profile_image")
+  profileImagePublicId      String? @map("profile_image_public_id")
+  bannerImage               String? @map("banner_image")
+  bannerImagePublicId       String? @map("banner_image_public_id")
+  backgroundImage           String? @map("background_image")
+  backgroundImagePublicId   String? @map("background_image_public_id")
+  role                      UserRole @default(USER)
+  emailVerified             Boolean @default(false) @map("email_verified")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at")
 
   refreshTokens     RefreshToken[]
   oauthAccounts     OAuthAccount[]
