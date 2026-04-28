@@ -11,8 +11,11 @@ export class User {
     private username: string;
     private reputation: number = 0;
     private profileImage: string;
+    private profileImagePublicId?: string;
     private bannerImage: string;
+    private bannerImagePublicId?: string;
     private backgroundImage: string;
+    private backgroundImagePublicId?: string;
     private role: UserRole = UserRole.USER;
     private emailVerified: boolean = false;
     private readonly createdAt: Date;
@@ -31,7 +34,10 @@ export class User {
         role: UserRole = UserRole.USER,
         emailVerified: boolean = false,
         createdAt: Date,
-        biography?: string
+        biography?: string,
+        profileImagePublicId?: string,
+        bannerImagePublicId?: string,
+        backgroundImagePublicId?: string
     ) {
         this.userId = userId;
         this.email = email;
@@ -39,8 +45,11 @@ export class User {
         this.username = username;
         this.reputation = reputation;
         this.profileImage = profileImage;
+        this.profileImagePublicId = profileImagePublicId;
         this.bannerImage = bannerImage;
+        this.bannerImagePublicId = bannerImagePublicId;
         this.backgroundImage = backgroundImage;
+        this.backgroundImagePublicId = backgroundImagePublicId;
         this.role = role;
         this.emailVerified = emailVerified;
         this.createdAt = createdAt;
@@ -54,8 +63,11 @@ export class User {
         username: string;
         reputation?: number;
         profileImage: string;
+        profileImagePublicId?: string;
         bannerImage: string;
+        bannerImagePublicId?: string;
         backgroundImage: string;
+        backgroundImagePublicId?: string;
         role?: UserRole;
         emailVerified?: boolean;
         createdAt: Date;
@@ -74,7 +86,10 @@ export class User {
             data.role ?? UserRole.USER,
             data.emailVerified ?? false,
             data.createdAt,
-            data.biography ?? ''
+            data.biography ?? '',
+            data.profileImagePublicId,
+            data.bannerImagePublicId,
+            data.backgroundImagePublicId
         );
 
         if (
@@ -103,9 +118,9 @@ export class User {
             password: hashedPassword,
             username: input.username,
             reputation: 0,
-            profileImage: input.profileImage ?? '',
-            bannerImage: input.bannerImage ?? '',
-            backgroundImage: input.backgroundImage ?? '',
+            profileImage: '',
+            bannerImage: '',
+            backgroundImage: '',
             emailVerified: false,
             createdAt: new Date(),
             biography: input.biography ?? ''
@@ -155,12 +170,24 @@ export class User {
         return this.profileImage;
     }
 
+    getProfileImagePublicId(): string | undefined {
+        return this.profileImagePublicId;
+    }
+
     getBannerImage(): string {
         return this.bannerImage;
     }
 
+    getBannerImagePublicId(): string | undefined {
+        return this.bannerImagePublicId;
+    }
+
     getBackgroundImage(): string {
         return this.backgroundImage;
+    }
+
+    getBackgroundImagePublicId(): string | undefined {
+        return this.backgroundImagePublicId;
     }
 
     getRole(): string {

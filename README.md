@@ -28,4 +28,24 @@
 - Google
 - Discord
 
-Cuando esto salga a produccion hay que cambiar toda la info del .env al dominio real
+### USER IMAGES INFO
+
+Max size user images:
+
+- Profile: 2MB
+- Banner: 1MB
+- Background: 2MB
+
+Valid format user images:
+
+- jpeg / jpg
+- webp
+- png
+
+Resolution user images:
+
+- Profile: 400x400
+- Banner: 1500x500
+- Background: 1920x1080
+
+###### Cuando esto salga a produccion hay que cambiar toda la info del .env al dominio real

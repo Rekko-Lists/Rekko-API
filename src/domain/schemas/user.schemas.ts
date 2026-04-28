@@ -1,3 +1,4 @@
+import e from 'express';
 import { z } from 'zod';
 
 export const createUserSchema = z
@@ -36,9 +37,6 @@ export const createUserSchema = z
                 'Password must contain at least one number'
             ),
         username: z.string().min(1, 'Username is required'),
-        profileImage: z.string().optional(),
-        bannerImage: z.string().optional(),
-        backgroundImage: z.string().optional(),
         biography: z.string().optional()
     })
     .strict()
@@ -49,9 +47,6 @@ export const createUserSchema = z
 
 export const userUpdateProfileSchema = z
     .object({
-        profileImage: z.string().optional(),
-        bannerImage: z.string().optional(),
-        backgroundImage: z.string().optional(),
         biography: z.string().optional()
     })
     .strict();
@@ -248,6 +243,30 @@ export const discordAccessToken = z.object({
     accessToken: z.string()
 });
 
+export const cloudinaryResponseSchema = z.object({
+    url: z.url(),
+    publicId: z.string()
+});
+
+export const imageUploadParams = z
+    .object({
+        username: z.string(),
+        imageType: z.enum([
+            'profileImage',
+            'bannerImage',
+            'backgroundImage'
+        ]),
+        imageBuffer: z.instanceof(Buffer),
+        width: z.number(),
+        height: z.number()
+    })
+    .strict();
+
+export const imageUploadResponse = z.object({
+    message: z.string(),
+    imageUrl: z.url().optional()
+});
+
 export const reputationReasons = {
     good_post: 10,
     helpful_comment: 5,
@@ -315,3 +334,8 @@ export type DiscordUser = z.infer<typeof userDiscordSchema>;
 export type DiscordAccessToken = z.infer<
     typeof discordAccessToken
 >;
+export type CloudinaryResponse = z.infer<
+    typeof cloudinaryResponseSchema
+>;
+export type ImageParams = z.infer<typeof imageUploadParams>;
+export type ImageResponse = z.infer<typeof imageUploadResponse>;
