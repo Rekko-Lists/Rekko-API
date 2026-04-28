@@ -10,6 +10,8 @@ import { RefreshTokenService } from '../../services/user/refreshToken.service';
 import { EmailHandler } from '../../utils/handlers/email.handler';
 import { OAuthPrismaRepository } from '../persistence/prisma/user/OAuth.prisma.repository';
 import { OAuthService } from '../../services/user/oauth.service';
+import { CloudinaryHandler } from '../../utils/handlers/cloudinary.handler';
+import { UploadService } from '../../services/user/upload.service';
 
 const userRepository = new UserPrismaRepository(prisma);
 const emailAuthRepository = new EmailAuthPrismaRepository(
@@ -24,6 +26,7 @@ const refreshTokenRepository = new RefreshTokenPrismaRepository(
 const oauthRepository = new OAuthPrismaRepository(prisma);
 
 const emailHandler = new EmailHandler();
+const cloudinaryHandler = new CloudinaryHandler();
 
 export const userService = new UserService(userRepository);
 export const emailAuthService = new EmailAuthService(
@@ -43,4 +46,8 @@ export const oauthService = new OAuthService(
     userRepository,
     emailAuthRepository,
     oauthRepository
+);
+export const uploadService = new UploadService(
+    cloudinaryHandler,
+    userService
 );

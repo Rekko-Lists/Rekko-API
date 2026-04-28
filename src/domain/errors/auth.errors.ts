@@ -1,7 +1,6 @@
 export class AuthError extends Error {
     public status: number;
     public details: any;
-    public stack?: string;
     public redirectStatus?: string;
 
     constructor(
