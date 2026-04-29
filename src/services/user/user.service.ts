@@ -8,7 +8,7 @@ import {
     UserUpdateSocialAccounts,
     UpdateReputation,
     reputationReasons
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/user.schemas';
 import {
     FindOptions,
     PaginatedResponse

@@ -1,5 +1,5 @@
 import nodemailer, { Transporter } from 'nodemailer';
-import { buildUrl } from './redirect.handler';
+import { buildUrl } from '../../../utils/http/redirect';
 
 export class EmailHandler {
     private transporter: Transporter;

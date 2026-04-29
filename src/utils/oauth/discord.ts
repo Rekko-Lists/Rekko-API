@@ -2,7 +2,7 @@ import { InvalidTokenError } from '../../domain/errors/auth.errors';
 import {
     DiscordAccessToken,
     OAuthData
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/oauth.schemas';
 
 export async function exchangeCodeForToken(
     code: string

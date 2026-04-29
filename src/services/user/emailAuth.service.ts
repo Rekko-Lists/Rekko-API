@@ -9,14 +9,14 @@ import {
 import {
     UserUpdateEmail,
     UserUsernameToken
-} from '../../domain/schemas/user.schemas';
-import { EmailHandler } from '../../utils/handlers/email.handler';
+} from '../../domain/schemas/user/user.schemas';
+import { EmailHandler } from '../../infraestructure/services/mailer/nodemailer.service';
 import { EmailAuthRepository } from '../../domain/repositories/user/EmailAuth.repository';
 import {
     sign10MinToken,
     verifyToken
-} from '../../utils/jwt.util';
-import { comparePassword } from '../../utils/bcrypt.util';
+} from '../../utils/auth/jwt';
+import { comparePassword } from '../../utils/auth/bcrypt.util';
 
 export class EmailAuthService {
     constructor(

@@ -1,8 +1,8 @@
-import { hashBcrypt } from '../../utils/bcrypt.util';
+import { hashBcrypt } from '../../utils/auth/bcrypt.util';
 import {
     CreateUserInput,
     SocialAccount
-} from '../schemas/user.schemas';
+} from '../schemas/user/user.schemas';
 
 export class User {
     private readonly userId: number;

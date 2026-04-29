@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../../../../domain/entities/User';
-import { handlePrismaError } from '../../../../domain/errors/prisma.errors';
+import { handlePrismaError } from '../../../errors/prisma.errors';
 
 import { prisma } from '../../../database/prisma.client';
 import {

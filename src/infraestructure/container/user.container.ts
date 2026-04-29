@@ -7,10 +7,10 @@ import { RefreshTokenPrismaRepository } from '../persistence/prisma/user/Refresh
 import { EmailAuthService } from '../../services/user/emailAuth.service';
 import { PasswordAuthService } from '../../services/user/passwordAuth.service';
 import { RefreshTokenService } from '../../services/user/refreshToken.service';
-import { EmailHandler } from '../../utils/handlers/email.handler';
+import { EmailHandler } from '../services/mailer/nodemailer.service';
 import { OAuthPrismaRepository } from '../persistence/prisma/user/OAuth.prisma.repository';
 import { OAuthService } from '../../services/user/oauth.service';
-import { CloudinaryHandler } from '../../utils/handlers/cloudinary.handler';
+import { CloudinaryHandler } from '../services/storage/cloudinary.service';
 import { UploadService } from '../../services/user/upload.service';
 
 const userRepository = new UserPrismaRepository(prisma);
@@ -48,6 +48,6 @@ export const oauthService = new OAuthService(
     oauthRepository
 );
 export const uploadService = new UploadService(
-    cloudinaryHandler,
-    userService
+    userService,
+    cloudinaryHandler
 );

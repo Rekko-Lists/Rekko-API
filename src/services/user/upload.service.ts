@@ -1,17 +1,17 @@
-import { CloudinaryHandler } from '../../utils/handlers/cloudinary.handler';
+import { CloudinaryHandler } from '../../infraestructure/services/storage/cloudinary.service';
 import { UserService } from './../user/user.service';
 import {
     ImageParams,
     ImageResponse
-} from './../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/image.schemas';
 import { IMAGE_DEFAULTS } from '../../domain/schemas/img.schema';
 import { CannotDeleteImageError } from '../../domain/errors/img.errors';
 import { UserNotFoundError } from '../../domain/errors/auth.errors';
 
 export class UploadService {
     constructor(
-        private readonly cloudinaryHandler: CloudinaryHandler,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly cloudinaryHandler: CloudinaryHandler
     ) {}
 
     private isDefaultImage(

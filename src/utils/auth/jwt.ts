@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import { NotFoundError } from '../domain/errors/http.errors';
-import { InvalidTokenError } from '../domain/errors/auth.errors';
+import { NotFoundError } from '../../domain/errors/http.errors';
+import { InvalidTokenError } from '../../domain/errors/auth.errors';
 
 export function sign10MinToken(purpose: string) {
     return jwt.sign(

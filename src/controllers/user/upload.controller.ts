@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { catchAsync } from '../../utils/catchAsync';
-import { created } from '../../utils/handlers/response.handler';
+import { catchAsync } from '../../utils/http/catchAsync';
+import { created } from '../../utils/http/response';
 import { uploadService } from '../../infraestructure/container/user.container';
 import { BadRequestError } from '../../domain/errors/http.errors';
 

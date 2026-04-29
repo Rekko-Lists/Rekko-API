@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
     oauthDiscord,
     oauthGoogle
-} from './../../controllers/user/oauth.controller';
+} from './../../../controllers/user/oauth.controller';
 
 const router = Router();
 

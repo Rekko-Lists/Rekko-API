@@ -1,7 +1,7 @@
 import { RefreshToken } from '../../../../domain/entities/RefreshToken';
 import { RefreshTokenRepository } from '../../../../domain/repositories/user/RefreshToken.repository';
 import { prisma } from '../../../database/prisma.client';
-import { handlePrismaError } from '../../../../domain/errors/prisma.errors';
+import { handlePrismaError } from '../../../errors/prisma.errors';
 
 export class RefreshTokenPrismaRepository implements RefreshTokenRepository {
     constructor(private readonly db = prisma) {}

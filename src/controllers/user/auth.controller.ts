@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
-import { catchAsync } from '../../utils/catchAsync';
+import { catchAsync } from '../../utils/http/catchAsync';
 import {
     refreshTokenService,
     emailAuthService
 } from '../../infraestructure/container/user.container';
-import { ok } from '../../utils/handlers/response.handler';
+import { ok } from '../../utils/http/response';
 import {
     loginSchema,
     refreshTokenSchema
-} from '../../domain/schemas/user.schemas';
-import { getClientInfo } from '../../utils/http.util';
+} from '../../domain/schemas/user/auth.schemas';
+import { getClientInfo } from '../../utils/http/http.util';
 
 export const login = catchAsync(
     async (req: Request, res: Response) => {

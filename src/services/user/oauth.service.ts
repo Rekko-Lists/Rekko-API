@@ -3,12 +3,12 @@ import { UserRepository } from '../../domain/repositories/user/User.repository';
 import { EmailAuthRepository } from '../../domain/repositories/user/EmailAuth.repository';
 import { OAuthRepository } from '../../domain/repositories/user/OAuth.repository';
 import { UserNotFoundError } from '../../domain/errors/auth.errors';
-import { OAuthData } from '../../domain/schemas/user.schemas';
-import { verifyFirebaseTokenId } from '../../utils/handlers/firebase.handler';
+import { OAuthData } from '../../domain/schemas/user/oauth.schemas';
+import { verifyFirebaseTokenId } from '../../utils/oauth/firebase';
 import {
     exchangeCodeForToken,
     getDiscordUser
-} from '../../utils/handlers/discord.handler';
+} from '../../utils/oauth/discord';
 import { OAuth } from '../../domain/entities/OAuth';
 import { emailAuthService } from '../../infraestructure/container/user.container';
 

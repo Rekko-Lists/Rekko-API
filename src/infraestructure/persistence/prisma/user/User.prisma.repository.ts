@@ -1,11 +1,11 @@
 import { User } from '../../../../domain/entities/User';
-import { handlePrismaError } from '../../../../domain/errors/prisma.errors';
+import { handlePrismaError } from '../../../errors/prisma.errors';
 import { UserRepository } from '../../../../domain/repositories/user/User.repository';
 import {
     UserUpdateProfile,
     UserUpdateSocialAccounts,
     UserWhereUnique
-} from '../../../../domain/schemas/user.schemas';
+} from '../../../../domain/schemas/user/user.schemas';
 import { prisma } from '../../../database/prisma.client';
 import {
     FindOptions,
@@ -14,8 +14,8 @@ import {
 import {
     userDefaultSelect,
     userFieldMappings
-} from '../../../../domain/schemas/user.schemas';
-import { buildPrismaSelect } from '../../../../utils/buildPrismaSelect.util';
+} from '../../../../domain/schemas/user/user.schemas';
+import { buildPrismaSelect } from '../../../../utils/prisma/prismaSelect';
 
 export class UserPrismaRepository implements UserRepository<User> {
     constructor(private readonly db = prisma) {}
