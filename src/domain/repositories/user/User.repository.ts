@@ -2,7 +2,7 @@ import {
     UserUpdateProfile,
     UserUpdateSocialAccounts,
     UserWhereUnique
-} from '../../schemas/user.schemas';
+} from '../../schemas/user/user.schemas';
 import { Repository } from '../repository';
 
 export interface UserRepository<User> extends Repository<

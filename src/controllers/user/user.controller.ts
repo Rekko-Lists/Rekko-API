@@ -14,7 +14,7 @@ import {
     userUpdateProfileSchema,
     userUpdateSocialAccounts,
     updateReputation
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/user.schemas';
 import { FindOptions } from '../../domain/schemas/find.schemas';
 
 export const postUser = catchAsync(

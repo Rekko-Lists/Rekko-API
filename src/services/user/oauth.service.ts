@@ -3,7 +3,7 @@ import { UserRepository } from '../../domain/repositories/user/User.repository';
 import { EmailAuthRepository } from '../../domain/repositories/user/EmailAuth.repository';
 import { OAuthRepository } from '../../domain/repositories/user/OAuth.repository';
 import { UserNotFoundError } from '../../domain/errors/auth.errors';
-import { OAuthData } from '../../domain/schemas/user.schemas';
+import { OAuthData } from '../../domain/schemas/user/oauth.schemas';
 import { verifyFirebaseTokenId } from '../../utils/oauth/firebase';
 import {
     exchangeCodeForToken,

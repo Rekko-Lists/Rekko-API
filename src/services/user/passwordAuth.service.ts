@@ -1,7 +1,7 @@
 import { User } from '../../domain/entities/User';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
 import { UserNotFoundError } from '../../domain/errors/auth.errors';
-import { UserResetPassword } from '../../domain/schemas/user.schemas';
+import { UserResetPassword } from '../../domain/schemas/user/user.schemas';
 import { EmailHandler } from '../../infraestructure/services/mailer/nodemailer.service';
 import { hashBcrypt } from '../../utils/auth/bcrypt.util';
 import { PasswordAuthRepository } from '../../domain/repositories/user/PasswordAuth.repository';

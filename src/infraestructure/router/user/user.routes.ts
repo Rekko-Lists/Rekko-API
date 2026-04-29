@@ -9,32 +9,32 @@ import {
     socialAccounts,
     patchReputation,
     getUserById
-} from '../../controllers/user/user.controller';
+} from '../../../controllers/user/user.controller';
 import {
     changeEmail,
     changeEmailConfirm,
     verifyEmail,
     verifyEmailRequest
-} from '../../controllers/user/emailAuth.controller';
+} from '../../../controllers/user/emailAuth.controller';
 import {
     forgotPassword,
     resetPassword
-} from '../../controllers/user/passwordAuth.controller';
+} from '../../../controllers/user/passwordAuth.controller';
 import {
     uploadProfileImage,
     uploadBannerImage,
     uploadBackgroundImage
-} from '../../controllers/user/upload.controller';
+} from '../../../controllers/user/upload.controller';
 
 import {
     validateUsername,
     validateUserQuery
-} from '../../middlewares/validators/user.validator';
-import { parseQueryOptions } from '../../middlewares/queryOptions.middleware';
+} from '../../../middlewares/validators/user.validator';
+import { parseQueryOptions } from '../../../middlewares/queryOptions.middleware';
 import {
     uploadMiddleware,
     validateImageType
-} from '../../middlewares/upload.middleware';
+} from '../../../middlewares/upload.middleware';
 
 const router = Router();
 

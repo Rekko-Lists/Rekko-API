@@ -11,7 +11,7 @@ import {
 import {
     TokenPair,
     SessionInfo
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/auth.schemas';
 import { encodeRefreshToken } from '../../utils/auth/refreshToken';
 
 export class RefreshTokenService {

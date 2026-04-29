@@ -3,7 +3,7 @@ import { catchAsync } from '../../utils/http/catchAsync';
 import {
     oauthDiscordSchema,
     oauthFirebaseSchema
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/oauth.schemas';
 import {
     oauthService,
     refreshTokenService

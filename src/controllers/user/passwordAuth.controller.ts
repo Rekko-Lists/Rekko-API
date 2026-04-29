@@ -5,7 +5,7 @@ import { passwordAuthService } from '../../infraestructure/container/user.contai
 import { catchAsync } from '../../utils/http/catchAsync';
 import { buildUrl } from '../../utils/http/redirect';
 
-import { userResetPassword } from '../../domain/schemas/user.schemas';
+import { userResetPassword } from '../../domain/schemas/user/user.schemas';
 import { AuthError } from '../../domain/errors/auth.errors';
 
 export const forgotPassword = catchAsync(

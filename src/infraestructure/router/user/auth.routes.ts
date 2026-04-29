@@ -5,7 +5,7 @@ import {
     logout,
     refreshToken,
     revokeSession
-} from '../../controllers/user/auth.controller';
+} from '../../../controllers/user/auth.controller';
 
 const router = Router();
 

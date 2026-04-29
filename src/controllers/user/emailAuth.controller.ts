@@ -5,7 +5,7 @@ import { ok } from '../../utils/http/response';
 import {
     userUpdateEmail,
     userUsernameToken
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/user.schemas';
 import { buildUrl } from '../../utils/http/redirect';
 import { AuthError } from '../../domain/errors/auth.errors';
 

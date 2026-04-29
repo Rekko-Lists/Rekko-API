@@ -5,7 +5,7 @@ import {
     UserUpdateProfile,
     UserUpdateSocialAccounts,
     UserWhereUnique
-} from '../../../../domain/schemas/user.schemas';
+} from '../../../../domain/schemas/user/user.schemas';
 import { prisma } from '../../../database/prisma.client';
 import {
     FindOptions,
@@ -14,7 +14,7 @@ import {
 import {
     userDefaultSelect,
     userFieldMappings
-} from '../../../../domain/schemas/user.schemas';
+} from '../../../../domain/schemas/user/user.schemas';
 import { buildPrismaSelect } from '../../../../utils/prisma/prismaSelect';
 
 export class UserPrismaRepository implements UserRepository<User> {

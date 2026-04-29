@@ -9,7 +9,7 @@ import {
 import {
     UserUpdateEmail,
     UserUsernameToken
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/user.schemas';
 import { EmailHandler } from '../../infraestructure/services/mailer/nodemailer.service';
 import { EmailAuthRepository } from '../../domain/repositories/user/EmailAuth.repository';
 import {

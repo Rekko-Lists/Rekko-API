@@ -8,7 +8,7 @@ import { ok } from '../../utils/http/response';
 import {
     loginSchema,
     refreshTokenSchema
-} from '../../domain/schemas/user.schemas';
+} from '../../domain/schemas/user/auth.schemas';
 import { getClientInfo } from '../../utils/http/http.util';
 
 export const login = catchAsync(

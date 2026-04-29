@@ -2,7 +2,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
-import { CloudinaryResponse } from '../../../domain/schemas/user.schemas';
+import { CloudinaryResponse } from '../../../domain/schemas/user/image.schemas';
 import { CannotDeleteImageError } from '../../../domain/errors/img.errors';
 
 export class CloudinaryHandler {
