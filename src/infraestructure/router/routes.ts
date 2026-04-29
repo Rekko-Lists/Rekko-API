@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import authRouter from './auth.routes';
-import oauthRouter from './oauth.routes';
-import userRouter from './user.routes';
+import authRouter from './user/auth.routes';
+import oauthRouter from './user/oauth.routes';
+import userRouter from './user/user.routes';
 import postRouter from './post.routes';
 import commentRouter from './comment.routes';
 import animeRouter from './anime.routes';

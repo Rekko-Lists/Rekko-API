@@ -29,10 +29,11 @@ export class UserPrismaRepository implements UserRepository<User> {
                     password: entity.getPasswordHash(),
                     biography: entity.getBiography() ?? null,
                     profileImage:
-                        entity.getProfileImage() ?? null,
-                    bannerImage: entity.getBannerImage() ?? null,
+                        process.env.DEFAULT_PROFILE_IMAGE_URL,
+                    bannerImage:
+                        process.env.DEFAULT_BANNER_IMAGE_URL,
                     backgroundImage:
-                        entity.getBackgroundImage() ?? null
+                        process.env.DEFAULT_BACKGROUND_IMAGE_URL
                 }
             });
 

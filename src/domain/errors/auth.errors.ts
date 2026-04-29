@@ -59,3 +59,14 @@ export class ValidationError extends AuthError {
         super(message, 400, details, 'validation_error');
     }
 }
+
+export class ForbiddenError extends AuthError {
+    constructor(details: any = null) {
+        super(
+            'You do not have permission to access this resource',
+            403,
+            details,
+            'forbidden'
+        );
+    }
+}

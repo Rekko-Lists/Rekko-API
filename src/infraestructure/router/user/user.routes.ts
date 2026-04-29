@@ -35,6 +35,7 @@ import {
     uploadMiddleware,
     validateImageType
 } from '../../../middlewares/upload.middleware';
+import { ownershipMiddleware } from '../../../middlewares/ownership.middleware';
 
 const router = Router();
 
@@ -50,10 +51,12 @@ router.use('/:username', validateUsername);
 router
     .route('/:username')
     .get(parseQueryOptions, validateUserQuery, getUser)
-    .patch(patchUser)
-    .delete(deleteUser);
+    .patch(ownershipMiddleware, patchUser)
+    .delete(ownershipMiddleware, deleteUser);
 
-router.route('/:username/change-email').post(changeEmail);
+router
+    .route('/:username/change-email')
+    .post(ownershipMiddleware, changeEmail);
 
 router
     .route('/:username/change-email/confirm')
@@ -63,19 +66,26 @@ router.route('/:username/verify-email').post(verifyEmailRequest);
 
 router.route('/:username/verify-email/confirm').get(verifyEmail);
 
-router.route('/:username/social-accounts').patch(socialAccounts);
+router
+    .route('/:username/social-accounts')
+    .patch(ownershipMiddleware, socialAccounts);
 
-router.route('/:username/change-username').patch(changeUsername);
+router
+    .route('/:username/change-username')
+    .patch(ownershipMiddleware, changeUsername);
 
 router.route('/:username/forgot-password').post(forgotPassword);
 
 router.route('/:username/reset-password').post(resetPassword);
 
-router.route('/:username/reputation').patch(patchReputation);
+router
+    .route('/:username/reputation')
+    .patch(ownershipMiddleware, patchReputation);
 
 router
     .route('/:username/upload-profile-image')
     .post(
+        ownershipMiddleware,
         uploadMiddleware.single('profileImage'),
         validateImageType('profileImage'),
         uploadProfileImage
@@ -84,6 +94,7 @@ router
 router
     .route('/:username/upload-banner-image')
     .post(
+        ownershipMiddleware,
         uploadMiddleware.single('bannerImage'),
         validateImageType('bannerImage'),
         uploadBannerImage
@@ -92,6 +103,7 @@ router
 router
     .route('/:username/upload-background-image')
     .post(
+        ownershipMiddleware,
         uploadMiddleware.single('backgroundImage'),
         validateImageType('backgroundImage'),
         uploadBackgroundImage
