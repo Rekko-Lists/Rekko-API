@@ -5,6 +5,7 @@ import {
     NotFoundError
 } from '../domain/errors/http.errors';
 import { AuthError } from '../domain/errors/auth.errors';
+import { ImageError } from '../domain/errors/img.errors';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -59,6 +60,16 @@ export const errorHandler = (
     }
 
     if (err instanceof AuthError) {
+        res.status(err.status).json({
+            error: {
+                message: err.message,
+                details: err.details
+            }
+        });
+        return;
+    }
+
+    if (err instanceof ImageError) {
         res.status(err.status).json({
             error: {
                 message: err.message,
