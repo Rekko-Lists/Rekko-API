@@ -3,7 +3,7 @@ import {
     DuplicateDataError,
     NotFoundError,
     InternalServerError
-} from './http.errors';
+} from '../../domain/errors/http.errors';
 
 interface PrismaError {
     code?: string;
