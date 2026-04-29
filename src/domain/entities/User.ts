@@ -1,4 +1,4 @@
-import { hashBcrypt } from '../../utils/bcrypt.util';
+import { hashBcrypt } from '../../utils/auth/bcrypt.util';
 import {
     CreateUserInput,
     SocialAccount

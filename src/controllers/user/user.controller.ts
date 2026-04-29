@@ -5,11 +5,8 @@ import {
     userService
 } from '../../infraestructure/container/user.container';
 
-import {
-    created,
-    ok
-} from '../../utils/handlers/response.handler';
-import { catchAsync } from '../../utils/catchAsync';
+import { created, ok } from '../../utils/http/response';
+import { catchAsync } from '../../utils/http/catchAsync';
 
 import {
     createUserSchema,

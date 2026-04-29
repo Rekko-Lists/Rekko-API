@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyAccessToken } from '../utils/jwt.util';
+import { verifyAccessToken } from '../utils/auth/jwt';
 import { InvalidTokenError } from '../domain/errors/auth.errors';
 
 declare global {

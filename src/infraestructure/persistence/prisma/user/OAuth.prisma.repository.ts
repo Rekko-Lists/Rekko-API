@@ -1,5 +1,5 @@
 import { OAuth } from '../../../../domain/entities/OAuth';
-import { handlePrismaError } from '../../../../domain/errors/prisma.errors';
+import { handlePrismaError } from '../../../errors/prisma.errors';
 import { OAuthRepository } from '../../../../domain/repositories/user/OAuth.repository';
 import { prisma } from '../../../database/prisma.client';
 
@@ -12,7 +12,7 @@ export class OAuthPrismaRepository implements OAuthRepository<OAuth> {
                 data: {
                     userId: account.getUserId(),
                     provider: account.getProvider(),
-                    providerUserId: account.getProviderUserId(),
+                    providerUserId: account.getProviderUserId()
                 },
                 include: { user: true }
             });

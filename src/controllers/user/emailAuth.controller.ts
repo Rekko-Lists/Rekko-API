@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { catchAsync } from '../../utils/catchAsync';
+import { catchAsync } from '../../utils/http/catchAsync';
 import { emailAuthService } from '../../infraestructure/container/user.container';
-import { ok } from '../../utils/handlers/response.handler';
+import { ok } from '../../utils/http/response';
 import {
     userUpdateEmail,
     userUsernameToken
 } from '../../domain/schemas/user.schemas';
-import { buildUrl } from '../../utils/handlers/redirect.handler';
+import { buildUrl } from '../../utils/http/redirect';
 import { AuthError } from '../../domain/errors/auth.errors';
 
 export const verifyEmailRequest = catchAsync(

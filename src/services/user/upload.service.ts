@@ -1,4 +1,4 @@
-import { CloudinaryHandler } from '../../utils/handlers/cloudinary.handler';
+import { CloudinaryHandler } from '../../infraestructure/services/storage/cloudinary.service';
 import { UserService } from './../user/user.service';
 import {
     ImageParams,
@@ -10,8 +10,8 @@ import { UserNotFoundError } from '../../domain/errors/auth.errors';
 
 export class UploadService {
     constructor(
-        private readonly cloudinaryHandler: CloudinaryHandler,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly cloudinaryHandler: CloudinaryHandler
     ) {}
 
     private isDefaultImage(

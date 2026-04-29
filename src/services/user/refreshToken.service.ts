@@ -2,7 +2,7 @@ import { RefreshToken } from '../../domain/entities/RefreshToken';
 import { User } from '../../domain/entities/User';
 import { RefreshTokenRepository } from '../../domain/repositories/user/RefreshToken.repository';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
-import { signAccessToken } from '../../utils/jwt.util';
+import { signAccessToken } from '../../utils/auth/jwt';
 import {
     InvalidTokenError,
     TokenExpiredError,
@@ -12,7 +12,7 @@ import {
     TokenPair,
     SessionInfo
 } from '../../domain/schemas/user.schemas';
-import { encodeRefreshToken } from '../../utils/refreshToken.util';
+import { encodeRefreshToken } from '../../utils/auth/refreshToken';
 
 export class RefreshTokenService {
     constructor(

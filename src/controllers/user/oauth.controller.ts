@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { catchAsync } from '../../utils/catchAsync';
+import { catchAsync } from '../../utils/http/catchAsync';
 import {
     oauthDiscordSchema,
     oauthFirebaseSchema
@@ -8,8 +8,8 @@ import {
     oauthService,
     refreshTokenService
 } from '../../infraestructure/container/user.container';
-import { ok } from '../../utils/handlers/response.handler';
-import { getClientInfo } from '../../utils/http.util';
+import { ok } from '../../utils/http/response';
+import { getClientInfo } from '../../utils/http/http.util';
 
 export const oauthGoogle = catchAsync(
     async (req: Request, res: Response) => {

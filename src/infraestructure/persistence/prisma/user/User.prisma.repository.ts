@@ -1,5 +1,5 @@
 import { User } from '../../../../domain/entities/User';
-import { handlePrismaError } from '../../../../domain/errors/prisma.errors';
+import { handlePrismaError } from '../../../errors/prisma.errors';
 import { UserRepository } from '../../../../domain/repositories/user/User.repository';
 import {
     UserUpdateProfile,
@@ -15,7 +15,7 @@ import {
     userDefaultSelect,
     userFieldMappings
 } from '../../../../domain/schemas/user.schemas';
-import { buildPrismaSelect } from '../../../../utils/buildPrismaSelect.util';
+import { buildPrismaSelect } from '../../../../utils/prisma/prismaSelect';
 
 export class UserPrismaRepository implements UserRepository<User> {
     constructor(private readonly db = prisma) {}

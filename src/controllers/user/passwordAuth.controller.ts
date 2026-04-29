@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 
 import { passwordAuthService } from '../../infraestructure/container/user.container';
 
-import { catchAsync } from '../../utils/catchAsync';
-import { buildUrl } from '../../utils/handlers/redirect.handler';
+import { catchAsync } from '../../utils/http/catchAsync';
+import { buildUrl } from '../../utils/http/redirect';
 
 import { userResetPassword } from '../../domain/schemas/user.schemas';
 import { AuthError } from '../../domain/errors/auth.errors';
