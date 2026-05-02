@@ -9,6 +9,7 @@ dist/
 
 # Environment variables
 .env
+.mal-token.json
 
 # Firebase Service Account Key
 serviceAccountKey.json
