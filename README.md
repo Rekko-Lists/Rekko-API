@@ -48,4 +48,8 @@ Resolution user images:
 - Banner: 1500x500
 - Background: 1920x1080
 
+### USER REFRESH TOKEN
+
+Hay funcionalidades en refreshToken.controller que por temas de seguridad y tal estaria interesante de tener pero por ahora priorizamos seguir adelante y implementarlo en un futuro
+
 ###### Cuando esto salga a produccion hay que cambiar toda la info del .env al dominio real
