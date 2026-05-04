@@ -6,7 +6,7 @@ import postRouter from './post.routes';
 import commentRouter from './comment.routes';
 import animeRouter from './anime.routes';
 import challengeRouter from './challenge.routes';
-import malRouter from './mal.routes';
+import malRouter from './anime/mal.routes';
 import {
     authAuthMiddleware,
     userAuthMiddleware
