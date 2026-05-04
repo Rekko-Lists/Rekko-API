@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import {
     malAuthService,
     malService
-} from '../../infraestructure/container/mal.container';
+} from '../../infraestructure/container/anime.container';
 import { ok } from '../../utils/http/response';
 import { catchAsync } from '../../utils/http/catchAsync';
 import { BadRequestError } from '../../domain/errors/http.errors';
