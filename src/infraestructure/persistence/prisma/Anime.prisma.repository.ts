@@ -1,29 +1,33 @@
 import { Anime } from '../../../domain/entities/Anime';
 import { AnimeRepository } from '../../../domain/repositories/Anime.repository';
-import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions } from '../../../domain/schemas/find.schemas';
+import { FindRepository } from '../../../domain/schemas/find.schemas';
+import { prisma } from '../../database/prisma.client';
+import { handlePrismaError } from '../../errors/prisma.errors';
 
 export class AnimePrismaRepository implements AnimeRepository {
-    create(entity: Anime): Promise<void> {
+    constructor(private readonly db = prisma) {}
+
+    create(entity: Anime): Promise<Anime | null> {
         throw new Error('Method not implemented.');
     }
 
-    findById(id: number): Promise<Anime | null> {
+    findById(
+        id: number,
+        fields?: string[]
+    ): Promise<Anime | null> {
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<Anime[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<Anime>> {
         throw new Error('Method not implemented.');
     }
 
-    update(id: number, entity: Anime): Promise<Anime | null> {
+    update(where: unknown, entity: unknown): Promise<Anime | null> {
         throw new Error('Method not implemented.');
     }
 
-    delete(id: number): Promise<boolean> {
+    delete(where: unknown): Promise<boolean> {
         throw new Error('Method not implemented.');
     }
 
@@ -31,8 +35,53 @@ export class AnimePrismaRepository implements AnimeRepository {
         throw new Error('Method not implemented.');
     }
 
-    findByName(pagination: Pagination): Promise<Anime[]> {
-        throw new Error('Method not implemented.');
+    async searchByName(
+        query: string,
+        limit: number
+    ): Promise<Anime[]> {
+        try {
+            const animes = await this.db.anime.findMany({
+                where: {
+                    name: {
+                        contains: query,
+                        mode: 'insensitive'
+                    }
+                },
+                take: limit,
+                orderBy: {
+                    malRank: 'asc'
+                }
+            });
+
+            return animes.map((anime: any) =>
+                Anime.fromPersistence(anime)
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findExistingMalIds(
+        malIds: number[]
+    ): Promise<number[]> {
+        if (malIds.length === 0) return [];
+
+        try {
+            const animes = await this.db.anime.findMany({
+                where: {
+                    malId: {
+                        in: malIds
+                    }
+                },
+                select: {
+                    malId: true
+                }
+            });
+
+            return animes.map((anime: { malId: number }) => anime.malId);
+        } catch (error) {
+            handlePrismaError(error);
+        }
     }
 
     findTopRanked(limit: number): Promise<Anime[]> {
@@ -41,7 +90,7 @@ export class AnimePrismaRepository implements AnimeRepository {
 
     findByStatus(
         status: string,
-        pagination: Pagination
+        limit: number
     ): Promise<Anime[]> {
         throw new Error('Method not implemented.');
     }
