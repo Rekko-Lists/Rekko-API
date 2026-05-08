@@ -1,10 +1,9 @@
 import { UserRateAnime } from '../../../domain/entities/UserRateAnime';
-import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserRateAnimeRepository } from '../../../domain/repositories/UserRateAnime.repository';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions, FindRepository } from '../../../domain/schemas/find.schemas';
 
 export class UserRateAnimePrismaRepository implements UserRateAnimeRepository {
-    create(entity: UserRateAnime): Promise<void> {
+    create(entity: UserRateAnime): Promise<UserRateAnime | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -12,17 +11,11 @@ export class UserRateAnimePrismaRepository implements UserRateAnimeRepository {
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<UserRateAnime[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<UserRateAnime>> {
         throw new Error('Method not implemented.');
     }
 
-    update(
-        id: number,
-        entity: UserRateAnime
-    ): Promise<UserRateAnime | null> {
+    update(id: number, entity: UserRateAnime): Promise<UserRateAnime | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -30,24 +23,15 @@ export class UserRateAnimePrismaRepository implements UserRateAnimeRepository {
         throw new Error('Method not implemented.');
     }
 
-    findByUserAndAnime(
-        userId: number,
-        animeId: number
-    ): Promise<UserRateAnime | null> {
+    findByUserAndAnime(userId: number, animeId: number): Promise<UserRateAnime | null> {
         throw new Error('Method not implemented.');
     }
 
-    updateRate(
-        userId: number,
-        animeId: number,
-        rate: number
-    ): Promise<UserRateAnime | null> {
+    updateRate(userId: number, animeId: number, rate: number): Promise<UserRateAnime | null> {
         throw new Error('Method not implemented.');
     }
 
-    getAverageRateByAnime(
-        animeId: number
-    ): Promise<number | null> {
+    getAverageRateByAnime(animeId: number): Promise<number | null> {
         throw new Error('Method not implemented.');
     }
 }

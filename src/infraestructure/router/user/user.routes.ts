@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import {
     getUser,
     postUser,
@@ -44,7 +44,10 @@ router
     .get(parseQueryOptions, validateUserQuery, getUsers)
     .post(postUser);
 
-router.route('/:id').get(getUserById);
+router.get('/:id', (req: Request, res: Response, next: NextFunction) => {
+    if (!/^\d+$/.test(String(req.params.id))) return next('route');
+    return getUserById(req, res, next);
+});
 
 router.use('/:username', validateUsername);
 
@@ -62,7 +65,7 @@ router
     .route('/:username/change-email/confirm')
     .get(changeEmailConfirm);
 
-router.route('/:username/verify-email').post(verifyEmailRequest);
+router.route('/:username/verify-email').post(ownershipMiddleware, verifyEmailRequest);
 
 router.route('/:username/verify-email/confirm').get(verifyEmail);
 

@@ -1,10 +1,10 @@
 import { Anime } from '../../../domain/entities/Anime';
 import { AnimeRepository } from '../../../domain/repositories/Anime.repository';
-import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions, FindRepository } from '../../../domain/schemas/find.schemas';
+import { Pagination } from '../../../domain/types/pagination';
 
 export class AnimePrismaRepository implements AnimeRepository {
-    create(entity: Anime): Promise<void> {
+    create(entity: Anime): Promise<Anime | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -12,10 +12,7 @@ export class AnimePrismaRepository implements AnimeRepository {
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<Anime[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<Anime>> {
         throw new Error('Method not implemented.');
     }
 
@@ -39,10 +36,7 @@ export class AnimePrismaRepository implements AnimeRepository {
         throw new Error('Method not implemented.');
     }
 
-    findByStatus(
-        status: string,
-        pagination: Pagination
-    ): Promise<Anime[]> {
+    findByStatus(status: string, pagination: Pagination): Promise<Anime[]> {
         throw new Error('Method not implemented.');
     }
 
@@ -50,12 +44,7 @@ export class AnimePrismaRepository implements AnimeRepository {
         throw new Error('Method not implemented.');
     }
 
-    updateStats(
-        animeId: number,
-        mean: number,
-        rank: number,
-        likes: number
-    ): Promise<void> {
+    updateStats(animeId: number, mean: number, rank: number, likes: number): Promise<void> {
         throw new Error('Method not implemented.');
     }
 }

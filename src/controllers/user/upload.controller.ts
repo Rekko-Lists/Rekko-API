@@ -20,7 +20,7 @@ export const uploadProfileImage = catchAsync(
             height: imageConfig.height
         });
 
-        created(res, result.message);
+        created(res, result);
     }
 );
 
@@ -40,7 +40,7 @@ export const uploadBannerImage = catchAsync(
             height: imageConfig.height
         });
 
-        created(res, result.message);
+        created(res, result);
     }
 );
 
@@ -60,6 +60,6 @@ export const uploadBackgroundImage = catchAsync(
             height: imageConfig.height
         });
 
-        created(res, result.message);
+        created(res, result);
     }
 );

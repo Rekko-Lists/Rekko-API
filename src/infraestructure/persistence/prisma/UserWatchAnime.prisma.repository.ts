@@ -1,10 +1,9 @@
 import { UserWatchAnime } from '../../../domain/entities/UserWatchAnime';
-import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserWatchAnimeRepository } from '../../../domain/repositories/UserWatchAnime.repository';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions, FindRepository } from '../../../domain/schemas/find.schemas';
 
 export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository {
-    create(entity: UserWatchAnime): Promise<void> {
+    create(entity: UserWatchAnime): Promise<UserWatchAnime | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -12,17 +11,11 @@ export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository 
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<UserWatchAnime[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<UserWatchAnime>> {
         throw new Error('Method not implemented.');
     }
 
-    update(
-        id: number,
-        entity: UserWatchAnime
-    ): Promise<UserWatchAnime | null> {
+    update(id: number, entity: UserWatchAnime): Promise<UserWatchAnime | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -30,26 +23,15 @@ export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository 
         throw new Error('Method not implemented.');
     }
 
-    findByUserAndAnime(
-        userId: number,
-        animeId: number
-    ): Promise<UserWatchAnime | null> {
+    findByUserAndAnime(userId: number, animeId: number): Promise<UserWatchAnime | null> {
         throw new Error('Method not implemented.');
     }
 
-    updateProgress(
-        userId: number,
-        animeId: number,
-        numEpisodes: number,
-        state: string
-    ): Promise<UserWatchAnime> {
+    updateProgress(userId: number, animeId: number, numEpisodes: number, state: string): Promise<UserWatchAnime> {
         throw new Error('Method not implemented.');
     }
 
-    findByUserAndState(
-        userId: number,
-        state: string
-    ): Promise<UserWatchAnime[]> {
+    findByUserAndState(userId: number, state: string): Promise<UserWatchAnime[]> {
         throw new Error('Method not implemented.');
     }
 }

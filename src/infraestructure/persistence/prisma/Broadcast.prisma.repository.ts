@@ -1,10 +1,9 @@
 import { Broadcast } from '../../../domain/entities/Broadcast';
 import { BroadcastRepository } from '../../../domain/repositories/Broadcast.repository';
-import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions, FindRepository } from '../../../domain/schemas/find.schemas';
 
 export class BroadcastPrismaRepository implements BroadcastRepository {
-    create(entity: Broadcast): Promise<void> {
+    create(entity: Broadcast): Promise<Broadcast | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -12,17 +11,11 @@ export class BroadcastPrismaRepository implements BroadcastRepository {
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<Broadcast[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<Broadcast>> {
         throw new Error('Method not implemented.');
     }
 
-    update(
-        id: number,
-        entity: Broadcast
-    ): Promise<Broadcast | null> {
+    update(id: number, entity: Broadcast): Promise<Broadcast | null> {
         throw new Error('Method not implemented.');
     }
 

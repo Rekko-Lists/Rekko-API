@@ -1,10 +1,9 @@
 import { Challenge } from '../../../domain/entities/Challenge';
 import { ChallengeRepository } from '../../../domain/repositories/Challenge.repository';
-import { Filter } from '../../../domain/repositories/filters/filter';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions, FindRepository } from '../../../domain/schemas/find.schemas';
 
 export class ChallengePrismaRepository implements ChallengeRepository {
-    create(entity: Challenge): Promise<void> {
+    create(entity: Challenge): Promise<Challenge | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -12,17 +11,11 @@ export class ChallengePrismaRepository implements ChallengeRepository {
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<Challenge[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<Challenge>> {
         throw new Error('Method not implemented.');
     }
 
-    update(
-        id: number,
-        entity: Challenge
-    ): Promise<Challenge | null> {
+    update(id: number, entity: Challenge): Promise<Challenge | null> {
         throw new Error('Method not implemented.');
     }
 

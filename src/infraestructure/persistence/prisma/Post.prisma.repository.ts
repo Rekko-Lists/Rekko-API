@@ -1,11 +1,11 @@
 import { Post } from '../../../domain/entities/Post';
-import { Filter } from '../../../domain/repositories/filters/filter';
 import { PostRepository } from '../../../domain/repositories/Post.repository';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions, FindRepository } from '../../../domain/schemas/find.schemas';
+import { Pagination } from '../../../domain/types/pagination';
 import { PostWithComments } from '../../../domain/schemas/post.schemas';
 
 export class PostPrismaRepository implements PostRepository {
-    create(entity: Post): Promise<void> {
+    create(entity: Post): Promise<Post | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -13,10 +13,7 @@ export class PostPrismaRepository implements PostRepository {
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<Post[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<Post>> {
         throw new Error('Method not implemented.');
     }
 
@@ -28,10 +25,7 @@ export class PostPrismaRepository implements PostRepository {
         throw new Error('Method not implemented.');
     }
 
-    findByUserId(
-        userId: number,
-        pagination: Pagination
-    ): Promise<Post[]> {
+    findByUserId(userId: number, pagination: Pagination): Promise<Post[]> {
         throw new Error('Method not implemented.');
     }
 
@@ -47,9 +41,7 @@ export class PostPrismaRepository implements PostRepository {
         throw new Error('Method not implemented.');
     }
 
-    findWithComments(
-        postId: number
-    ): Promise<PostWithComments | null> {
+    findWithComments(postId: number): Promise<PostWithComments | null> {
         throw new Error('Method not implemented.');
     }
 }

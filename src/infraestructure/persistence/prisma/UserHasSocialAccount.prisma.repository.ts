@@ -1,11 +1,10 @@
 import { SocialAccount } from '../../../domain/entities/SocialAccount';
 import { UserHasSocialAccount } from '../../../domain/entities/UserHasSocialAccount';
-import { Filter } from '../../../domain/repositories/filters/filter';
 import { UserHasSocialAccountRepository } from '../../../domain/repositories/UserHasSocialAccount.repository';
-import { Pagination } from '../../../domain/schemas/pagination.schemas';
+import { FindOptions, FindRepository } from '../../../domain/schemas/find.schemas';
 
 export class UserHasSocialAccountPrismaRepository implements UserHasSocialAccountRepository {
-    create(entity: UserHasSocialAccount): Promise<void> {
+    create(entity: UserHasSocialAccount): Promise<UserHasSocialAccount | null> {
         throw new Error('Method not implemented.');
     }
 
@@ -13,17 +12,11 @@ export class UserHasSocialAccountPrismaRepository implements UserHasSocialAccoun
         throw new Error('Method not implemented.');
     }
 
-    find(
-        filters?: Filter<string>[] | undefined,
-        pagination?: Pagination
-    ): Promise<UserHasSocialAccount[]> {
+    find(findOptions: FindOptions): Promise<FindRepository<UserHasSocialAccount>> {
         throw new Error('Method not implemented.');
     }
 
-    update(
-        id: number,
-        entity: UserHasSocialAccount
-    ): Promise<UserHasSocialAccount | null> {
+    update(id: number, entity: UserHasSocialAccount): Promise<UserHasSocialAccount | null> {
         throw new Error('Method not implemented.');
     }
 
