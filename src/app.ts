@@ -25,6 +25,8 @@ app.use(cors({
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 
+app.get('/health', (_req, res) => { res.status(200).json({ status: 'ok' }); });
+
 app.use('/', router);
 
 app.use(notFoundHandler);
