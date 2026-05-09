@@ -1,4 +1,7 @@
 {
+    "engines": {
+        "node": ">=20.0.0"
+    },
     "scripts": {
         "build": "prisma generate && tsc",
         "start": "node dist/server.js",
