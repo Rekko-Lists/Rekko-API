@@ -9,18 +9,30 @@ import {
 
 const app = express();
 
-const clientPort = process.env.CLIENT_PORT ? `:${process.env.CLIENT_PORT}` : '';
-const allowedOrigins = [
-    process.env.CLIENT_URL_DEV
-        ? `${process.env.CLIENT_URL_DEV}${clientPort}`
-        : 'http://localhost:5173',
-    process.env.CLIENT_URL_PROD,
-].filter(Boolean) as string[];
+const allowedOrigins = new Set(
+    [
+        'http://localhost:5173',
+        process.env.CLIENT_URL_DEV?.trim(),
+        process.env.CLIENT_URL_PROD?.trim(),
+    ]
+        .filter(Boolean)
+        .map((o) => o!.replace(/\/$/, ''))
+);
 
-app.use(cors({
-    origin: allowedOrigins,
-    credentials: true,
-}));
+console.log('Allowed CORS origins:', [...allowedOrigins]);
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // allow same-origin / server-to-server (no Origin header)
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.has(origin)) return callback(null, true);
+            console.log(`CORS blocked origin: "${origin}"`);
+            callback(new Error(`Origin ${origin} not allowed`));
+        },
+        credentials: true,
+    })
+);
 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
