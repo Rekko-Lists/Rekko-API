@@ -4,6 +4,7 @@
     },
     "scripts": {
         "build": "prisma generate && tsc",
+        "migrate": "prisma migrate deploy",
         "start": "node dist/server.js",
         "dev": "nodemon --watch src --ext ts,json --exec tsx src/server.ts",
         "format": "prettier . --write",
