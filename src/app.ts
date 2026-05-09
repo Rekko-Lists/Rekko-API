@@ -21,6 +21,11 @@ const allowedOrigins = new Set(
 
 console.log('Allowed CORS origins:', [...allowedOrigins]);
 
+app.use((req, _res, next) => {
+    console.log(`>>> ${req.method} ${req.path} origin="${req.headers.origin ?? 'none'}"`);
+    next();
+});
+
 app.use(
     cors({
         origin: (origin, callback) => {
