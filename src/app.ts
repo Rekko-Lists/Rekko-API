@@ -19,21 +19,12 @@ const allowedOrigins = new Set(
         .map((o) => o!.replace(/\/$/, ''))
 );
 
-console.log('Allowed CORS origins:', [...allowedOrigins]);
-
-app.use((req, _res, next) => {
-    console.log(`>>> ${req.method} ${req.path} origin="${req.headers.origin ?? 'none'}"`);
-    next();
-});
-
 app.use(
     cors({
         origin: (origin, callback) => {
-            // allow same-origin / server-to-server (no Origin header)
             if (!origin) return callback(null, true);
             if (allowedOrigins.has(origin)) return callback(null, true);
-            console.log(`CORS blocked origin: "${origin}"`);
-            callback(new Error(`Origin ${origin} not allowed`));
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
         },
         credentials: true,
     })
