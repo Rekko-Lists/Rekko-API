@@ -15,7 +15,7 @@ import {
     userDefaultSelect,
     userFieldMappings
 } from '../../../../domain/schemas/user/user.schemas';
-import { buildPrismaSelect } from '../../../../utils/prisma/prismaSelect';
+import { buildPrismaSelect } from '../../../../utils/prisma/prismaHelper';
 
 export class UserPrismaRepository implements UserRepository<User> {
     constructor(private readonly db = prisma) {}
@@ -27,13 +27,7 @@ export class UserPrismaRepository implements UserRepository<User> {
                     email: entity.getEmail(),
                     username: entity.getUsername(),
                     password: entity.getPasswordHash(),
-                    biography: entity.getBiography() ?? null,
-                    profileImage:
-                        process.env.DEFAULT_PROFILE_IMAGE_URL,
-                    bannerImage:
-                        process.env.DEFAULT_BANNER_IMAGE_URL,
-                    backgroundImage:
-                        process.env.DEFAULT_BACKGROUND_IMAGE_URL
+                    biography: entity.getBiography() ?? null
                 }
             });
 
@@ -268,6 +262,29 @@ export class UserPrismaRepository implements UserRepository<User> {
             return await this.db.user.findUnique({
                 where: { userId }
             });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async searchByName(
+        query: string,
+        limit: number
+    ): Promise<User[]> {
+        try {
+            const users = await this.db.user.findMany({
+                where: {
+                    username: {
+                        contains: query,
+                        mode: 'insensitive'
+                    }
+                },
+                take: limit
+            });
+
+            return users.map((user: any) =>
+                User.fromPersistence(user)
+            );
         } catch (error) {
             handlePrismaError(error);
         }
