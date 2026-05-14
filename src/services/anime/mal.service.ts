@@ -1,33 +1,61 @@
 import { MalService as MalApiService } from '../../infraestructure/services/mal/mal.service';
-import { NotFoundError } from '../../domain/errors/http.errors';
+import { NotFoundError } from '../../exceptions/exceptions';
+import { SEARCH_LIMITS } from '../../domain/schemas/search/search.schemas';
 import {
     MalAnimeData,
     MalAnime,
     malSearchParamsSchema,
     malSearchSchema,
-    malAnimeDataSchema
+    malAnimeDataSchema,
+    validSeasons
 } from '../../domain/schemas/anime/mal.schemas';
 
 export class MalService {
     private readonly animeFields =
-        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres';
+        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast';
 
     constructor(private readonly malApiService: MalApiService) {}
 
     async searchAnimes(
         query: string,
-        limit: number = 10
+        limit: number = SEARCH_LIMITS.MAL_SEARCH_LIMIT
     ): Promise<Array<MalAnimeData>> {
         const validatedParams = malSearchParamsSchema.parse({
             query,
-            limit: Math.min(limit, 25)
+            limit: Math.min(
+                limit,
+                SEARCH_LIMITS.MAL_SEARCH_LIMIT
+            )
         });
 
         const response = await this.malApiService.fetchFromMal(
             '/anime',
             {
                 q: validatedParams.query,
-                limit: validatedParams.limit ?? 10,
+                limit:
+                    validatedParams.limit ??
+                    SEARCH_LIMITS.MAL_SEARCH_LIMIT,
+                fields: this.animeFields
+            }
+        );
+
+        const data = await response.json();
+        const validated = malSearchSchema.parse(data);
+
+        return validated.data.map((item) => item.node);
+    }
+
+    async getTrendingAnimes(
+        limit: number = SEARCH_LIMITS.MAL_TRENDING_LIMIT
+    ): Promise<Array<MalAnimeData>> {
+        const response = await this.malApiService.fetchFromMal(
+            '/anime/ranking',
+            {
+                ranking_type: 'all',
+                limit: Math.min(
+                    limit,
+                    SEARCH_LIMITS.MAL_TRENDING_LIMIT
+                ),
                 fields: this.animeFields
             }
         );
@@ -62,6 +90,36 @@ export class MalService {
         return malAnimeDataSchema.parse(data);
     }
 
+    async getSeasonalAnimes(
+        year: number,
+        season: string,
+        limit: number = SEARCH_LIMITS.MAL_SEARCH_LIMIT
+    ): Promise<Array<MalAnimeData>> {
+        const normalizedSeason = season.toLowerCase();
+
+        if (!validSeasons.includes(normalizedSeason)) {
+            throw new Error(
+                `Invalid season. Must be one of: ${validSeasons.join(', ')}`
+            );
+        }
+
+        const response = await this.malApiService.fetchFromMal(
+            `/anime/season/${year}/${normalizedSeason}`,
+            {
+                limit: Math.min(
+                    limit,
+                    SEARCH_LIMITS.MAL_SEARCH_LIMIT
+                ),
+                fields: this.animeFields
+            }
+        );
+
+        const data = await response.json();
+        const validated = malSearchSchema.parse(data);
+
+        return validated.data.map((item) => item.node);
+    }
+
     mapMalToAnime(malData: MalAnimeData) {
         return {
             malId: malData.id,
@@ -74,13 +132,26 @@ export class MalService {
                 : new Date(),
             endDate: malData.end_date
                 ? new Date(malData.end_date)
-                : null,
+                : new Date(),
             malMean: malData.mean || 0,
             malRank: malData.rank || 0,
+            mean: 0,
+            rank: 0,
             numEpisodes: malData.num_episodes || 0,
             status: malData.status || 'Unknown',
             genres: malData.genres?.map((g) => g.name) || [],
-            studios: malData.studios?.map((s) => s.name) || []
+            studios: malData.studios?.map((s) => s.name) || [],
+            likes: 0,
+            nextUpdate: new Date(
+                Date.now() + 7 * 24 * 60 * 60 * 1000
+            ),
+            broadcast: {
+                dayOfWeek:
+                    malData.broadcast?.day_of_the_week ||
+                    'Unknown',
+                startTime:
+                    malData.broadcast?.start_time || '00:00'
+            }
         };
     }
 }
