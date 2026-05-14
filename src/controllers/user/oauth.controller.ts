@@ -4,23 +4,20 @@ import {
     oauthDiscordSchema,
     oauthFirebaseSchema
 } from '../../domain/schemas/user/oauth.schemas';
-import {
-    oauthService,
-    refreshTokenService
-} from '../../infraestructure/container/user.container';
 import { ok } from '../../utils/http/response';
 import { getClientInfo } from '../../utils/http/http.util';
 
 export const oauthGoogle = catchAsync(
     async (req: Request, res: Response) => {
+        const { services } = req.container!;
         const { tokenId } = oauthFirebaseSchema.parse(req.body);
 
         const clientInfo = getClientInfo(req);
 
-        const user = await oauthService.googleAuth(tokenId);
+        const user = await services.oauth.googleAuth(tokenId);
 
         const tokens =
-            await refreshTokenService.generateTokenPair(
+            await services.refreshToken.generateTokenPair(
                 user.getUserId(),
                 clientInfo.userAgent,
                 clientInfo.ip
@@ -35,14 +32,15 @@ export const oauthGoogle = catchAsync(
 
 export const oauthDiscord = catchAsync(
     async (req: Request, res: Response) => {
+        const { services } = req.container!;
         const { code } = oauthDiscordSchema.parse(req.body);
 
         const clientInfo = getClientInfo(req);
 
-        const user = await oauthService.discordAuth(code);
+        const user = await services.oauth.discordAuth(code);
 
         const tokens =
-            await refreshTokenService.generateTokenPair(
+            await services.refreshToken.generateTokenPair(
                 user.getUserId(),
                 clientInfo.userAgent,
                 clientInfo.ip
