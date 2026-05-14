@@ -6,9 +6,9 @@ import { prisma } from '../../../database/prisma.client';
 import {
     TokenExpiredError,
     InvalidTokenError,
-    TokenAlreadyUsed,
+    TokenAlreadyUsedError,
     EmailTakenError
-} from '../../../../domain/errors/auth.errors';
+} from '../../../../exceptions/exceptions';
 import { PasswordAuthRepository } from '../../../../domain/repositories/user/PasswordAuth.repository';
 
 export class PasswordAuthPrismaRepository implements PasswordAuthRepository<User> {
@@ -29,7 +29,7 @@ export class PasswordAuthPrismaRepository implements PasswordAuthRepository<User
 
             if (existingRequest) {
                 if (existingRequest.confirmed) {
-                    throw new TokenAlreadyUsed(
+                    throw new TokenAlreadyUsedError(
                         'Password change already confirmed'
                     );
                 }
@@ -54,7 +54,7 @@ export class PasswordAuthPrismaRepository implements PasswordAuthRepository<User
         } catch (error) {
             if (
                 error instanceof EmailTakenError ||
-                error instanceof TokenAlreadyUsed
+                error instanceof TokenAlreadyUsedError
             )
                 throw error;
             handlePrismaError(error);

@@ -1,5 +1,5 @@
 import { firebaseAuth } from '../../infraestructure/database/firebase.admin';
-import { InvalidTokenError } from '../../domain/errors/auth.errors';
+import { InvalidTokenError } from '../../exceptions/exceptions';
 import { FirebaseUser } from '../../domain/schemas/user/oauth.schemas';
 
 export async function verifyFirebaseTokenId(
