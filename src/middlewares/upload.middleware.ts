@@ -7,9 +7,9 @@ import {
 } from '../domain/schemas/img.schema';
 import {
     InvalidImageFormatError,
-    SpaceLimitExceededError
-} from '../domain/errors/img.errors';
-import { BadRequestError } from '../domain/errors/http.errors';
+    SpaceLimitExceededError,
+    ValidationError
+} from '../exceptions/exceptions';
 
 const storage = multer.memoryStorage();
 
@@ -40,7 +40,7 @@ export const uploadMiddleware = multer({
 export const validateImage = (config: ImgValidation) => {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.file)
-            throw new BadRequestError('No se envió archivo');
+            throw new ValidationError('No file was uploaded');
 
         const fileSize = req.file.size;
 

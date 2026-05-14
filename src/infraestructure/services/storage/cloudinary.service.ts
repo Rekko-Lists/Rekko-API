@@ -3,7 +3,7 @@ import { Readable } from 'stream';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import { CloudinaryResponse } from '../../../domain/schemas/user/image.schemas';
-import { CannotDeleteImageError } from '../../../domain/errors/img.errors';
+import { CannotDeleteImageError } from '../../../exceptions/exceptions';
 
 export class CloudinaryHandler {
     constructor() {
