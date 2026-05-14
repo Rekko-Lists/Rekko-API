@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/auth/jwt';
-import { InvalidTokenError } from '../domain/errors/auth.errors';
+import { InvalidTokenError } from '../exceptions/exceptions';
 
 declare global {
     namespace Express {

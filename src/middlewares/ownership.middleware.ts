@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { userService } from '../infraestructure/container/user.container';
-import { ForbiddenError } from '../domain/errors/auth.errors';
+import { ForbiddenError } from '../exceptions/exceptions';
 
 export const ownershipMiddleware = async (
     req: Request,
@@ -8,11 +7,12 @@ export const ownershipMiddleware = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        const { services } = req.container!;
         const username = req.params.username as string;
         const authenticatedUserId = req.user!.userId;
 
         const targetUser =
-            await userService.getUserByUsername(username);
+            await services.user.getUserByUsername(username);
 
         if (targetUser.getUserId() !== authenticatedUserId) {
             throw new ForbiddenError(

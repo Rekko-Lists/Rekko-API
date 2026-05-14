@@ -7,14 +7,13 @@ import {
     MalTokenResult,
     malTokenResultSchema
 } from '../../../domain/schemas/anime/mal.schemas';
-import { NotFoundError } from '../../../domain/errors/http.errors';
+import {
+    NotFoundError,
+    MalApiError
+} from '../../../exceptions/exceptions';
 import { randomBytes } from 'crypto';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
-import {
-    AuthorizationRequestError,
-    MalApiError
-} from '../../errors/mal.errors';
 
 export class MalService {
     private baseUrl = 'https://api.myanimelist.net/v2';
@@ -83,7 +82,7 @@ export class MalService {
             this.authorizationRequests.get(state);
 
         if (!authorizationRequest) {
-            throw new AuthorizationRequestError(
+            throw new MalApiError(
                 'Code verifier not found or expired. Please start authorization again.'
             );
         }
@@ -136,8 +135,8 @@ export class MalService {
 
         if (!response.ok) {
             throw new MalApiError(
-                response.status,
-                `MAL API Error: ${response.status} - ${response.statusText}`
+                `MAL API Error: ${response.status} - ${response.statusText}`,
+                response.status
             );
         }
 
@@ -198,8 +197,8 @@ export class MalService {
         if (!response.ok) {
             const errorBody = await response.text();
             throw new MalApiError(
-                response.status,
-                `${errorMessage}: ${response.status} - ${response.statusText} - ${errorBody}`
+                `${errorMessage}: ${response.status} - ${response.statusText} - ${errorBody}`,
+                response.status
             );
         }
 
