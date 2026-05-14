@@ -1,18 +1,18 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../../utils/http/catchAsync';
 import { created } from '../../utils/http/response';
-import { uploadService } from '../../infraestructure/container/user.container';
-import { BadRequestError } from '../../domain/errors/http.errors';
+import { ValidationError } from '../../exceptions/exceptions';
 
 export const uploadProfileImage = catchAsync(
     async (req: Request, res: Response) => {
+        const { services } = req.container!;
         const username = req.params.username as string;
         const imageConfig = (req as any).imageConfig;
 
         if (!req.file)
-            throw new BadRequestError('No se envió archivo');
+            throw new ValidationError('No file was uploaded');
 
-        const result = await uploadService.uploadProfileImage({
+        const result = await services.upload.uploadProfileImage({
             username,
             imageType: 'profileImage',
             imageBuffer: req.file.buffer,
@@ -26,13 +26,14 @@ export const uploadProfileImage = catchAsync(
 
 export const uploadBannerImage = catchAsync(
     async (req: Request, res: Response) => {
+        const { services } = req.container!;
         const username = req.params.username as string;
         const imageConfig = (req as any).imageConfig;
 
         if (!req.file)
-            throw new BadRequestError('No se envió archivo');
+            throw new ValidationError('No file was uploaded');
 
-        const result = await uploadService.uploadProfileImage({
+        const result = await services.upload.uploadProfileImage({
             username,
             imageType: 'bannerImage',
             imageBuffer: req.file.buffer,
@@ -46,13 +47,14 @@ export const uploadBannerImage = catchAsync(
 
 export const uploadBackgroundImage = catchAsync(
     async (req: Request, res: Response) => {
+        const { services } = req.container!;
         const username = req.params.username as string;
         const imageConfig = (req as any).imageConfig;
 
         if (!req.file)
-            throw new BadRequestError('No se envió archivo');
+            throw new ValidationError('No file was uploaded');
 
-        const result = await uploadService.uploadProfileImage({
+        const result = await services.upload.uploadProfileImage({
             username,
             imageType: 'backgroundImage',
             imageBuffer: req.file.buffer,

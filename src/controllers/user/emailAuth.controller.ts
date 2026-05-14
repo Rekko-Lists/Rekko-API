@@ -1,19 +1,20 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../../utils/http/catchAsync';
-import { emailAuthService } from '../../infraestructure/container/user.container';
 import { ok } from '../../utils/http/response';
 import {
     userUpdateEmail,
     userUsernameToken
 } from '../../domain/schemas/user/user.schemas';
 import { buildUrl } from '../../utils/http/redirect';
-import { AuthError } from '../../domain/errors/auth.errors';
+import { AppError } from '../../exceptions/exceptions';
 
 export const verifyEmailRequest = catchAsync(
     async (req: Request, res: Response) => {
-        const result = await emailAuthService.verifyEmailRequest(
-            req.params.username as string
-        );
+        const { services } = req.container!;
+        const result =
+            await services.emailAuth.verifyEmailRequest(
+                req.params.username as string
+            );
 
         ok(res, 'Verification email sended.', result);
     }
@@ -22,6 +23,7 @@ export const verifyEmailRequest = catchAsync(
 export const verifyEmail = catchAsync(
     async (req: Request, res: Response) => {
         try {
+            const { services } = req.container!;
             const data = {
                 username: req.params.username,
                 token: req.query.token
@@ -29,7 +31,7 @@ export const verifyEmail = catchAsync(
 
             const validatedInput = userUsernameToken.parse(data);
 
-            await emailAuthService.verifyEmail(validatedInput);
+            await services.emailAuth.verifyEmail(validatedInput);
 
             // El correo se ha verificado
             res.redirect(
@@ -44,7 +46,7 @@ export const verifyEmail = catchAsync(
             );
         } catch (error) {
             // El correo no se ha verificado y manda al motivo
-            if (error instanceof AuthError) {
+            if (error instanceof AppError) {
                 return res.redirect(
                     buildUrl({
                         domain:
@@ -53,7 +55,7 @@ export const verifyEmail = catchAsync(
                                 ? process.env.CLIENT_URL_DEV!
                                 : process.env.CLIENT_URL_PROD!,
                         path: '/email-verified',
-                        params: { status: error.redirectStatus! }
+                        params: { status: 'error', message: error.code }
                     })
                 );
             }
@@ -65,6 +67,7 @@ export const verifyEmail = catchAsync(
 
 export const changeEmail = catchAsync(
     async (req: Request, res: Response) => {
+        const { services } = req.container!;
         const data = {
             username: req.params.username,
             newEmail: req.body.newEmail
@@ -73,7 +76,7 @@ export const changeEmail = catchAsync(
         const validatedInput = userUpdateEmail.parse(data);
 
         const result =
-            await emailAuthService.updateEmailRequest(
+            await services.emailAuth.updateEmailRequest(
                 validatedInput
             );
 
@@ -84,6 +87,7 @@ export const changeEmail = catchAsync(
 export const changeEmailConfirm = catchAsync(
     async (req: Request, res: Response) => {
         try {
+            const { services } = req.container!;
             const data = {
                 username: req.params.username,
                 token: req.query.token
@@ -91,7 +95,7 @@ export const changeEmailConfirm = catchAsync(
 
             const validatedInput = userUsernameToken.parse(data);
 
-            await emailAuthService.updateEmail(validatedInput);
+            await services.emailAuth.updateEmail(validatedInput);
 
             // El correo se ha cambiado
             res.redirect(
@@ -106,7 +110,7 @@ export const changeEmailConfirm = catchAsync(
             );
         } catch (error) {
             // El correo no se ha cambiado y manda el motivo
-            if (error instanceof AuthError) {
+            if (error instanceof AppError) {
                 return res.redirect(
                     buildUrl({
                         domain:
@@ -115,7 +119,7 @@ export const changeEmailConfirm = catchAsync(
                                 ? process.env.CLIENT_URL_DEV!
                                 : process.env.CLIENT_URL_PROD!,
                         path: '/email-changed',
-                        params: { status: error.redirectStatus! }
+                        params: { status: 'error', message: error.code }
                     })
                 );
             }
