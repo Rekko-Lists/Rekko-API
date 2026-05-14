@@ -10,8 +10,8 @@ import {
 } from '../../domain/schemas/search/search.schemas';
 import { MalService } from '../anime/mal.service';
 import { rankByRelevance } from '../../utils/search/search';
-import { AnimeDuplicator } from './anime-duplicator.service';
-import { AnimeRanker } from '../../utils/anime/anime-ranker';
+import { AnimeDuplicator } from './animeDuplicator.service';
+import { AnimeRanker } from '../../utils/anime/animeRanker';
 import { Paginator } from '../../utils/pagination/paginator';
 
 export class SearchService {
