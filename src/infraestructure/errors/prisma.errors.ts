@@ -1,9 +1,9 @@
 import {
-    BadRequestError,
-    DuplicateDataError,
+    ValidationError,
+    ConflictError,
     NotFoundError,
     InternalServerError
-} from '../../domain/errors/http.errors';
+} from '../../exceptions/exceptions';
 
 interface PrismaError {
     code?: string;
@@ -27,30 +27,37 @@ export function handlePrismaError(error: unknown): never {
             const fieldNames =
                 prismaError.meta?.target?.join(', ') ??
                 'given fields';
-            throw new DuplicateDataError(
+            throw new ConflictError(
                 `${fieldNames} already exists.`,
-                stack
+                {
+                    code: 'P2002',
+                    fields: prismaError.meta?.target
+                }
             );
 
         case 'P2025':
-            throw new NotFoundError('Record not found.', stack);
+            throw new NotFoundError('record');
 
         case 'P2003':
-            throw new BadRequestError(
+            throw new ValidationError(
                 'Invalid reference to another record.',
-                stack
+                { code: 'P2003' }
             );
 
         case 'P2014':
-            throw new BadRequestError(
+            throw new ValidationError(
                 'Cannot delete record due to related records.',
-                stack
+                { code: 'P2014' }
             );
 
         default:
             throw new InternalServerError(
                 'An unexpected database error occurred.',
-                stack
+                'INTERNAL_DATABASE_ERROR',
+                {
+                    prismaCode: prismaError.code,
+                    originalError: prismaError.message
+                }
             );
     }
 }
