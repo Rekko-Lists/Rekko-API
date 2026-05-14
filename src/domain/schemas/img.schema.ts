@@ -33,8 +33,7 @@ export const ALLOWED_MIMETYPES = [
 ];
 
 export const IMAGE_DEFAULTS = {
-    profileImage: process.env.DEFAULT_PROFILE_IMAGE_URL || '',
-    bannerImage: process.env.DEFAULT_BANNER_IMAGE_URL || '',
-    backgroundImage:
-        process.env.DEFAULT_BACKGROUND_IMAGE_URL || ''
+    profileImage: '',
+    bannerImage: '',
+    backgroundImage: ''
 };
