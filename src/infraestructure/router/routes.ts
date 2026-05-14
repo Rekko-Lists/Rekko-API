@@ -4,23 +4,33 @@ import oauthRouter from './user/oauth.routes';
 import userRouter from './user/user.routes';
 import postRouter from './post.routes';
 import commentRouter from './comment.routes';
-import animeRouter from './anime.routes';
+import animeRouter from './anime/anime.routes';
 import challengeRouter from './challenge.routes';
 import malRouter from './anime/mal.routes';
+import searchRouter from './search/search.routes';
 import {
     authAuthMiddleware,
     userAuthMiddleware
 } from '../../middlewares/auth.middleware';
+import { injectDependencies } from '../../middlewares/dependencyInjection.middleware';
 
 const router = Router();
 
+router.use(injectDependencies);
+
+// IMPLEMENTED
 router.use('/auth', authAuthMiddleware, authRouter);
 router.use('/oauth', oauthRouter);
 router.use('/user', userAuthMiddleware, userRouter);
+
+// WORKING
+router.use('/mal', malRouter);
+router.use('/anime', animeRouter);
+router.use('/api/search', searchRouter);
+
+// NOT IMPLEMENTED YET
 router.use('/post', postRouter);
 router.use('/comment', commentRouter);
-router.use('/anime', animeRouter);
 router.use('/challenge', challengeRouter);
-router.use('/mal', malRouter);
 
 export default router;
