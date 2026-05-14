@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+// Filter operators schema
+export const filterOperatorSchema = z.object({
+    lt: z.any().optional().describe('Less than'),
+    lte: z.any().optional().describe('Less than or equal'),
+    gt: z.any().optional().describe('Greater than'),
+    gte: z.any().optional().describe('Greater than or equal'),
+    eq: z.any().optional().describe('Equal'),
+    ne: z.any().optional().describe('Not equal')
+});
+
+export type FilterOperator = z.infer<
+    typeof filterOperatorSchema
+>;
+
 export const findOptionsSchema = z.object({
     select: z
         .array(z.string())
@@ -25,6 +39,9 @@ export const findOptionsSchema = z.object({
             field: z.string(),
             order: z.enum(['asc', 'desc']).default('asc')
         })
+        .optional(),
+    filters: z
+        .record(z.string(), filterOperatorSchema)
         .optional()
 });
 
@@ -57,3 +74,8 @@ export type PaginatedResponse<T> = {
         pages: number;
     };
 };
+
+export type PaginatedResponseWithMalStatus<T> =
+    PaginatedResponse<T> & {
+        withMalData: boolean;
+    };

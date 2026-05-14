@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { findOptionsSchema } from '../domain/schemas/find.schemas';
+import { parseFilters } from '../utils/query/filter';
 
 export const parseQueryOptions = (
     req: Request,
@@ -7,6 +8,10 @@ export const parseQueryOptions = (
     next: NextFunction
 ) => {
     try {
+        const filters = parseFilters(
+            req.query as Record<string, any>
+        );
+
         const findOptions = findOptionsSchema.parse({
             select: req.query.fields
                 ? (req.query.fields as string)
@@ -30,7 +35,8 @@ export const parseQueryOptions = (
                               ? 'desc'
                               : 'asc'
                   }
-                : undefined
+                : undefined,
+            filters
         });
 
         (req as any).findOptions = findOptions;
