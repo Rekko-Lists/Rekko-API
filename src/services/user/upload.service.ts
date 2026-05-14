@@ -5,8 +5,10 @@ import {
     ImageResponse
 } from '../../domain/schemas/user/image.schemas';
 import { IMAGE_DEFAULTS } from '../../domain/schemas/img.schema';
-import { CannotDeleteImageError } from '../../domain/errors/img.errors';
-import { UserNotFoundError } from '../../domain/errors/auth.errors';
+import {
+    CannotDeleteImageError,
+    UserNotFoundError
+} from '../../exceptions/exceptions';
 
 export class UploadService {
     constructor(

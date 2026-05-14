@@ -7,7 +7,7 @@ import {
     InvalidTokenError,
     TokenExpiredError,
     UserNotFoundError
-} from '../../domain/errors/auth.errors';
+} from '../../exceptions/exceptions';
 import {
     TokenPair,
     SessionInfo
