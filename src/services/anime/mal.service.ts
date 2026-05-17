@@ -12,7 +12,7 @@ import {
 
 export class MalService {
     private readonly animeFields =
-        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast';
+        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type';
 
     constructor(private readonly malApiService: MalApiService) {}
 
@@ -46,7 +46,8 @@ export class MalService {
     }
 
     async getTrendingAnimes(
-        limit: number = SEARCH_LIMITS.MAL_TRENDING_LIMIT
+        limit: number = SEARCH_LIMITS.MAL_TRENDING_LIMIT,
+        offset: number = 0
     ): Promise<Array<MalAnimeData>> {
         const response = await this.malApiService.fetchFromMal(
             '/anime/ranking',
@@ -56,6 +57,7 @@ export class MalService {
                     limit,
                     SEARCH_LIMITS.MAL_TRENDING_LIMIT
                 ),
+                offset,
                 fields: this.animeFields
             }
         );
@@ -141,6 +143,7 @@ export class MalService {
             status: malData.status || 'Unknown',
             genres: malData.genres?.map((g) => g.name) || [],
             studios: malData.studios?.map((s) => s.name) || [],
+            mediaType: malData.media_type || 'tv',
             likes: 0,
             nextUpdate: new Date(
                 Date.now() + 7 * 24 * 60 * 60 * 1000
