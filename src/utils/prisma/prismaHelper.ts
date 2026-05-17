@@ -46,6 +46,12 @@ export function buildFilterWhere(
             fieldWhere.equals = operators.eq;
         if (operators.ne !== undefined)
             fieldWhere.not = operators.ne;
+        if (operators.in !== undefined) {
+            const raw = operators.in;
+            fieldWhere.in = typeof raw === 'string'
+                ? raw.split(',').map((v: string) => v.trim())
+                : raw;
+        }
 
         if (Object.keys(fieldWhere).length > 0) {
             where[field] = fieldWhere;

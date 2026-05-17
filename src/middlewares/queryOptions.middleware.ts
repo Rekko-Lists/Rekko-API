@@ -26,15 +26,20 @@ export const parseQueryOptions = (
                     ? req.query.limit
                     : undefined
             },
+            // sortField y sortOrder aceptan valores comma-separated para multi-sort
+            // ej: sortField=malRank,likes&sortOrder=asc,desc
             sort: req.query.sortField
-                ? {
-                      field: req.query.sortField as string,
-                      order:
-                          (req.query.sortOrder as string) ===
-                          'desc'
-                              ? 'desc'
-                              : 'asc'
-                  }
+                ? (req.query.sortField as string)
+                      .split(',')
+                      .map((field, i) => {
+                          const orders = req.query.sortOrder
+                              ? (req.query.sortOrder as string).split(',')
+                              : [];
+                          return {
+                              field: field.trim(),
+                              order: orders[i]?.trim() === 'desc' ? 'desc' : 'asc'
+                          };
+                      })
                 : undefined,
             filters
         });

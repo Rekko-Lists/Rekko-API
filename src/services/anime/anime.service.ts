@@ -3,9 +3,13 @@ import { MalAnimeData } from '../../domain/schemas/anime/mal.schemas';
 import { MalService } from './mal.service';
 import {
     FindOptions,
-    PaginatedResponse
+    PaginatedResponse,
+    PaginatedResponseWithMalStatus
 } from '../../domain/schemas/find.schemas';
-import { NotFoundError } from '../../exceptions/exceptions';
+import {
+    ConflictError,
+    NotFoundError
+} from '../../exceptions/exceptions';
 import { Anime } from '../../domain/entities/Anime';
 import { Paginator } from '../../utils/pagination/paginator';
 
@@ -59,7 +63,12 @@ export class AnimeService {
             const now = new Date();
 
             if (nextUpdate && nextUpdate < now) {
-                this.updateAnimeFromMal(malId);
+                this.updateAnimeFromMal(malId).catch((error) => {
+                    console.warn(
+                        '[getAnimeByMalId] Background update failed:',
+                        error
+                    );
+                });
             }
 
             return dbAnime;
@@ -70,9 +79,18 @@ export class AnimeService {
         const mappedAnime =
             this.malService.mapMalToAnime(malAnime);
 
-        this.animeRepository.create(mappedAnime as any);
+        const createdAnime = await this.animeRepository.create(
+            mappedAnime as any
+        );
 
-        return Anime.fromPersistence(mappedAnime as any);
+        if (createdAnime) return createdAnime;
+
+        const existingAnime =
+            await this.animeRepository.findByMalId(malId);
+
+        if (existingAnime) return existingAnime;
+
+        throw new ConflictError('Anime already exists but could not be loaded.');
     }
 
     private async updateAnimeFromMal(
@@ -156,5 +174,135 @@ export class AnimeService {
                 mappedAnime as any
             );
         }
+    }
+
+    async getCatalogue(
+        findOptions: FindOptions
+    ): Promise<PaginatedResponseWithMalStatus<Anime>> {
+        const { pagination } = findOptions;
+        const page  = pagination?.page  ?? 1;
+        const limit = pagination?.limit ?? 10;
+
+        // DB maneja paginación, sort y filtros directamente.
+        // MAL corre en paralelo solo para descubrir animes nuevos en background.
+        const [dbResult, malResult] = await Promise.allSettled([
+            this.animeRepository.find(findOptions),
+            this.malService.getTrendingAnimes(500)
+        ]);
+
+        if (dbResult.status === 'rejected') {
+            console.error('[getCatalogue] DB query failed:', dbResult.reason);
+            throw dbResult.reason;
+        }
+        const dbData = dbResult.value;
+
+        const malApiWorked = malResult.status === 'fulfilled';
+
+        if (!malApiWorked) {
+            console.warn(
+                '[getCatalogue] MAL fetch failed, using DB only:',
+                (malResult as PromiseRejectedResult).reason
+            );
+        }
+
+        // Background: detectar y guardar animes de MAL que no estén en DB
+        if (malApiWorked) {
+            const malAnimes = malResult.value;
+            const malIds    = malAnimes.map((m) => m.id);
+
+            this.animeRepository.findExistingMalIds(malIds)
+                .then((existingIds) => {
+                    const existing = new Set(existingIds);
+                    const newOnes  = malAnimes.filter((m) => !existing.has(m.id));
+                    if (newOnes.length > 0) {
+                        return this.saveMalAnimes(newOnes);
+                    }
+                })
+                .catch((err) =>
+                    console.error('[getCatalogue] Background save error:', err)
+                );
+        }
+
+        if (dbData.data.length === 0 && page === 1) {
+            throw new NotFoundError('No animes found.');
+        }
+
+        const maxPages = Math.ceil(dbData.total / limit);
+
+        if (page > maxPages && maxPages > 0) {
+            throw new NotFoundError(
+                `Page ${page} does not exist. Max pages: ${maxPages}`
+            );
+        }
+
+        return {
+            data: dbData.data,
+            pagination: { page, limit, total: dbData.total, pages: maxPages },
+            withMalData: malApiWorked
+        };
+    }
+
+    async getGenres(): Promise<string[]> {
+        return this.animeRepository.findAllGenres();
+    }
+
+    async seedFromMal(
+        pages: number = 10
+    ): Promise<{ saved: number; skipped: number; pages: number }> {
+        const pageSize = 500; // MAL ranking max per request
+        let totalSaved = 0;
+        let totalSkipped = 0;
+
+        for (let page = 0; page < pages; page++) {
+            const offset = page * pageSize;
+
+            try {
+                const malAnimes = await this.malService.getTrendingAnimes(
+                    pageSize,
+                    offset
+                );
+
+                if (malAnimes.length === 0) break;
+
+                const malIds = malAnimes.map((m) => m.id);
+                const existingIds =
+                    await this.animeRepository.findExistingMalIds(malIds);
+                const existing = new Set(existingIds);
+                const newOnes = malAnimes.filter((m) => !existing.has(m.id));
+
+                totalSkipped += malAnimes.length - newOnes.length;
+
+                if (newOnes.length > 0) {
+                    await this.saveMalAnimes(newOnes);
+                    totalSaved += newOnes.length;
+                }
+
+                if (malAnimes.length < pageSize) break;
+
+                // Respect MAL rate limits between pages
+                if (page < pages - 1) {
+                    await new Promise((resolve) => setTimeout(resolve, 1200));
+                }
+            } catch (error) {
+                console.error(
+                    `[seedFromMal] Failed at offset ${offset}:`,
+                    error
+                );
+                break;
+            }
+        }
+
+        return { saved: totalSaved, skipped: totalSkipped, pages };
+    }
+
+    private async saveMalAnimes(
+        malAnimes: MalAnimeData[]
+    ): Promise<void> {
+        const animesData = malAnimes.map((m) =>
+            this.malService.mapMalToAnime(m)
+        );
+        await this.animeRepository.createTransactionErrorHandling(
+            animesData as any
+        );
     }
 }

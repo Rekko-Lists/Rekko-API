@@ -68,7 +68,8 @@ export const malAnimeDataSchema = z.object({
             day_of_the_week: z.string().optional(),
             start_time: z.string().optional()
         })
-        .optional()
+        .optional(),
+    media_type: z.string().optional()
 });
 export type MalAnimeData = z.infer<typeof malAnimeDataSchema>;
 

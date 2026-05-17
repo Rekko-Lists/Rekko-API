@@ -2,14 +2,20 @@ import { Router } from 'express';
 import {
     getAnime,
     getAnimes,
-    getSeasonalAnimes
+    getGenres,
+    getSeasonalAnimes,
+    seedAnimes
 } from '../../../controllers/anime/anime.controller';
 import { parseQueryOptions } from '../../../middlewares/queryOptions.middleware';
 import { validateSeasonParams } from '../../../middlewares/validators/anime.validator';
+import { authMiddleware } from '../../../middlewares/auth.middleware';
 
 const router = Router();
 
 router.route('/').get(parseQueryOptions, getAnimes);
+
+router.route('/genres').get(getGenres);
+router.route('/seed').get(authMiddleware, seedAnimes);
 
 router.route('/season').get(
     parseQueryOptions,

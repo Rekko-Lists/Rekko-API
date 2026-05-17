@@ -6,36 +6,59 @@ import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
 import { buildFilterWhere } from '../../../../utils/prisma/prismaHelper';
 import { Broadcast } from '../../../../domain/entities/Broadcast';
-import { validSeasons } from '../../../../domain/schemas/anime/mal.schemas';
+
+const GENRE_INCLUDE = {
+    animeGenres: { include: { genre: true } }
+} as const;
 
 export class AnimePrismaRepository implements AnimeRepository {
     constructor(private readonly db = prisma) {}
 
+    // Extrae nombres de género desde la relación incluida
+    private withGenres(record: any): any {
+        return {
+            ...record,
+            genres: record.animeGenres?.map((ag: any) => ag.genre.name) ?? []
+        };
+    }
+
+    // Construye los nested writes de Prisma para géneros
+    private genreConnectOrCreate(genres: string[]) {
+        if (!genres || genres.length === 0) return undefined;
+        return {
+            create: genres.map(name => ({
+                genre: {
+                    connectOrCreate: {
+                        where: { name },
+                        create: { name }
+                    }
+                }
+            }))
+        };
+    }
+
     async create(entity: Anime): Promise<Anime | null> {
         try {
             const animeData = entity as any;
-            const { broadcast, ...animeWithoutBroadcast } =
-                animeData;
+            const { broadcast, genres, ...animeWithoutRelations } = animeData;
 
-            const createdBroadcast =
-                await this.createBroadcast(broadcast);
+            const createdBroadcast = await this.createBroadcast(broadcast);
 
             const created = await this.db.anime.create({
                 data: {
-                    ...animeWithoutBroadcast,
+                    ...animeWithoutRelations,
                     broadcast: {
-                        connect: {
-                            broadcastId:
-                                createdBroadcast.getBroadcastId()
-                        }
-                    }
+                        connect: { broadcastId: createdBroadcast.getBroadcastId() }
+                    },
+                    animeGenres: this.genreConnectOrCreate(genres)
                 },
                 include: {
-                    broadcast: true
+                    broadcast: true,
+                    ...GENRE_INCLUDE
                 }
             });
 
-            return Anime.fromPersistence(created);
+            return Anime.fromPersistence(this.withGenres(created));
         } catch (error: any) {
             if (
                 error?.code === 'P2002' &&
@@ -70,27 +93,20 @@ export class AnimePrismaRepository implements AnimeRepository {
         try {
             for (const animeData of animesData) {
                 try {
-                    const {
-                        broadcast,
-                        ...animeDataWithoutBroadcast
-                    } = animeData;
+                    const { broadcast, genres, ...animeDataWithoutRelations } = animeData;
 
-                    const createdBroadcast =
-                        await this.createBroadcast(broadcast);
+                    const createdBroadcast = await this.createBroadcast(broadcast);
 
                     await this.db.anime.create({
                         data: {
-                            ...animeDataWithoutBroadcast,
+                            ...animeDataWithoutRelations,
                             broadcast: {
-                                connect: {
-                                    broadcastId:
-                                        createdBroadcast.getBroadcastId()
-                                }
-                            }
+                                connect: { broadcastId: createdBroadcast.getBroadcastId() }
+                            },
+                            animeGenres: this.genreConnectOrCreate(genres)
                         }
                     });
                 } catch (error: any) {
-                    // Si es error de constraint en mal_id, ignorar
                     if (
                         error?.code === 'P2002' &&
                         error?.meta?.target?.includes('mal_id')
@@ -111,33 +127,35 @@ export class AnimePrismaRepository implements AnimeRepository {
         animeData: any
     ): Promise<Anime | null> {
         try {
-            const { broadcast, ...anime } = animeData;
+            const { broadcast, genres, ...anime } = animeData;
 
             const updated = await this.db.anime.update({
-                where: {
-                    malId
-                },
+                where: { malId },
                 data: {
                     ...anime,
                     broadcast: broadcast
                         ? {
                               update: {
-                                  dayOfWeek:
-                                      broadcast.dayOfWeek ||
-                                      'Unknown',
-                                  startTime:
-                                      broadcast.startTime ||
-                                      '00:00'
+                                  dayOfWeek: broadcast.dayOfWeek || 'Unknown',
+                                  startTime: broadcast.startTime || '00:00'
                               }
+                          }
+                        : undefined,
+                    // Al actualizar, borramos las relaciones existentes y recreamos
+                    animeGenres: genres
+                        ? {
+                              deleteMany: {},
+                              ...this.genreConnectOrCreate(genres)
                           }
                         : undefined
                 },
                 include: {
-                    broadcast: true
+                    broadcast: true,
+                    ...GENRE_INCLUDE
                 }
             });
 
-            return Anime.fromPersistence(updated);
+            return Anime.fromPersistence(this.withGenres(updated));
         } catch (error) {
             handlePrismaError(error);
         }
@@ -150,22 +168,18 @@ export class AnimePrismaRepository implements AnimeRepository {
         try {
             const animes = await this.db.anime.findMany({
                 where: {
-                    name: {
-                        contains: query,
-                        mode: 'insensitive'
-                    }
+                    name: { contains: query, mode: 'insensitive' }
                 },
                 include: {
-                    broadcast: true
+                    broadcast: true,
+                    ...GENRE_INCLUDE
                 },
                 take: limit,
-                orderBy: {
-                    malRank: 'asc'
-                }
+                orderBy: { malRank: 'asc' }
             });
 
             return animes.map((anime: any) =>
-                Anime.fromPersistence(anime)
+                Anime.fromPersistence(this.withGenres(anime))
             );
         } catch (error) {
             handlePrismaError(error);
@@ -176,40 +190,52 @@ export class AnimePrismaRepository implements AnimeRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Anime>> {
         try {
-            const { select, pagination, sort, filters } =
-                findOptions;
+            const { pagination, sort, filters } = findOptions;
 
-            // Build where clause from filters
-            const where = filters
-                ? buildFilterWhere(filters)
-                : {};
+            // Extraer el filtro de géneros antes de buildFilterWhere
+            // porque necesita una query de relación, no un operador escalar
+            const { genres: genreFilter, ...otherFilters } =
+                (filters || {}) as Record<string, any>;
 
-            const skip =
-                (pagination.page - 1) * pagination.limit;
+            const where: any =
+                Object.keys(otherFilters).length > 0
+                    ? buildFilterWhere(otherFilters)
+                    : {};
+
+            if (genreFilter?.eq) {
+                const genreNames = String(genreFilter.eq)
+                    .split(',')
+                    .map((g: string) => g.trim())
+                    .filter(Boolean);
+                where.animeGenres = {
+                    some: { genre: { name: { in: genreNames } } }
+                };
+            }
+
+            const skip = (pagination.page - 1) * pagination.limit;
             const take = pagination.limit;
 
-            const orderBy = sort
-                ? { [sort.field]: sort.order }
-                : { animeId: 'asc' };
+            const orderBy =
+                sort && sort.length > 0
+                    ? sort.map(s => ({ [s.field]: s.order }))
+                    : [{ animeId: 'asc' }];
 
             const [animes, total] = await Promise.all([
                 this.db.anime.findMany({
                     where,
                     skip,
                     take,
-                    orderBy
+                    orderBy,
+                    include: GENRE_INCLUDE
                 }),
                 this.db.anime.count({ where })
             ]);
 
-            const formattedAnimes = animes.map((anime: any) => {
-                return Anime.fromPersistence(anime);
-            });
+            const formattedAnimes = animes.map((anime: any) =>
+                Anime.fromPersistence(this.withGenres(anime))
+            );
 
-            return {
-                data: formattedAnimes as any,
-                total
-            };
+            return { data: formattedAnimes as any, total };
         } catch (error) {
             handlePrismaError(error);
         }
@@ -218,15 +244,16 @@ export class AnimePrismaRepository implements AnimeRepository {
     async findByMalId(malId: number): Promise<Anime | null> {
         try {
             const anime = await this.db.anime.findUnique({
-                where: {
-                    malId
-                },
+                where: { malId },
                 include: {
-                    broadcast: true
+                    broadcast: true,
+                    ...GENRE_INCLUDE
                 }
             });
 
-            return anime ? Anime.fromPersistence(anime) : null;
+            return anime
+                ? Anime.fromPersistence(this.withGenres(anime))
+                : null;
         } catch (error) {
             handlePrismaError(error);
         }
@@ -239,14 +266,8 @@ export class AnimePrismaRepository implements AnimeRepository {
 
         try {
             const animes = await this.db.anime.findMany({
-                where: {
-                    malId: {
-                        in: malIds
-                    }
-                },
-                select: {
-                    malId: true
-                }
+                where: { malId: { in: malIds } },
+                select: { malId: true }
             });
 
             return animes.map(
@@ -273,16 +294,8 @@ export class AnimePrismaRepository implements AnimeRepository {
 
             const where = {
                 AND: [
-                    {
-                        startDate: {
-                            gte: new Date(year, months[0] - 1, 1)
-                        }
-                    },
-                    {
-                        startDate: {
-                            lt: new Date(year, months[2] + 1, 1)
-                        }
-                    }
+                    { startDate: { gte: new Date(year, months[0] - 1, 1) } },
+                    { startDate: { lt: new Date(year, months[2] + 1, 1) } }
                 ]
             };
 
@@ -290,13 +303,25 @@ export class AnimePrismaRepository implements AnimeRepository {
                 where,
                 orderBy: { malRank: 'asc' },
                 include: {
-                    broadcast: true
+                    broadcast: true,
+                    ...GENRE_INCLUDE
                 }
             });
 
             return animes.map((anime: any) =>
-                Anime.fromPersistence(anime)
+                Anime.fromPersistence(this.withGenres(anime))
             );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findAllGenres(): Promise<string[]> {
+        try {
+            const genres = await this.db.genre.findMany({
+                orderBy: { name: 'asc' }
+            });
+            return genres.map((g: { name: string }) => g.name);
         } catch (error) {
             handlePrismaError(error);
         }

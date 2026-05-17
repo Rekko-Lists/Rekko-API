@@ -33,4 +33,6 @@ export interface AnimeRepository {
     findBySeason(year: number, season: string): Promise<Anime[]>;
 
     findExistingMalIds(malIds: number[]): Promise<number[]>;
+
+    findAllGenres(): Promise<string[]>;
 }
