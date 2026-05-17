@@ -7,7 +7,8 @@ export const filterOperatorSchema = z.object({
     gt: z.any().optional().describe('Greater than'),
     gte: z.any().optional().describe('Greater than or equal'),
     eq: z.any().optional().describe('Equal'),
-    ne: z.any().optional().describe('Not equal')
+    ne: z.any().optional().describe('Not equal'),
+    in: z.any().optional().describe('In array (comma-separated string or array)')
 });
 
 export type FilterOperator = z.infer<
@@ -30,15 +31,17 @@ export const findOptionsSchema = z.object({
                 .number()
                 .int('Must be integer')
                 .min(1, 'Limit must be at least 1')
-                .max(20, 'Maximum limit is 20')
+                .max(110, 'Maximum limit is 110')
                 .default(10)
         })
         .default({ page: 1, limit: 10 }),
     sort: z
-        .object({
-            field: z.string(),
-            order: z.enum(['asc', 'desc']).default('asc')
-        })
+        .array(
+            z.object({
+                field: z.string(),
+                order: z.enum(['asc', 'desc']).default('asc')
+            })
+        )
         .optional(),
     filters: z
         .record(z.string(), filterOperatorSchema)
