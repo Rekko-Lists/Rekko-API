@@ -56,9 +56,36 @@ export const validateImage = (config: ImgValidation) => {
     };
 };
 
+export const validateImageOptional = (config: ImgValidation) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        // If no file, continue (file is optional)
+        if (!req.file) {
+            next();
+            return;
+        }
+
+        const fileSize = req.file.size;
+
+        if (fileSize > config.maxSize) {
+            throw new SpaceLimitExceededError(
+                `El archivo es muy grande. Máximo permitido: ${config.maxSize / (1024 * 1024)}MB`
+            );
+        }
+
+        (req as any).imageConfig = config;
+
+        next();
+    };
+};
+
 export const validateImageType = (
-    imageType: 'profileImage' | 'bannerImage' | 'backgroundImage'
+    imageType:
+        | 'profileImage'
+        | 'bannerImage'
+        | 'backgroundImage'
+        | 'postImage'
 ) => {
     const config = IMAGE_CONFIG[imageType];
+    if (config.optional) return validateImageOptional(config);
     return validateImage(config);
 };

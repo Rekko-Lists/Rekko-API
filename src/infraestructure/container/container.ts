@@ -7,6 +7,8 @@ import { EmailAuthPrismaRepository } from '../persistence/prisma/user/EmailAuth.
 import { PasswordAuthPrismaRepository } from '../persistence/prisma/user/PasswordAuth.prisma.repository';
 import { RefreshTokenPrismaRepository } from '../persistence/prisma/user/RefreshToken.prisma.repository';
 import { OAuthPrismaRepository } from '../persistence/prisma/user/OAuth.prisma.repository';
+import { PostPrismaRepository } from '../persistence/prisma/publication/Post.prisma.repository';
+import { LikePrismaRepository } from '../persistence/prisma/publication/Like.prisma.repository';
 
 // ===== EXTERNAL SERVICES (Mailer, Storage) =====
 import { EmailHandler } from '../services/mailer/nodemailer.service';
@@ -23,6 +25,9 @@ import { PasswordAuthService } from '../../services/user/passwordAuth.service';
 import { RefreshTokenService } from '../../services/user/refreshToken.service';
 import { OAuthService } from '../../services/user/oauth.service';
 import { UploadService } from '../../services/user/upload.service';
+import { PostService } from '../../services/publication/post.service';
+import { LikeService } from '../../services/publication/like.service';
+import { CommentPrismaRepository } from '../persistence/prisma/Comment.prisma.repository';
 
 // ===== REPOSITORIES INITIALIZATION =====
 const animeRepository = new AnimePrismaRepository(prisma);
@@ -37,6 +42,9 @@ const refreshTokenRepository = new RefreshTokenPrismaRepository(
     prisma
 );
 const oauthRepository = new OAuthPrismaRepository(prisma);
+const postRepository = new PostPrismaRepository(prisma);
+const likeRepository = new LikePrismaRepository(prisma);
+const commentRepository = new CommentPrismaRepository();
 
 // ===== EXTERNAL SERVICES INITIALIZATION =====
 const emailHandler = new EmailHandler();
@@ -54,6 +62,7 @@ const animeService = new AnimeService(
 const searchService = new SearchService(
     animeRepository,
     userRepository,
+    postRepository,
     malService
 );
 
@@ -82,6 +91,16 @@ const uploadService = new UploadService(
     userService,
     cloudinaryHandler
 );
+const likeService = new LikeService(
+    likeRepository,
+    postRepository
+);
+const postService = new PostService(
+    postRepository,
+    commentRepository,
+    cloudinaryHandler,
+    likeService
+);
 
 // ===== CONTAINER EXPORT =====
 export const container = {
@@ -91,7 +110,8 @@ export const container = {
         emailAuth: emailAuthRepository,
         passwordAuth: passwordAuthRepository,
         refreshToken: refreshTokenRepository,
-        oauth: oauthRepository
+        oauth: oauthRepository,
+        post: postRepository
     },
     externalServices: {
         emailHandler,
@@ -107,6 +127,8 @@ export const container = {
         refreshToken: refreshTokenService,
         oauth: oauthService,
         upload: uploadService,
+        post: postService,
+        like: likeService,
         mal: malService
     }
 } as const;

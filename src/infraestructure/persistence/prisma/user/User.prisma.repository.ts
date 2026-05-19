@@ -27,7 +27,8 @@ export class UserPrismaRepository implements UserRepository<User> {
                     email: entity.getEmail(),
                     username: entity.getUsername(),
                     password: entity.getPasswordHash(),
-                    biography: entity.getBiography() ?? null
+                    biography: entity.getBiography() ?? null,
+                    profileImage: ''
                 }
             });
 
@@ -76,9 +77,10 @@ export class UserPrismaRepository implements UserRepository<User> {
                 (pagination.page - 1) * pagination.limit;
             const take = pagination.limit;
 
-            const orderBy = sort
-                ? { [sort.field]: sort.order }
-                : { userId: 'asc' };
+            const orderBy =
+                sort && sort.length > 0
+                    ? { [sort[0].field]: sort[0].order }
+                    : { userId: 'asc' };
 
             const [users, total] = await Promise.all([
                 this.db.user.findMany({
