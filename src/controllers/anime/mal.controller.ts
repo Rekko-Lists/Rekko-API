@@ -14,15 +14,11 @@ export const getAuthUrl = catchAsync(
                 ? `${process.env.APP_URL_DEV}:${process.env.SERVER_PORT}/mal/auth/callback`
                 : `${process.env.APP_URL_PROD}/mal/auth/callback`;
 
-        console.log('[MAL OAuth] redirectUri enviada:', redirectUri);
-
         const authUrl =
             externalServices.malAuth.getAuthorizationUrl(
                 redirectUri,
                 state
             );
-
-        console.log('[MAL OAuth] authUrl generada:', authUrl);
 
         ok(res, 'Authorization URL generated', {
             authUrl,
