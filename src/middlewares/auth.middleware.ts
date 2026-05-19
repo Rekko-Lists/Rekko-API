@@ -36,6 +36,30 @@ export const authMiddleware = (
     next();
 };
 
+export const optionalAuthMiddleware = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): void => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next();
+    }
+
+    try {
+        const token = authHeader.slice(7);
+
+        const decoded = verifyAccessToken(token);
+
+        req.user = {
+            userId: decoded.userId
+        };
+    } catch (error) {}
+
+    next();
+};
+
 export const userAuthMiddleware = (
     req: Request,
     res: Response,
