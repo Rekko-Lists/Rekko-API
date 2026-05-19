@@ -20,14 +20,16 @@ export const searchData = catchAsync(
         }
 
         const { services } = req.container!;
+        const userId = req.user?.userId;
 
-        const [animeResult, users] = await Promise.all([
+        const [animeResult, users, posts] = await Promise.all([
             services.search.searchAnimesWithMalPaginated(
                 q,
                 1,
                 SEARCH_LIMITS.DEFAULT_PAGE_LIMIT
             ),
-            services.search.searchUsers(q)
+            services.search.searchUsers(q),
+            services.search.searchPosts(q)
         ]);
 
         const mappedAnimes = AnimeMapper.toDTOs(
@@ -44,12 +46,16 @@ export const searchData = catchAsync(
                 ''
         }));
 
-        const posts: any[] = [];
+        const mappedPosts =
+            await services.post.enrichPostsWithLikesStatus(
+                posts,
+                userId
+            );
 
         ok(res, 'Search results', {
             animes: mappedAnimes,
             users: mappedUsers,
-            posts,
+            posts: mappedPosts,
             withMalData: animeResult.withMalData
         });
     }

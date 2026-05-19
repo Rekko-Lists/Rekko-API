@@ -1,7 +1,9 @@
 import { Anime } from '../../domain/entities/Anime';
 import { User } from '../../domain/entities/User';
+import { Post } from '../../domain/entities/Post';
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
+import { PostRepository } from '../../domain/repositories/publication/Post.repository';
 import { MalAnimeData } from '../../domain/schemas/anime/mal.schemas';
 import { PaginatedResponseWithMalStatus } from '../../domain/schemas/find.schemas';
 import {
@@ -22,6 +24,7 @@ export class SearchService {
     constructor(
         private readonly animeRepository: AnimeRepository,
         private readonly userRepository: UserRepository<User>,
+        private readonly postRepository: PostRepository,
         private readonly malService: MalService
     ) {
         this.deduplicator = new AnimeDuplicator(malService);
@@ -183,5 +186,14 @@ export class SearchService {
         );
 
         return sorted.slice(0, SEARCH_LIMITS.MAX_RESULTS);
+    }
+
+    async searchPosts(query: string): Promise<Post[]> {
+        const posts = await this.postRepository.searchByTitle(
+            query,
+            SEARCH_LIMITS.MAX_RESULTS
+        );
+
+        return posts;
     }
 }
