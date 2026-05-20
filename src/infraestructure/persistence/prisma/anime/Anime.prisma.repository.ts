@@ -4,7 +4,10 @@ import { FindOptions } from '../../../../domain/schemas/find.schemas';
 import { FindRepository } from '../../../../domain/schemas/find.schemas';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
-import { buildFilterWhere } from '../../../../utils/prisma/prismaHelper';
+import {
+    buildFilterWhere,
+    buildPrismaPageQueryArray
+} from '../../../../utils/prisma/prismaHelper';
 import { Broadcast } from '../../../../domain/entities/Broadcast';
 
 const GENRE_INCLUDE = {
@@ -18,7 +21,10 @@ export class AnimePrismaRepository implements AnimeRepository {
     private withGenres(record: any): any {
         return {
             ...record,
-            genres: record.animeGenres?.map((ag: any) => ag.genre.name) ?? []
+            genres:
+                record.animeGenres?.map(
+                    (ag: any) => ag.genre.name
+                ) ?? []
         };
     }
 
@@ -26,7 +32,7 @@ export class AnimePrismaRepository implements AnimeRepository {
     private genreConnectOrCreate(genres: string[]) {
         if (!genres || genres.length === 0) return undefined;
         return {
-            create: genres.map(name => ({
+            create: genres.map((name) => ({
                 genre: {
                     connectOrCreate: {
                         where: { name },
@@ -40,17 +46,26 @@ export class AnimePrismaRepository implements AnimeRepository {
     async create(entity: Anime): Promise<Anime | null> {
         try {
             const animeData = entity as any;
-            const { broadcast, genres, ...animeWithoutRelations } = animeData;
+            const {
+                broadcast,
+                genres,
+                ...animeWithoutRelations
+            } = animeData;
 
-            const createdBroadcast = await this.createBroadcast(broadcast);
+            const createdBroadcast =
+                await this.createBroadcast(broadcast);
 
             const created = await this.db.anime.create({
                 data: {
                     ...animeWithoutRelations,
                     broadcast: {
-                        connect: { broadcastId: createdBroadcast.getBroadcastId() }
+                        connect: {
+                            broadcastId:
+                                createdBroadcast.getBroadcastId()
+                        }
                     },
-                    animeGenres: this.genreConnectOrCreate(genres)
+                    animeGenres:
+                        this.genreConnectOrCreate(genres)
                 },
                 include: {
                     broadcast: true,
@@ -58,7 +73,9 @@ export class AnimePrismaRepository implements AnimeRepository {
                 }
             });
 
-            return Anime.fromPersistence(this.withGenres(created));
+            return Anime.fromPersistence(
+                this.withGenres(created)
+            );
         } catch (error: any) {
             if (
                 error?.code === 'P2002' &&
@@ -93,17 +110,26 @@ export class AnimePrismaRepository implements AnimeRepository {
         try {
             for (const animeData of animesData) {
                 try {
-                    const { broadcast, genres, ...animeDataWithoutRelations } = animeData;
+                    const {
+                        broadcast,
+                        genres,
+                        ...animeDataWithoutRelations
+                    } = animeData;
 
-                    const createdBroadcast = await this.createBroadcast(broadcast);
+                    const createdBroadcast =
+                        await this.createBroadcast(broadcast);
 
                     await this.db.anime.create({
                         data: {
                             ...animeDataWithoutRelations,
                             broadcast: {
-                                connect: { broadcastId: createdBroadcast.getBroadcastId() }
+                                connect: {
+                                    broadcastId:
+                                        createdBroadcast.getBroadcastId()
+                                }
                             },
-                            animeGenres: this.genreConnectOrCreate(genres)
+                            animeGenres:
+                                this.genreConnectOrCreate(genres)
                         }
                     });
                 } catch (error: any) {
@@ -136,8 +162,12 @@ export class AnimePrismaRepository implements AnimeRepository {
                     broadcast: broadcast
                         ? {
                               update: {
-                                  dayOfWeek: broadcast.dayOfWeek || 'Unknown',
-                                  startTime: broadcast.startTime || '00:00'
+                                  dayOfWeek:
+                                      broadcast.dayOfWeek ||
+                                      'Unknown',
+                                  startTime:
+                                      broadcast.startTime ||
+                                      '00:00'
                               }
                           }
                         : undefined,
@@ -145,7 +175,9 @@ export class AnimePrismaRepository implements AnimeRepository {
                     animeGenres: genres
                         ? {
                               deleteMany: {},
-                              ...this.genreConnectOrCreate(genres)
+                              ...this.genreConnectOrCreate(
+                                  genres
+                              )
                           }
                         : undefined
                 },
@@ -155,7 +187,9 @@ export class AnimePrismaRepository implements AnimeRepository {
                 }
             });
 
-            return Anime.fromPersistence(this.withGenres(updated));
+            return Anime.fromPersistence(
+                this.withGenres(updated)
+            );
         } catch (error) {
             handlePrismaError(error);
         }
@@ -168,7 +202,10 @@ export class AnimePrismaRepository implements AnimeRepository {
         try {
             const animes = await this.db.anime.findMany({
                 where: {
-                    name: { contains: query, mode: 'insensitive' }
+                    name: {
+                        contains: query,
+                        mode: 'insensitive'
+                    }
                 },
                 include: {
                     broadcast: true,
@@ -190,7 +227,7 @@ export class AnimePrismaRepository implements AnimeRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Anime>> {
         try {
-            const { pagination, sort, filters } = findOptions;
+            const { filters } = findOptions;
 
             // Extraer el filtro de géneros antes de buildFilterWhere
             // porque necesita una query de relación, no un operador escalar
@@ -212,13 +249,11 @@ export class AnimePrismaRepository implements AnimeRepository {
                 };
             }
 
-            const skip = (pagination.page - 1) * pagination.limit;
-            const take = pagination.limit;
-
-            const orderBy =
-                sort && sort.length > 0
-                    ? sort.map(s => ({ [s.field]: s.order }))
-                    : [{ animeId: 'asc' }];
+            const { skip, take, orderBy } =
+                buildPrismaPageQueryArray(
+                    findOptions,
+                    'animeId'
+                );
 
             const [animes, total] = await Promise.all([
                 this.db.anime.findMany({
@@ -294,8 +329,16 @@ export class AnimePrismaRepository implements AnimeRepository {
 
             const where = {
                 AND: [
-                    { startDate: { gte: new Date(year, months[0] - 1, 1) } },
-                    { startDate: { lt: new Date(year, months[2] + 1, 1) } }
+                    {
+                        startDate: {
+                            gte: new Date(year, months[0] - 1, 1)
+                        }
+                    },
+                    {
+                        startDate: {
+                            lt: new Date(year, months[2] + 1, 1)
+                        }
+                    }
                 ]
             };
 

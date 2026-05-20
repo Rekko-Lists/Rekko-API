@@ -7,6 +7,7 @@ import {
 import { PostWhereUnique } from '../../../../domain/schemas/publication/post.schemas';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
+import { buildPrismaPageQuery } from '../../../../utils/prisma/prismaHelper';
 
 export class PostPrismaRepository implements PostRepository {
     constructor(private readonly db = prisma) {}
@@ -68,15 +69,10 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { pagination, sort } = findOptions;
-            const skip =
-                (pagination.page - 1) * pagination.limit;
-            const take = pagination.limit;
-
-            const orderBy =
-                sort && sort.length > 0
-                    ? { [sort[0].field]: sort[0].order }
-                    : { postId: 'desc' };
+            const { skip, take, orderBy } = buildPrismaPageQuery(
+                findOptions,
+                'postId'
+            );
 
             const [posts, total] = await Promise.all([
                 this.db.post.findMany({
@@ -113,15 +109,10 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { pagination, sort } = findOptions;
-            const skip =
-                (pagination.page - 1) * pagination.limit;
-            const take = pagination.limit;
-
-            const orderBy =
-                sort && sort.length > 0
-                    ? { [sort[0].field]: sort[0].order }
-                    : { postId: 'desc' };
+            const { skip, take, orderBy } = buildPrismaPageQuery(
+                findOptions,
+                'postId'
+            );
 
             const [posts, total] = await Promise.all([
                 this.db.post.findMany({
@@ -184,15 +175,10 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { pagination, sort } = findOptions;
-            const skip =
-                (pagination.page - 1) * pagination.limit;
-            const take = pagination.limit;
-
-            const orderBy =
-                sort && sort.length > 0
-                    ? { [sort[0].field]: sort[0].order }
-                    : { postId: 'desc' };
+            const { skip, take, orderBy } = buildPrismaPageQuery(
+                findOptions,
+                'postId'
+            );
 
             const [posts, total] = await Promise.all([
                 this.db.post.findMany({

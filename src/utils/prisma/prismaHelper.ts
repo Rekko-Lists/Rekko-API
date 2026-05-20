@@ -1,4 +1,50 @@
-import { FilterOperator } from '../../domain/schemas/find.schemas';
+import {
+    FilterOperator,
+    FindOptions,
+    PrismaPageQuery
+} from '../../domain/schemas/find.schemas';
+
+export function buildPrismaPageQuery(
+    findOptions: FindOptions,
+    defaultSortField: string = 'id'
+): PrismaPageQuery {
+    const { pagination, sort } = findOptions;
+    const skip = (pagination.page - 1) * pagination.limit;
+    const take = pagination.limit;
+
+    const orderBy: Record<string, 'asc' | 'desc'> =
+        sort && sort.length > 0
+            ? {
+                  [sort[0].field]: sort[0].order as
+                      | 'asc'
+                      | 'desc'
+              }
+            : { [defaultSortField]: 'asc' };
+
+    return { skip, take, orderBy };
+}
+
+export function buildPrismaPageQueryArray(
+    findOptions: FindOptions,
+    defaultSortField: string = 'id'
+): {
+    skip: number;
+    take: number;
+    orderBy: Record<string, 'asc' | 'desc'>[];
+} {
+    const { pagination, sort } = findOptions;
+    const skip = (pagination.page - 1) * pagination.limit;
+    const take = pagination.limit;
+
+    const orderBy: Record<string, 'asc' | 'desc'>[] =
+        sort && sort.length > 0
+            ? sort.map((s) => ({
+                  [s.field]: s.order as 'asc' | 'desc'
+              }))
+            : [{ [defaultSortField]: 'asc' }];
+
+    return { skip, take, orderBy };
+}
 
 export function buildPrismaSelect(
     defaultFields: string[],
@@ -46,12 +92,6 @@ export function buildFilterWhere(
             fieldWhere.equals = operators.eq;
         if (operators.ne !== undefined)
             fieldWhere.not = operators.ne;
-        if (operators.in !== undefined) {
-            const raw = operators.in;
-            fieldWhere.in = typeof raw === 'string'
-                ? raw.split(',').map((v: string) => v.trim())
-                : raw;
-        }
 
         if (Object.keys(fieldWhere).length > 0) {
             where[field] = fieldWhere;
