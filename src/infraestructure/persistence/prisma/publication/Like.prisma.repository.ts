@@ -54,4 +54,106 @@ export class LikePrismaRepository implements LikeRepository {
             handlePrismaError(error);
         }
     }
+
+    async hasUserLikedComment(
+        commentId: number,
+        userId: number
+    ): Promise<boolean> {
+        try {
+            const like = await this.db.userLikeComment.findFirst(
+                {
+                    where: { commentId, userId }
+                }
+            );
+            return !!like;
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async createCommentLike(
+        commentId: number,
+        userId: number
+    ): Promise<void> {
+        try {
+            await this.db.userLikeComment.create({
+                data: { commentId, userId }
+            });
+
+            await this.db.comment.update({
+                where: { commentId },
+                data: { likes: { increment: 1 } }
+            });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async removeCommentLike(
+        commentId: number,
+        userId: number
+    ): Promise<void> {
+        try {
+            await this.db.userLikeComment.deleteMany({
+                where: { commentId, userId }
+            });
+
+            await this.db.comment.update({
+                where: { commentId },
+                data: { likes: { decrement: 1 } }
+            });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async hasUserLikedAnime(
+        animeId: number,
+        userId: number
+    ): Promise<boolean> {
+        try {
+            const like = await this.db.userLikeAnime.findFirst({
+                where: { animeId, userId }
+            });
+            return !!like;
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async createAnimeLike(
+        animeId: number,
+        userId: number
+    ): Promise<void> {
+        try {
+            await this.db.userLikeAnime.create({
+                data: { animeId, userId }
+            });
+
+            await this.db.anime.update({
+                where: { animeId },
+                data: { likes: { increment: 1 } }
+            });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async removeAnimeLike(
+        animeId: number,
+        userId: number
+    ): Promise<void> {
+        try {
+            await this.db.userLikeAnime.deleteMany({
+                where: { animeId, userId }
+            });
+
+            await this.db.anime.update({
+                where: { animeId },
+                data: { likes: { decrement: 1 } }
+            });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
 }
