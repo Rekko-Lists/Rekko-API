@@ -9,6 +9,7 @@ import { RefreshTokenPrismaRepository } from '../persistence/prisma/user/Refresh
 import { OAuthPrismaRepository } from '../persistence/prisma/user/OAuth.prisma.repository';
 import { PostPrismaRepository } from '../persistence/prisma/publication/Post.prisma.repository';
 import { LikePrismaRepository } from '../persistence/prisma/publication/Like.prisma.repository';
+import { CommentPrismaRepository } from '../persistence/prisma/publication/Comment.prisma.repository';
 
 // ===== EXTERNAL SERVICES (Mailer, Storage) =====
 import { EmailHandler } from '../services/mailer/nodemailer.service';
@@ -27,7 +28,7 @@ import { OAuthService } from '../../services/user/oauth.service';
 import { UploadService } from '../../services/user/upload.service';
 import { PostService } from '../../services/publication/post.service';
 import { LikeService } from '../../services/publication/like.service';
-import { CommentPrismaRepository } from '../persistence/prisma/Comment.prisma.repository';
+import { CommentService } from '../../services/publication/comment.service';
 
 // ===== REPOSITORIES INITIALIZATION =====
 const animeRepository = new AnimePrismaRepository(prisma);
@@ -44,7 +45,7 @@ const refreshTokenRepository = new RefreshTokenPrismaRepository(
 const oauthRepository = new OAuthPrismaRepository(prisma);
 const postRepository = new PostPrismaRepository(prisma);
 const likeRepository = new LikePrismaRepository(prisma);
-const commentRepository = new CommentPrismaRepository();
+const commentRepository = new CommentPrismaRepository(prisma);
 
 // ===== EXTERNAL SERVICES INITIALIZATION =====
 const emailHandler = new EmailHandler();
@@ -93,12 +94,20 @@ const uploadService = new UploadService(
 );
 const likeService = new LikeService(
     likeRepository,
-    postRepository
+    postRepository,
+    commentRepository,
+    animeRepository
 );
 const postService = new PostService(
     postRepository,
     commentRepository,
     cloudinaryHandler,
+    likeService
+);
+
+const commentService = new CommentService(
+    commentRepository,
+    postRepository,
     likeService
 );
 
@@ -128,6 +137,7 @@ export const container = {
         oauth: oauthService,
         upload: uploadService,
         post: postService,
+        comment: commentService,
         like: likeService,
         mal: malService
     }
