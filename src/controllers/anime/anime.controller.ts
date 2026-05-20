@@ -60,7 +60,7 @@ export const seedAnimes = catchAsync(
     async (req: Request, res: Response) => {
         const pages = Math.min(
             parseInt(req.query.pages as string) || 10,
-            40  // hard cap: 40 pages × 500 = 20 000 anime
+            40 // hard cap: 40 pages × 500 = 20 000 anime
         );
         const { services } = req.container!;
         const result = await services.anime.seedFromMal(pages);
@@ -89,6 +89,54 @@ export const getSeasonalAnimes = catchAsync(
                 pages: result.pagination.pages
             },
             withMalData: result.withMalData
+        });
+    }
+);
+
+export const likeAnime = catchAsync(
+    async (req: Request, res: Response) => {
+        const malId = parseInt(req.params.malid as string);
+
+        if (isNaN(malId)) {
+            throw new ValidationError('Invalid MAL ID', {
+                received: req.params.malid
+            });
+        }
+
+        const { services } = req.container!;
+        const userId = req.user!.userId;
+
+        const anime = await services.like.likeAnime(
+            malId,
+            userId
+        );
+
+        ok(res, 'Anime liked successfully', {
+            anime: AnimeMapper.toDTO(anime)
+        });
+    }
+);
+
+export const unlikeAnime = catchAsync(
+    async (req: Request, res: Response) => {
+        const malId = parseInt(req.params.malid as string);
+
+        if (isNaN(malId)) {
+            throw new ValidationError('Invalid MAL ID', {
+                received: req.params.malid
+            });
+        }
+
+        const { services } = req.container!;
+        const userId = req.user!.userId;
+
+        const anime = await services.like.unlikeAnime(
+            malId,
+            userId
+        );
+
+        ok(res, 'Anime unliked successfully', {
+            anime: AnimeMapper.toDTO(anime)
         });
     }
 );
