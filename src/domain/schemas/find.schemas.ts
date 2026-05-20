@@ -1,19 +1,13 @@
 import { z } from 'zod';
 
-// Filter operators schema
 export const filterOperatorSchema = z.object({
     lt: z.any().optional().describe('Less than'),
     lte: z.any().optional().describe('Less than or equal'),
     gt: z.any().optional().describe('Greater than'),
     gte: z.any().optional().describe('Greater than or equal'),
     eq: z.any().optional().describe('Equal'),
-    ne: z.any().optional().describe('Not equal'),
-    in: z.any().optional().describe('In array (comma-separated string or array)')
+    ne: z.any().optional().describe('Not equal')
 });
-
-export type FilterOperator = z.infer<
-    typeof filterOperatorSchema
->;
 
 export const findOptionsSchema = z.object({
     select: z
@@ -31,7 +25,7 @@ export const findOptionsSchema = z.object({
                 .number()
                 .int('Must be integer')
                 .min(1, 'Limit must be at least 1')
-                .max(110, 'Maximum limit is 110')
+                .max(100, 'Maximum limit is 100')
                 .default(10)
         })
         .default({ page: 1, limit: 10 }),
@@ -48,34 +42,39 @@ export const findOptionsSchema = z.object({
         .optional()
 });
 
-export const findRepositorySchema = z.object({
-    data: z.array(z.any()),
-    total: z.number()
+export const paginationSchema = z.object({
+    page: z.number(),
+    limit: z.number(),
+    total: z.number(),
+    pages: z.number()
 });
 
-export const paginatedResponseSchema = z.object({
-    data: z.array(z.any()),
-    pagination: z.object({
-        page: z.number(),
-        limit: z.number(),
-        total: z.number(),
-        pages: z.number()
-    })
+export const prismaPageQuerySchema = z.object({
+    skip: z.number(),
+    take: z.number(),
+    orderBy: z.record(z.string(), z.enum(['asc', 'desc']))
 });
+
+export type FilterOperator = z.infer<
+    typeof filterOperatorSchema
+>;
 
 export type FindOptions = z.infer<typeof findOptionsSchema>;
+
+export type Pagination = z.infer<typeof paginationSchema>;
+
+export type PrismaPageQuery = z.infer<
+    typeof prismaPageQuerySchema
+>;
+
 export type FindRepository<T> = {
     data: T[];
     total: number;
 };
+
 export type PaginatedResponse<T> = {
     data: T[];
-    pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        pages: number;
-    };
+    pagination: Pagination;
 };
 
 export type PaginatedResponseWithMalStatus<T> =

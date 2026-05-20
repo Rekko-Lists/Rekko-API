@@ -15,7 +15,10 @@ import {
     userDefaultSelect,
     userFieldMappings
 } from '../../../../domain/schemas/user/user.schemas';
-import { buildPrismaSelect } from '../../../../utils/prisma/prismaHelper';
+import {
+    buildPrismaSelect,
+    buildPrismaPageQuery
+} from '../../../../utils/prisma/prismaHelper';
 
 export class UserPrismaRepository implements UserRepository<User> {
     constructor(private readonly db = prisma) {}
@@ -66,21 +69,18 @@ export class UserPrismaRepository implements UserRepository<User> {
         findOptions: FindOptions
     ): Promise<FindRepository<User>> {
         try {
-            const { select, pagination, sort } = findOptions;
+            const { select } = findOptions;
 
             const prismaSelect = buildPrismaSelect(
                 userDefaultSelect,
                 userFieldMappings,
                 select
             );
-            const skip =
-                (pagination.page - 1) * pagination.limit;
-            const take = pagination.limit;
 
-            const orderBy =
-                sort && sort.length > 0
-                    ? { [sort[0].field]: sort[0].order }
-                    : { userId: 'asc' };
+            const { skip, take, orderBy } = buildPrismaPageQuery(
+                findOptions,
+                'username'
+            );
 
             const [users, total] = await Promise.all([
                 this.db.user.findMany({

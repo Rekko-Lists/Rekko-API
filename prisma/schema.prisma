@@ -59,6 +59,7 @@ model Comment {
   post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
   parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId])
   replies           Comment[] @relation("CommentReplies")
+  userLikeComment   UserLikeComment[]
 
   @@map("comment")
 }
@@ -86,6 +87,7 @@ model User {
   comments          Comment[]
   posts             Post[]
   userLikePost      UserLikePost[]
+  userLikeComment   UserLikeComment[]
   userLikeAnime     UserLikeAnime[]
   userRateAnime     UserRateAnime[]
   userWatchAnime    UserWatchAnime[]
@@ -231,6 +233,17 @@ model UserLikePost {
   post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
 
   @@map("user_like_post")
+}
+
+model UserLikeComment {
+  userLikeCommentId Int @id @default(autoincrement()) @map("user_like_comment_id")
+  userId            Int @map("user_id")
+  commentId         Int @map("comment_id")
+
+  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  comment           Comment @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
+
+  @@map("user_like_comment")
 }
 
 model AnimePost {
