@@ -24,7 +24,7 @@
         "tsx": "^4.21.0"
     },
     "dependencies": {
-        "@prisma/client": "^7.8.0",
+        "@prisma/client": "^6.19.3",
         "@types/cors": "^2.8.19",
         "bcrypt": "^6.0.0",
         "cloudinary": "^2.10.0",
