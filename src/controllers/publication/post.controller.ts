@@ -32,6 +32,7 @@ export const getPosts = catchAsync(
 
 export const getPost = catchAsync(
     async (req: Request, res: Response) => {
+        const findOptions = (req as any).findOptions;
         const postId = parseInt(req.params.postid as string);
         const { services } = req.container!;
         const userId = req.user?.userId;
@@ -43,8 +44,29 @@ export const getPost = catchAsync(
                 userId
             );
 
+        const comments =
+            await services.comment.getCommentsByPostId(
+                post.getPostId(),
+                findOptions
+            );
+
+        const formattedComments =
+            await services.comment.enrichCommentsWithLikesStatus(
+                comments.data,
+                userId
+            );
+
         ok(res, 'Post found', {
-            post: formattedPost
+            post: formattedPost,
+            comments: {
+                data: formattedComments,
+                pagination: {
+                    page: comments.pagination.page,
+                    limit: comments.pagination.limit,
+                    total: comments.pagination.total,
+                    pages: comments.pagination.pages
+                }
+            }
         });
     }
 );

@@ -1,5 +1,5 @@
 import { PostRepository } from '../../domain/repositories/publication/Post.repository';
-import { CommentRepository } from '../../domain/repositories/Comment.repository';
+import { CommentRepository } from '../../domain/repositories/publication/Comment.repository';
 import { Post } from '../../domain/entities/Post';
 import {
     FindOptions,
