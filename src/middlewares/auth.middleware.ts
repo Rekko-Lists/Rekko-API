@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/auth/jwt';
+import { UserRole } from '../domain/schemas/user/user.schemas';
 import { InvalidTokenError } from '../exceptions/exceptions';
 
 declare global {
@@ -7,6 +8,7 @@ declare global {
         interface Request {
             user?: {
                 userId: number;
+                role: UserRole;
             };
         }
     }
@@ -30,7 +32,8 @@ export const authMiddleware = (
     const decoded = verifyAccessToken(token);
 
     req.user = {
-        userId: decoded.userId
+        userId: decoded.userId,
+        role: decoded.role
     };
 
     next();
@@ -53,7 +56,8 @@ export const optionalAuthMiddleware = (
         const decoded = verifyAccessToken(token);
 
         req.user = {
-            userId: decoded.userId
+            userId: decoded.userId,
+            role: decoded.role
         };
     } catch (error) {}
 

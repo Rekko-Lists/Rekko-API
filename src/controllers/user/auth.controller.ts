@@ -33,7 +33,8 @@ export const login = catchAsync(
             user: {
                 userId: user.getUserId(),
                 email: user.getEmail(),
-                username: user.getUsername()
+                username: user.getUsername(),
+                role: user.getRole()
             }
         });
     }

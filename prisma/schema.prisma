@@ -144,7 +144,6 @@ model Anime {
   malMean           Float @map("mal_mean")
   malRank           Int @map("mal_rank")
   mean              Float
-  rank              Int
   numEpisodes       Int @map("num_episodes")
   status            String
   mediaType         String   @default("tv") @map("media_type")
@@ -272,7 +271,7 @@ model UserRateAnime {
   userRateAnimeId   Int @id @default(autoincrement()) @map("user_rate_anime_id")
   userId            Int @map("user_id")
   animeId           Int @map("anime_id")
-  rate              Float
+  rate              Int
 
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
@@ -285,12 +284,20 @@ model UserWatchAnime {
   userId            Int @map("user_id")
   animeId           Int @map("anime_id")
   numEpisodes       Int @map("num_episodes")
-  state             String
+  state             AnimeState
 
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@map("user_watch_anime")
+}
+
+enum AnimeState {
+  COMPLETED
+  WATCHING
+  ON_HOLD
+  DROPPED
+  PLAN_TO_WATCH
 }
 
 model UserSocialAccount {
