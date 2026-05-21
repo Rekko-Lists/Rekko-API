@@ -10,7 +10,6 @@ export class AnimeDTO {
     malMean: number;
     malRank: number;
     mean: number;
-    rank: number;
     numEpisodes: number;
     status: string;
     likes: number;
@@ -33,7 +32,6 @@ export class AnimeDTO {
         malMean: number;
         malRank: number;
         mean: number;
-        rank: number;
         numEpisodes: number;
         status: string;
         likes: number;
@@ -55,7 +53,6 @@ export class AnimeDTO {
         this.malMean = data.malMean;
         this.malRank = data.malRank;
         this.mean = data.mean;
-        this.rank = data.rank;
         this.numEpisodes = data.numEpisodes;
         this.status = data.status;
         this.likes = data.likes;

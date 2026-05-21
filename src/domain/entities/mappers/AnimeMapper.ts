@@ -14,7 +14,6 @@ export class AnimeMapper {
             malMean: anime.getMalMean(),
             malRank: anime.getMalRank(),
             mean: anime.getMean(),
-            rank: anime.getRank(),
             numEpisodes: anime.getNumEpisodes(),
             status: anime.getStatus(),
             likes: anime.getLikes(),

@@ -11,6 +11,16 @@ import {
 import { parseQueryOptions } from '../../../middlewares/queryOptions.middleware';
 import { validateSeasonParams } from '../../../middlewares/validators/anime.validator';
 import { authMiddleware } from '../../../middlewares/auth.middleware';
+import {
+    deleteRate,
+    getRate,
+    postRate
+} from '../../../controllers/anime/rate.controller';
+import {
+    deleteWatch,
+    getWatch,
+    postWatch
+} from '../../../controllers/anime/watch.controller';
 
 const router = Router();
 
@@ -26,6 +36,24 @@ router
         validateSeasonParams,
         getSeasonalAnimes
     );
+
+router.route('/rate').post(authMiddleware, postRate);
+
+router
+    .route('/rate/user/:userid')
+    .get(parseQueryOptions, getRate);
+
+router.route('/rate/:malid').delete(authMiddleware, deleteRate);
+
+router.route('/watch').post(authMiddleware, postWatch);
+
+router
+    .route('/watch/user/:userid')
+    .get(parseQueryOptions, getWatch);
+
+router
+    .route('/watch/:malid')
+    .delete(authMiddleware, deleteWatch);
 
 router
     .route('/:malid/like')

@@ -11,7 +11,6 @@ export class Anime {
     private readonly malMean: number;
     private readonly malRank: number;
     private mean: number;
-    private rank: number;
     private numEpisodes: number;
     private status: AnimeStatus;
     private nextUpdate: Date;
@@ -33,7 +32,6 @@ export class Anime {
         malMean: number,
         malRank: number,
         mean: number,
-        rank: number,
         numEpisodes: number,
         status: AnimeStatus,
         nextUpdate: Date,
@@ -54,7 +52,6 @@ export class Anime {
         this.malMean = malMean;
         this.malRank = malRank;
         this.mean = mean;
-        this.rank = rank;
         this.numEpisodes = numEpisodes;
         this.status = status;
         this.nextUpdate = nextUpdate;
@@ -77,7 +74,6 @@ export class Anime {
         malMean: number;
         malRank: number;
         mean: number;
-        rank: number;
         numEpisodes: number;
         status: AnimeStatus;
         nextUpdate: Date;
@@ -99,7 +95,6 @@ export class Anime {
             data.malMean,
             data.malRank,
             data.mean,
-            data.rank,
             data.numEpisodes,
             data.status,
             data.nextUpdate,
@@ -144,10 +139,6 @@ export class Anime {
 
     getMean(): number {
         return this.mean;
-    }
-
-    getRank(): number {
-        return this.rank;
     }
 
     getSynopsis(): string {
@@ -208,7 +199,6 @@ export class Anime {
             malMean: this.malMean,
             malRank: this.malRank,
             mean: this.mean,
-            rank: this.rank,
             numEpisodes: this.numEpisodes,
             status: this.status,
             nextUpdate: this.nextUpdate,
@@ -238,7 +228,6 @@ export class Anime {
             malMean=${this.malMean},
             malRank=${this.malRank},
             mean=${this.mean},
-            rank=${this.rank},
             numEpisodes=${this.numEpisodes},
             status=${this.status},
             nextUpdate=${this.nextUpdate},

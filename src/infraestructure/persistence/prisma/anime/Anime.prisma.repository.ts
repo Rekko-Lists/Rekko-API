@@ -369,4 +369,20 @@ export class AnimePrismaRepository implements AnimeRepository {
             handlePrismaError(error);
         }
     }
+
+    async updateMean(animeId: number, mean: number): Promise<Anime | null> {
+        try {
+            const updated = await this.db.anime.update({
+                where: { animeId },
+                data: { mean },
+                include: {
+                    broadcast: true,
+                    animeGenres: { include: { genre: true } }
+                }
+            });
+            return Anime.fromPersistence(this.withGenres(updated));
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
 }

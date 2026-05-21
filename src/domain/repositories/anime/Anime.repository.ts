@@ -35,4 +35,6 @@ export interface AnimeRepository {
     findExistingMalIds(malIds: number[]): Promise<number[]>;
 
     findAllGenres(): Promise<string[]>;
+
+    updateMean(animeId: number, mean: number): Promise<Anime | null>;
 }

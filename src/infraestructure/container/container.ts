@@ -10,6 +10,8 @@ import { OAuthPrismaRepository } from '../persistence/prisma/user/OAuth.prisma.r
 import { PostPrismaRepository } from '../persistence/prisma/publication/Post.prisma.repository';
 import { LikePrismaRepository } from '../persistence/prisma/publication/Like.prisma.repository';
 import { CommentPrismaRepository } from '../persistence/prisma/publication/Comment.prisma.repository';
+import { UserRateAnimePrismaRepository } from '../persistence/prisma/anime/UserRateAnime.prisma.repository';
+import { UserWatchAnimePrismaRepository } from '../persistence/prisma/anime/UserWatchAnime.prisma.repository';
 
 // ===== EXTERNAL SERVICES (Mailer, Storage) =====
 import { EmailHandler } from '../services/mailer/nodemailer.service';
@@ -19,6 +21,8 @@ import { MalService as MalApiService } from '../services/mal/mal.service';
 // ===== DOMAIN SERVICES =====
 import { MalService } from '../../services/anime/mal.service';
 import { AnimeService } from '../../services/anime/anime.service';
+import { RateService } from '../../services/anime/rate.service';
+import { WatchService } from '../../services/anime/watch.service';
 import { SearchService } from '../../services/search/search.service';
 import { UserService } from '../../services/user/user.service';
 import { EmailAuthService } from '../../services/user/emailAuth.service';
@@ -46,6 +50,10 @@ const oauthRepository = new OAuthPrismaRepository(prisma);
 const postRepository = new PostPrismaRepository(prisma);
 const likeRepository = new LikePrismaRepository(prisma);
 const commentRepository = new CommentPrismaRepository(prisma);
+const userRateAnimeRepository =
+    new UserRateAnimePrismaRepository(prisma);
+const userWatchAnimeRepository =
+    new UserWatchAnimePrismaRepository(prisma);
 
 // ===== EXTERNAL SERVICES INITIALIZATION =====
 const emailHandler = new EmailHandler();
@@ -59,6 +67,16 @@ const malService = new MalService(malAuthService);
 const animeService = new AnimeService(
     animeRepository,
     malService
+);
+const rateService = new RateService(
+    userRateAnimeRepository,
+    animeRepository,
+    animeService
+);
+const watchService = new WatchService(
+    userWatchAnimeRepository,
+    animeRepository,
+    animeService
 );
 const searchService = new SearchService(
     animeRepository,
@@ -120,7 +138,9 @@ export const container = {
         passwordAuth: passwordAuthRepository,
         refreshToken: refreshTokenRepository,
         oauth: oauthRepository,
-        post: postRepository
+        post: postRepository,
+        userRateAnime: userRateAnimeRepository,
+        userWatchAnime: userWatchAnimeRepository
     },
     externalServices: {
         emailHandler,
@@ -139,7 +159,9 @@ export const container = {
         post: postService,
         comment: commentService,
         like: likeService,
-        mal: malService
+        mal: malService,
+        rate: rateService,
+        watch: watchService
     }
 } as const;
 
