@@ -74,7 +74,7 @@ export const errorHandler = (
         return;
     }
 
-    if (err instanceof AppError && err.isOperational) {
+    if (err instanceof AppError) {
         logError(err, req, err.statusCode);
 
         res.status(err.statusCode).json({
