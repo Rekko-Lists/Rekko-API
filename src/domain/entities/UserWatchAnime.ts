@@ -47,6 +47,24 @@ export class UserWatchAnime {
         return this.animeId;
     }
 
+    getNumEpisodes(): number {
+        return this.numEpisodes;
+    }
+
+    getState(): string {
+        return this.state;
+    }
+
+    toJSON() {
+        return {
+            userWatchAnimeId: this.userWatchAnimeId,
+            userId: this.userId,
+            animeId: this.animeId,
+            numEpisodes: this.numEpisodes,
+            state: this.state
+        };
+    }
+
     toString(): string {
         return `
             userWatchAnimeId=${this.userWatchAnimeId},
