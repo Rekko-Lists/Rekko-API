@@ -1,9 +1,72 @@
 import { LikeRepository } from '../../../../domain/repositories/publication/Like.repository';
+import {
+    FindOptions,
+    FindRepository
+} from '../../../../domain/schemas/find.schemas';
+import {
+    LikedAnimeListItem,
+    LikedPostListItem
+} from '../../../../domain/schemas/publication/like.schemas';
+import { buildPrismaPageQueryArray } from '../../../../utils/prisma/prismaHelper';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
 
 export class LikePrismaRepository implements LikeRepository {
     constructor(private readonly db = prisma) {}
+
+    private toLikedAnimeListItem(
+        record: any
+    ): LikedAnimeListItem {
+        return {
+            userLikeAnimeId: record.userLikeAnimeId,
+            userId: record.userId,
+            animeId: record.animeId,
+            anime: {
+                malId: record.anime.malId,
+                name: record.anime.name,
+                synopsis: record.anime.synopsis,
+                imgMedium: record.anime.imgMedium,
+                imgLarge: record.anime.imgLarge,
+                startDate: record.anime.startDate,
+                endDate: record.anime.endDate,
+                malMean: record.anime.malMean,
+                malRank: record.anime.malRank,
+                mean: record.anime.mean,
+                numEpisodes: record.anime.numEpisodes,
+                status: record.anime.status,
+                mediaType: record.anime.mediaType,
+                nextUpdate: record.anime.nextUpdate,
+                likes: record.anime.likes,
+                genres:
+                    record.anime.animeGenres?.map(
+                        (animeGenre: any) =>
+                            animeGenre.genre.name
+                    ) ?? [],
+                studios: record.anime.studios,
+                broadcast: {
+                    dayOfWeek: record.anime.broadcast.dayOfWeek,
+                    startTime: record.anime.broadcast.startTime
+                }
+            }
+        };
+    }
+
+    private toLikedPostListItem(record: any): LikedPostListItem {
+        return {
+            userLikePostId: record.userLikePostId,
+            userId: record.userId,
+            postId: record.postId,
+            post: {
+                postId: record.post.postId,
+                userId: record.post.userId,
+                title: record.post.title,
+                description: record.post.description,
+                photo: record.post.photo,
+                likes: record.post.likes,
+                user: record.post.user
+            }
+        };
+    }
 
     async hasUserLikedPost(
         postId: number,
@@ -152,6 +215,96 @@ export class LikePrismaRepository implements LikeRepository {
                 where: { animeId },
                 data: { likes: { decrement: 1 } }
             });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findLikedAnimesByUserId(
+        userId: number,
+        findOptions: FindOptions
+    ): Promise<FindRepository<LikedAnimeListItem>> {
+        try {
+            const { skip, take, orderBy } =
+                buildPrismaPageQueryArray(
+                    findOptions,
+                    'userLikeAnimeId'
+                );
+
+            const [records, total] = await Promise.all([
+                this.db.userLikeAnime.findMany({
+                    where: { userId },
+                    skip,
+                    take,
+                    orderBy,
+                    include: {
+                        anime: {
+                            include: {
+                                broadcast: true,
+                                animeGenres: {
+                                    include: { genre: true }
+                                }
+                            }
+                        }
+                    }
+                }),
+                this.db.userLikeAnime.count({
+                    where: { userId }
+                })
+            ]);
+
+            return {
+                data: records.map((record: any) =>
+                    this.toLikedAnimeListItem(record)
+                ),
+                total
+            };
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findLikedPostsByUserId(
+        userId: number,
+        findOptions: FindOptions
+    ): Promise<FindRepository<LikedPostListItem>> {
+        try {
+            const { skip, take, orderBy } =
+                buildPrismaPageQueryArray(
+                    findOptions,
+                    'userLikePostId'
+                );
+
+            const [records, total] = await Promise.all([
+                this.db.userLikePost.findMany({
+                    where: { userId },
+                    skip,
+                    take,
+                    orderBy,
+                    include: {
+                        post: {
+                            include: {
+                                user: {
+                                    select: {
+                                        username: true,
+                                        profileImage: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }),
+                this.db.userLikePost.count({
+                    where: { userId }
+                })
+            ]);
+
+            return {
+                data: records.map((record: any) =>
+                    this.toLikedPostListItem(record)
+                ),
+                total
+            };
         } catch (error) {
             handlePrismaError(error);
         }
