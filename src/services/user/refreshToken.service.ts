@@ -7,7 +7,7 @@ import {
     InvalidTokenError,
     TokenExpiredError,
     UserNotFoundError
-} from '../../domain/errors/auth.errors';
+} from '../../exceptions/exceptions';
 import {
     TokenPair,
     SessionInfo
@@ -99,7 +99,8 @@ export class RefreshTokenService {
         }
 
         const accessToken = signAccessToken(
-            storedToken.getUserId()
+            storedToken.getUserId(),
+            user.getRole() as any
         );
 
         return { accessToken };
@@ -113,7 +114,10 @@ export class RefreshTokenService {
         const user = await this.userRepository.findById(userId);
         if (!user) throw new UserNotFoundError('User not found');
 
-        const accessToken = signAccessToken(userId);
+        const accessToken = signAccessToken(
+            userId,
+            user.getRole() as any
+        );
         const refreshToken = await encodeRefreshToken({
             username: user.getUsername(),
             userAgent,

@@ -1,0 +1,1 @@
+ALTER TABLE "anime" ADD COLUMN "media_type" TEXT NOT NULL DEFAULT 'tv';

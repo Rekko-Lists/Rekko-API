@@ -62,7 +62,14 @@ export const malAnimeDataSchema = z.object({
                 name: z.string()
             })
         )
-        .optional()
+        .optional(),
+    broadcast: z
+        .object({
+            day_of_the_week: z.string().optional(),
+            start_time: z.string().optional()
+        })
+        .optional(),
+    media_type: z.string().optional()
 });
 export type MalAnimeData = z.infer<typeof malAnimeDataSchema>;
 
@@ -85,9 +92,46 @@ export const malAnime = malAnimeDataSchema;
 export type MalAnime = z.infer<typeof malAnimeDataSchema>;
 
 export const malSearchParamsSchema = z.object({
-    query: z.string().min(1, 'Search query is required'),
-    limit: z.number().int().min(1).max(25).default(10).optional()
+    query: z
+        .string()
+        .min(
+            3,
+            'Search query is required and min length is 3 caracters'
+        ),
+    limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(10)
+        .optional()
 });
 export type MalSearchParams = z.infer<
     typeof malSearchParamsSchema
 >;
+
+export const seasonParamsSchema = z.object({
+    year: z
+        .number()
+        .int()
+        .min(1917, 'Year must be 1917 or later')
+        .max(
+            new Date().getFullYear() + 5,
+            'Year cannot be more than 5 years in the future'
+        )
+        .optional(),
+    season: z
+        .enum(
+            ['winter', 'spring', 'summer', 'fall'],
+            "Season must be one of: 'winter', 'spring', 'summer', 'fall'"
+        )
+        .optional()
+});
+export type SeasonParams = z.infer<typeof seasonParamsSchema>;
+
+export const validSeasons = [
+    'winter',
+    'spring',
+    'summer',
+    'fall'
+];

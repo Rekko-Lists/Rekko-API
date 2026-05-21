@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken';
-import { NotFoundError } from '../../domain/errors/http.errors';
-import { InvalidTokenError } from '../../domain/errors/auth.errors';
+import {
+    NotFoundError,
+    InvalidTokenError
+} from '../../exceptions/exceptions';
+import { UserRole } from '../../domain/schemas/user/user.schemas';
 
 export function sign10MinToken(purpose: string) {
     return jwt.sign(
@@ -24,9 +27,12 @@ export function verifyToken(
     }
 }
 
-export function signAccessToken(userId: number): string {
+export function signAccessToken(
+    userId: number,
+    role: UserRole
+): string {
     return jwt.sign(
-        { userId, type: 'access' },
+        { userId, role, type: 'access' },
         process.env.JWT_SECRET as string,
         { expiresIn: '15m' }
     );
@@ -34,6 +40,7 @@ export function signAccessToken(userId: number): string {
 
 export function verifyAccessToken(token: string): {
     userId: number;
+    role: UserRole;
     type: string;
 } {
     try {
@@ -46,7 +53,11 @@ export function verifyAccessToken(token: string): {
             throw new InvalidTokenError('Invalid token type');
         }
 
-        return { userId: decoded.userId, type: 'access' };
+        return {
+            userId: decoded.userId,
+            role: decoded.role,
+            type: 'access'
+        };
     } catch (error) {
         if (error instanceof InvalidTokenError) {
             throw error;

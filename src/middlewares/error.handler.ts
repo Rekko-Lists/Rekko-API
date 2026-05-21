@@ -1,26 +1,46 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import {
-    HttpError,
+    AppError,
     NotFoundError
-} from '../domain/errors/http.errors';
-import { AuthError } from '../domain/errors/auth.errors';
-import { ImageError } from '../domain/errors/img.errors';
+} from '../exceptions/exceptions';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+
+const logError = (
+    error: Error,
+    req: Request,
+    statusCode: number
+): void => {
+    console.error({
+        timestamp: new Date().toISOString(),
+        error: {
+            name: error.constructor.name,
+            message: error.message,
+            stack: error.stack
+        },
+        request: {
+            method: req.method,
+            path: req.path,
+            ip: req.ip
+        },
+        statusCode
+    });
+};
 
 export const notFoundHandler = (
     req: Request,
     res: Response,
     next: NextFunction
 ): void => {
-    next(
-        new NotFoundError({
-            message: 'Route not found',
-            path: req.originalUrl,
-            method: req.method
-        })
-    );
+    const error = new NotFoundError('route');
+    (error as any).context = {
+        ...(error.context || {}),
+        code: 'NOT_FOUND_ROUTE',
+        path: req.originalUrl,
+        method: req.method
+    };
+    next(error);
 };
 
 export const errorHandler = (
@@ -29,61 +49,61 @@ export const errorHandler = (
     res: Response,
     next: NextFunction
 ): void => {
-    const stack = isDevelopment ? err.stack : undefined;
+    const isDev = isDevelopment;
 
     if (err instanceof ZodError) {
         const message = err.issues
-            .map((issue) => {
-                return `${issue.message}`;
-            })
+            .map(
+                (issue) =>
+                    `${issue.path.join('.')}: ${issue.message}`
+            )
             .join('; ');
 
+        logError(err, req, 400);
+
         res.status(400).json({
+            success: false,
             error: {
-                message: 'Validation error',
+                code: 'VALIDATION_ZOD_ERROR',
+                type: 'VALIDATION_ERROR',
+                message: 'Validation failed',
                 details: message,
-                stack
+                ...(isDev && { stack: err.stack })
             }
         });
         return;
     }
 
-    if (err instanceof HttpError) {
-        res.status(err.status).json({
-            error: {
-                message: err.message,
-                details: err.details,
-                stack
-            }
-        });
-        return;
-    }
+    if (err instanceof AppError) {
+        logError(err, req, err.statusCode);
 
-    if (err instanceof AuthError) {
-        res.status(err.status).json({
+        res.status(err.statusCode).json({
+            success: false,
             error: {
+                code: err.code,
+                type: err.context?.type || 'APPLICATION_ERROR',
                 message: err.message,
-                details: err.details
-            }
-        });
-        return;
-    }
-
-    if (err instanceof ImageError) {
-        res.status(err.status).json({
-            error: {
-                message: err.message,
-                details: err.details,
-                stack
+                statusCode: err.statusCode,
+                ...(isDev && {
+                    context: err.context,
+                    timestamp: err.timestamp,
+                    stack: err.stack
+                })
             }
         });
         return;
     }
 
     res.status(500).json({
+        success: false,
         error: {
-            message: 'Internal Server Error',
-            stack
+            code: 'INTERNAL_UNHANDLED_ERROR',
+            type: 'INTERNAL_SERVER_ERROR',
+            message: 'Internal server error',
+            ...(isDev && {
+                originalError: err.message,
+                stack: err.stack
+            })
         }
     });
 };

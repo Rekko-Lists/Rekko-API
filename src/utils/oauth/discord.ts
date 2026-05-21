@@ -1,4 +1,4 @@
-import { InvalidTokenError } from '../../domain/errors/auth.errors';
+import { InvalidTokenError } from '../../exceptions/exceptions';
 import {
     DiscordAccessToken,
     OAuthData

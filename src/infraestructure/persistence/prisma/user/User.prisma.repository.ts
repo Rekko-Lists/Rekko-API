@@ -15,7 +15,10 @@ import {
     userDefaultSelect,
     userFieldMappings
 } from '../../../../domain/schemas/user/user.schemas';
-import { buildPrismaSelect } from '../../../../utils/prisma/prismaSelect';
+import {
+    buildPrismaSelect,
+    buildPrismaPageQuery
+} from '../../../../utils/prisma/prismaHelper';
 
 export class UserPrismaRepository implements UserRepository<User> {
     constructor(private readonly db = prisma) {}
@@ -28,12 +31,7 @@ export class UserPrismaRepository implements UserRepository<User> {
                     username: entity.getUsername(),
                     password: entity.getPasswordHash(),
                     biography: entity.getBiography() ?? null,
-                    profileImage:
-                        process.env.DEFAULT_PROFILE_IMAGE_URL,
-                    bannerImage:
-                        process.env.DEFAULT_BANNER_IMAGE_URL,
-                    backgroundImage:
-                        process.env.DEFAULT_BACKGROUND_IMAGE_URL
+                    profileImage: ''
                 }
             });
 
@@ -71,20 +69,18 @@ export class UserPrismaRepository implements UserRepository<User> {
         findOptions: FindOptions
     ): Promise<FindRepository<User>> {
         try {
-            const { select, pagination, sort } = findOptions;
+            const { select } = findOptions;
 
             const prismaSelect = buildPrismaSelect(
                 userDefaultSelect,
                 userFieldMappings,
                 select
             );
-            const skip =
-                (pagination.page - 1) * pagination.limit;
-            const take = pagination.limit;
 
-            const orderBy = sort
-                ? { [sort.field]: sort.order }
-                : { userId: 'asc' };
+            const { skip, take, orderBy } = buildPrismaPageQuery(
+                findOptions,
+                'username'
+            );
 
             const [users, total] = await Promise.all([
                 this.db.user.findMany({
@@ -268,6 +264,29 @@ export class UserPrismaRepository implements UserRepository<User> {
             return await this.db.user.findUnique({
                 where: { userId }
             });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async searchByName(
+        query: string,
+        limit: number
+    ): Promise<User[]> {
+        try {
+            const users = await this.db.user.findMany({
+                where: {
+                    username: {
+                        contains: query,
+                        mode: 'insensitive'
+                    }
+                },
+                take: limit
+            });
+
+            return users.map((user: any) =>
+                User.fromPersistence(user)
+            );
         } catch (error) {
             handlePrismaError(error);
         }

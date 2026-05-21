@@ -7,14 +7,18 @@ import {
     MalTokenResult,
     malTokenResultSchema
 } from '../../../domain/schemas/anime/mal.schemas';
-import { NotFoundError } from '../../../domain/errors/http.errors';
-import { randomBytes } from 'crypto';
-import { mkdir, readFile, writeFile } from 'fs/promises';
-import { dirname, resolve } from 'path';
 import {
-    AuthorizationRequestError,
+    NotFoundError,
     MalApiError
-} from '../../errors/mal.errors';
+} from '../../../exceptions/exceptions';
+import { randomBytes } from 'crypto';
+import {
+    mkdir,
+    readFile,
+    writeFile,
+} from 'fs/promises';
+import { dirname, resolve } from 'path';
+import { existsSync } from 'fs';
 
 export class MalService {
     private baseUrl = 'https://api.myanimelist.net/v2';
@@ -34,14 +38,40 @@ export class MalService {
     constructor() {
         this.clientId = process.env.MAL_CLIENT_ID!;
         this.clientSecret = process.env.MAL_CLIENT_SECRET!;
-        this.accessToken = process.env.MAL_ACCESS_TOKEN || null;
         this.refreshToken = process.env.MAL_REFRESH_TOKEN!;
-        this.tokenExpiresAt = process.env.MAL_TOKEN_EXPIRES_AT
-            ? Number(process.env.MAL_TOKEN_EXPIRES_AT)
-            : null;
         this.tokenStorePath = resolve(
             process.env.MAL_TOKEN_STORE_PATH || '.mal-token.json'
         );
+
+        this.loadTokenStoreSync();
+
+        if (!this.accessToken) {
+            this.accessToken =
+                process.env.MAL_ACCESS_TOKEN || null;
+            this.tokenExpiresAt = process.env
+                .MAL_TOKEN_EXPIRES_AT
+                ? Number(process.env.MAL_TOKEN_EXPIRES_AT)
+                : null;
+        }
+    }
+
+    private loadTokenStoreSync(): void {
+        try {
+            if (!existsSync(this.tokenStorePath)) return;
+
+            const content = require('fs').readFileSync(
+                this.tokenStorePath,
+                'utf8'
+            );
+            const tokenData = malTokenDataSchema.parse(
+                JSON.parse(content)
+            );
+
+            this.accessToken = tokenData.accessToken;
+            this.refreshToken = tokenData.refreshToken;
+            this.tokenExpiresAt = tokenData.tokenExpiresAt;
+            this.tokenStoreLoaded = true;
+        } catch (error) {}
     }
 
     getAuthorizationUrl(
@@ -83,7 +113,7 @@ export class MalService {
             this.authorizationRequests.get(state);
 
         if (!authorizationRequest) {
-            throw new AuthorizationRequestError(
+            throw new MalApiError(
                 'Code verifier not found or expired. Please start authorization again.'
             );
         }
@@ -136,8 +166,8 @@ export class MalService {
 
         if (!response.ok) {
             throw new MalApiError(
-                response.status,
-                `MAL API Error: ${response.status} - ${response.statusText}`
+                `MAL API Error: ${response.status} - ${response.statusText}`,
+                response.status
             );
         }
 
@@ -198,8 +228,8 @@ export class MalService {
         if (!response.ok) {
             const errorBody = await response.text();
             throw new MalApiError(
-                response.status,
-                `${errorMessage}: ${response.status} - ${response.statusText} - ${errorBody}`
+                `${errorMessage}: ${response.status} - ${response.statusText} - ${errorBody}`,
+                response.status
             );
         }
 

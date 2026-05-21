@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/auth/jwt';
-import { InvalidTokenError } from '../domain/errors/auth.errors';
+import { UserRole } from '../domain/schemas/user/user.schemas';
+import { InvalidTokenError } from '../exceptions/exceptions';
 
 declare global {
     namespace Express {
         interface Request {
             user?: {
                 userId: number;
+                role: UserRole;
             };
         }
     }
@@ -30,8 +32,34 @@ export const authMiddleware = (
     const decoded = verifyAccessToken(token);
 
     req.user = {
-        userId: decoded.userId
+        userId: decoded.userId,
+        role: decoded.role
     };
+
+    next();
+};
+
+export const optionalAuthMiddleware = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): void => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next();
+    }
+
+    try {
+        const token = authHeader.slice(7);
+
+        const decoded = verifyAccessToken(token);
+
+        req.user = {
+            userId: decoded.userId,
+            role: decoded.role
+        };
+    } catch (error) {}
 
     next();
 };

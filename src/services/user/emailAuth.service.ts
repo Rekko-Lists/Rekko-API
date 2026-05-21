@@ -1,11 +1,11 @@
 import { User } from '../../domain/entities/User';
-import { NotFoundError } from '../../domain/errors/http.errors';
-import { UserRepository } from '../../domain/repositories/user/User.repository';
 import {
+    NotFoundError,
     TokenExpiredError,
     UserNotFoundError,
     InvalidTokenError
-} from '../../domain/errors/auth.errors';
+} from '../../exceptions/exceptions';
+import { UserRepository } from '../../domain/repositories/user/User.repository';
 import {
     UserUpdateEmail,
     UserUsernameToken

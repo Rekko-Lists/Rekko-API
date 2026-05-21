@@ -6,9 +6,9 @@ import { prisma } from '../../../database/prisma.client';
 import {
     TokenExpiredError,
     InvalidTokenError,
-    TokenAlreadyUsed,
+    TokenAlreadyUsedError,
     EmailTakenError
-} from '../../../../domain/errors/auth.errors';
+} from '../../../../exceptions/exceptions';
 import { EmailAuthRepository } from '../../../../domain/repositories/user/EmailAuth.repository';
 
 export class EmailAuthPrismaRepository implements EmailAuthRepository<User> {
@@ -156,7 +156,7 @@ export class EmailAuthPrismaRepository implements EmailAuthRepository<User> {
         } catch (error) {
             if (
                 error instanceof EmailTakenError ||
-                error instanceof TokenAlreadyUsed
+                error instanceof TokenAlreadyUsedError
             )
                 throw error;
             handlePrismaError(error);

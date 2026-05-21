@@ -1,5 +1,8 @@
 import { User } from '../../domain/entities/User';
-import { NotFoundError } from '../../domain/errors/http.errors';
+import {
+    NotFoundError,
+    UserNotFoundError
+} from '../../exceptions/exceptions';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
 import {
     CreateUserInput,
@@ -13,7 +16,6 @@ import {
     FindOptions,
     PaginatedResponse
 } from '../../domain/schemas/find.schemas';
-import { UserNotFoundError } from '../../domain/errors/auth.errors';
 
 export class UserService {
     constructor(
