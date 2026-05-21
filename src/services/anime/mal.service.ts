@@ -136,9 +136,8 @@ export class MalService {
                 ? new Date(malData.end_date)
                 : new Date(),
             malMean: malData.mean || 0,
-            malRank: malData.rank || 0,
+            malRank: malData.rank ?? 999999,
             mean: 0,
-            rank: 0,
             numEpisodes: malData.num_episodes || 0,
             status: malData.status || 'Unknown',
             genres: malData.genres?.map((g) => g.name) || [],
