@@ -1,24 +1,25 @@
 import { Request, Response } from 'express';
-import { SEARCH_LIMITS } from '../../domain/schemas/search/search.schemas';
+import {
+    malAuthService,
+    malService
+} from '../../infraestructure/container/mal.container';
 import { ok } from '../../utils/http/response';
 import { catchAsync } from '../../utils/http/catchAsync';
-import { ValidationError } from '../../exceptions/exceptions';
+import { BadRequestError } from '../../domain/errors/http.errors';
 import { randomUUID } from 'crypto';
 
 export const getAuthUrl = catchAsync(
     async (req: Request, res: Response) => {
-        const { externalServices } = req.container!;
         const state = randomUUID();
         const redirectUri =
             process.env.NODE_ENV === 'development'
                 ? `${process.env.APP_URL_DEV}:${process.env.SERVER_PORT}/mal/auth/callback`
                 : `${process.env.APP_URL_PROD}/mal/auth/callback`;
 
-        const authUrl =
-            externalServices.malAuth.getAuthorizationUrl(
-                redirectUri,
-                state
-            );
+        const authUrl = malAuthService.getAuthorizationUrl(
+            redirectUri,
+            state
+        );
 
         ok(res, 'Authorization URL generated', {
             authUrl,
@@ -29,28 +30,24 @@ export const getAuthUrl = catchAsync(
 
 export const handleAuthCallback = catchAsync(
     async (req: Request, res: Response) => {
-        const { externalServices } = req.container!;
         const { code, state } = req.query;
 
         if (!code || typeof code !== 'string') {
-            throw new ValidationError(
-                'Authorization code is required',
-                { received: code }
+            throw new BadRequestError(
+                'Authorization code is required'
             );
         }
 
         if (!state || typeof state !== 'string') {
-            throw new ValidationError(
-                'State parameter is required',
-                { received: state }
+            throw new BadRequestError(
+                'State parameter is required'
             );
         }
 
-        const tokenData =
-            await externalServices.malAuth.getAccessToken(
-                code,
-                state
-            );
+        const tokenData = await malAuthService.getAccessToken(
+            code,
+            state
+        );
 
         ok(res, 'Access token obtained successfully', {
             ...tokenData
@@ -60,22 +57,18 @@ export const handleAuthCallback = catchAsync(
 
 export const searchMalAnimes = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const { query, limit } = req.query;
 
         if (!query || typeof query !== 'string') {
-            throw new ValidationError(
-                'Query parameter is required and must be a string',
-                { received: query }
+            throw new BadRequestError(
+                'Query parameter is required and must be a string'
             );
         }
 
         const limitNumber =
-            limit && !isNaN(Number(limit))
-                ? Number(limit)
-                : SEARCH_LIMITS.MAX_RESULTS;
+            limit && !isNaN(Number(limit)) ? Number(limit) : 10;
 
-        const animes = await services.mal.searchAnimes(
+        const animes = await malService.searchAnimes(
             query,
             limitNumber
         );
@@ -86,21 +79,18 @@ export const searchMalAnimes = catchAsync(
 
 export const getMalAnime = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const { malid } = req.params;
 
         const malIdNumber = Number(malid);
 
         if (isNaN(malIdNumber)) {
-            throw new ValidationError(
-                'MAL ID must be a valid number',
-                { received: malid }
+            throw new BadRequestError(
+                'MAL ID must be a valid number'
             );
         }
 
-        const anime =
-            await services.mal.getAnimeById(malIdNumber);
-        const mapped = services.mal.mapMalToAnime(anime);
+        const anime = await malService.getAnimeById(malIdNumber);
+        const mapped = malService.mapMalToAnime(anime);
 
         ok(res, 'Anime found in MAL', {
             ...anime,

@@ -2,7 +2,7 @@ import { User } from '../../domain/entities/User';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
 import { EmailAuthRepository } from '../../domain/repositories/user/EmailAuth.repository';
 import { OAuthRepository } from '../../domain/repositories/user/OAuth.repository';
-import { UserNotFoundError } from '../../exceptions/exceptions';
+import { UserNotFoundError } from '../../domain/errors/auth.errors';
 import { OAuthData } from '../../domain/schemas/user/oauth.schemas';
 import { verifyFirebaseTokenId } from '../../utils/oauth/firebase';
 import {
@@ -10,14 +10,13 @@ import {
     getDiscordUser
 } from '../../utils/oauth/discord';
 import { OAuth } from '../../domain/entities/OAuth';
-import { EmailAuthService } from './emailAuth.service';
+import { emailAuthService } from '../../infraestructure/container/user.container';
 
 export class OAuthService {
     constructor(
         private readonly userRepository: UserRepository<User>,
         private readonly emailAuthRepository: EmailAuthRepository<User>,
-        private readonly oauthRepository: OAuthRepository<OAuth>,
-        private readonly emailAuthService: EmailAuthService
+        private readonly oauthRepository: OAuthRepository<OAuth>
     ) {}
 
     async googleAuth(tokenId: string) {
@@ -64,7 +63,7 @@ export class OAuthService {
                 );
             }
 
-            await this.emailAuthService.verifyEmailRequest(
+            await emailAuthService.verifyEmailRequest(
                 user.getUsername()
             );
         }

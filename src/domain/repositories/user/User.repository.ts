@@ -31,6 +31,4 @@ export interface UserRepository<User> extends Repository<
         userId: number,
         socialAccounts: UserUpdateSocialAccounts
     ): Promise<User | null>;
-
-    searchByName(query: string, limit: number): Promise<User[]>;
 }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ValidationError } from '../../exceptions/exceptions';
+import { BadRequestError } from '../../domain/errors/http.errors';
 import { FindOptions } from '../../domain/schemas/find.schemas';
 import { userSelectableField } from '../../domain/schemas/user/user.schemas';
 
@@ -14,10 +14,7 @@ export const validateUsername = (
             : undefined;
 
     if (!username)
-        throw new ValidationError('Username not valid.', {
-            received: username,
-            pattern: '/^[a-zA-Z0-9_-]*$/'
-        });
+        throw new BadRequestError('Username not valid.');
 
     next();
 };

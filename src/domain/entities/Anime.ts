@@ -11,13 +11,13 @@ export class Anime {
     private readonly malMean: number;
     private readonly malRank: number;
     private mean: number;
+    private rank: number;
     private numEpisodes: number;
     private status: AnimeStatus;
     private nextUpdate: Date;
     private likes: number;
     private genres: string[];
     private studios: string[];
-    private broadcast?: { dayOfWeek: string; startTime: string };
 
     private constructor(
         animeId: number,
@@ -32,13 +32,13 @@ export class Anime {
         malMean: number,
         malRank: number,
         mean: number,
+        rank: number,
         numEpisodes: number,
         status: AnimeStatus,
         nextUpdate: Date,
         likes: number,
         genres: string[],
-        studios: string[],
-        broadcast?: { dayOfWeek: string; startTime: string }
+        studios: string[]
     ) {
         this.animeId = animeId;
         this.malId = malId;
@@ -52,13 +52,13 @@ export class Anime {
         this.malMean = malMean;
         this.malRank = malRank;
         this.mean = mean;
+        this.rank = rank;
         this.numEpisodes = numEpisodes;
         this.status = status;
         this.nextUpdate = nextUpdate;
         this.likes = likes;
         this.genres = genres;
         this.studios = studios;
-        this.broadcast = broadcast;
     }
 
     public static fromPersistence(data: {
@@ -74,13 +74,13 @@ export class Anime {
         malMean: number;
         malRank: number;
         mean: number;
+        rank: number;
         numEpisodes: number;
         status: AnimeStatus;
         nextUpdate: Date;
         likes: number;
         genres: string[];
         studios: string[];
-        broadcast?: { dayOfWeek: string; startTime: string };
     }): Anime {
         return new Anime(
             data.animeId,
@@ -95,13 +95,13 @@ export class Anime {
             data.malMean,
             data.malRank,
             data.mean,
+            data.rank,
             data.numEpisodes,
             data.status,
             data.nextUpdate,
             data.likes,
             data.genres,
-            data.studios,
-            data.broadcast
+            data.studios
         );
     }
 
@@ -115,103 +115,6 @@ export class Anime {
 
     getBroadcastId(): number {
         return this.broadcastId;
-    }
-
-    getName(): string {
-        return this.name;
-    }
-
-    getImgMedium(): string {
-        return this.imgMedium;
-    }
-
-    getImgLarge(): string {
-        return this.imgLarge;
-    }
-
-    getMalMean(): number {
-        return this.malMean;
-    }
-
-    getMalRank(): number {
-        return this.malRank;
-    }
-
-    getMean(): number {
-        return this.mean;
-    }
-
-    getSynopsis(): string {
-        return this.synopsis;
-    }
-
-    getStartDate(): Date {
-        return this.startDate;
-    }
-
-    getEndDate(): Date {
-        return this.endDate;
-    }
-
-    getNumEpisodes(): number {
-        return this.numEpisodes;
-    }
-
-    getStatus(): AnimeStatus {
-        return this.status;
-    }
-
-    getNextUpdate(): Date {
-        return this.nextUpdate;
-    }
-
-    getLikes(): number {
-        return this.likes;
-    }
-
-    getGenres(): string[] {
-        return this.genres;
-    }
-
-    getStudios(): string[] {
-        return this.studios;
-    }
-
-    getBroadcast():
-        | { dayOfWeek: string; startTime: string }
-        | undefined {
-        return this.broadcast;
-    }
-
-    isStale(): boolean {
-        return this.nextUpdate < new Date();
-    }
-
-    toJSON() {
-        return {
-            malId: this.malId,
-            name: this.name,
-            synopsis: this.synopsis,
-            imgMedium: this.imgMedium,
-            imgLarge: this.imgLarge,
-            startDate: this.startDate,
-            endDate: this.endDate,
-            malMean: this.malMean,
-            malRank: this.malRank,
-            mean: this.mean,
-            numEpisodes: this.numEpisodes,
-            status: this.status,
-            nextUpdate: this.nextUpdate,
-            likes: this.likes,
-            genres: this.genres,
-            studios: this.studios,
-            broadcast: this.broadcast
-                ? {
-                      dayOfWeek: this.broadcast.dayOfWeek,
-                      startTime: this.broadcast.startTime
-                  }
-                : undefined
-        };
     }
 
     toString(): string {
@@ -228,6 +131,7 @@ export class Anime {
             malMean=${this.malMean},
             malRank=${this.malRank},
             mean=${this.mean},
+            rank=${this.rank},
             numEpisodes=${this.numEpisodes},
             status=${this.status},
             nextUpdate=${this.nextUpdate},

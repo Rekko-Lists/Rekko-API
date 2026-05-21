@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { findOptionsSchema } from '../domain/schemas/find.schemas';
-import { parseFilters } from '../utils/query/filter';
 
 export const parseQueryOptions = (
     req: Request,
@@ -8,10 +7,6 @@ export const parseQueryOptions = (
     next: NextFunction
 ) => {
     try {
-        const filters = parseFilters(
-            req.query as Record<string, any>
-        );
-
         const findOptions = findOptionsSchema.parse({
             select: req.query.fields
                 ? (req.query.fields as string)
@@ -26,22 +21,16 @@ export const parseQueryOptions = (
                     ? req.query.limit
                     : undefined
             },
-            // sortField y sortOrder aceptan valores comma-separated para multi-sort
-            // ej: sortField=malRank,likes&sortOrder=asc,desc
             sort: req.query.sortField
-                ? (req.query.sortField as string)
-                      .split(',')
-                      .map((field, i) => {
-                          const orders = req.query.sortOrder
-                              ? (req.query.sortOrder as string).split(',')
-                              : [];
-                          return {
-                              field: field.trim(),
-                              order: orders[i]?.trim() === 'desc' ? 'desc' : 'asc'
-                          };
-                      })
-                : undefined,
-            filters
+                ? {
+                      field: req.query.sortField as string,
+                      order:
+                          (req.query.sortOrder as string) ===
+                          'desc'
+                              ? 'desc'
+                              : 'asc'
+                  }
+                : undefined
         });
 
         (req as any).findOptions = findOptions;

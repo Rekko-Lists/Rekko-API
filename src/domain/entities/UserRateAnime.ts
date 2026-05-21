@@ -46,15 +46,6 @@ export class UserRateAnime {
         return this.rate;
     }
 
-    toJSON() {
-        return {
-            userRateAnimeId: this.userRateAnimeId,
-            userId: this.userId,
-            animeId: this.animeId,
-            rate: this.rate
-        };
-    }
-
     toString(): string {
         return `
             userRateAnimeId=${this.userRateAnimeId},

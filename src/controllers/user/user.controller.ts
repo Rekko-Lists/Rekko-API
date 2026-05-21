@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
 
+import {
+    emailAuthService,
+    userService
+} from '../../infraestructure/container/user.container';
+
 import { created, ok } from '../../utils/http/response';
 import { catchAsync } from '../../utils/http/catchAsync';
 
@@ -14,13 +19,12 @@ import { FindOptions } from '../../domain/schemas/find.schemas';
 
 export const postUser = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const validatedInput = createUserSchema.parse(req.body);
 
         const user =
-            await services.user.createUser(validatedInput);
+            await userService.createUser(validatedInput);
 
-        await services.emailAuth.verifyEmailRequest(
+        await emailAuthService.verifyEmailRequest(
             user!.getUsername()
         );
 
@@ -33,14 +37,13 @@ export const postUser = catchAsync(
 
 export const patchUser = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const username = req.params.username as string;
 
         const validatedProfile = userUpdateProfileSchema.parse(
             req.body
         );
 
-        const updated = await services.user.updateUser(
+        const updated = await userService.updateUser(
             validatedProfile,
             username
         );
@@ -51,8 +54,7 @@ export const patchUser = catchAsync(
 
 export const getUsers = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
-        const users = await services.user.getUsers(
+        const users = await userService.getUsers(
             (req as any).findOptions as FindOptions
         );
 
@@ -62,11 +64,10 @@ export const getUsers = catchAsync(
 
 export const getUser = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const username = req.params.username as string;
         const fields = (req as any).findOptions?.select;
 
-        const user = await services.user.getUserData(
+        const user = await userService.getUserData(
             username,
             fields
         );
@@ -77,11 +78,10 @@ export const getUser = catchAsync(
 
 export const deleteUser = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const username = req.params.username as string;
 
         const deleted =
-            await services.user.deleteByUsername(username);
+            await userService.deleteByUsername(username);
 
         ok(res, 'User deleted succesfully.', deleted);
     }
@@ -89,14 +89,13 @@ export const deleteUser = catchAsync(
 
 export const changeUsername = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const username = req.params.username as string;
 
         const validatedInput = userUpdateUsername.parse(
             req.body
         );
 
-        const result = await services.user.updateUsername(
+        const result = await userService.updateUsername(
             username,
             validatedInput
         );
@@ -107,13 +106,12 @@ export const changeUsername = catchAsync(
 
 export const socialAccounts = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const username = req.params.username as string;
 
         const validateSocialAccounts =
             userUpdateSocialAccounts.parse(req.body);
 
-        const user = await services.user.updateSocialAccounts(
+        const user = await userService.updateSocialAccounts(
             username,
             validateSocialAccounts
         );
@@ -124,7 +122,6 @@ export const socialAccounts = catchAsync(
 
 export const patchReputation = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const data = {
             username: req.params.username,
             reason: req.body.reason
@@ -132,7 +129,7 @@ export const patchReputation = catchAsync(
 
         const validatedInput = updateReputation.parse(data);
 
-        await services.user.updateReputation(validatedInput);
+        await userService.updateReputation(validatedInput);
 
         ok(res, 'Reputation updated succesfully.');
     }
@@ -140,11 +137,9 @@ export const patchReputation = catchAsync(
 
 export const getUserById = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
-
         const id = Number(req.params.id);
 
-        const user = await services.user.getUserById(id);
+        const user = await userService.getUserById(id);
 
         ok(res, 'User found', user);
     }

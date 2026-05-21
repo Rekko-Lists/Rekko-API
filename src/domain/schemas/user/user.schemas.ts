@@ -200,9 +200,6 @@ export const userSelectableField = z.enum([
     'oauthAccounts'
 ]);
 
-export const userRole = z.enum(['USER', 'MODERATOR', 'ADMIN']);
-export type UserRole = z.infer<typeof userRole>;
-
 export const userDefaultSelect = [
     'username',
     'email',
@@ -211,7 +208,6 @@ export const userDefaultSelect = [
     'backgroundImage',
     'biography',
     'reputation',
-    'role',
     'emailVerified'
 ];
 

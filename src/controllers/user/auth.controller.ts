@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../../utils/http/catchAsync';
+import {
+    refreshTokenService,
+    emailAuthService
+} from '../../infraestructure/container/user.container';
 import { ok } from '../../utils/http/response';
 import {
     loginSchema,
@@ -9,11 +13,10 @@ import { getClientInfo } from '../../utils/http/http.util';
 
 export const login = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const validatedInput = loginSchema.parse(req.body);
 
         const user =
-            await services.emailAuth.authenticateByEmailAndPassword(
+            await emailAuthService.authenticateByEmailAndPassword(
                 validatedInput.email,
                 validatedInput.password
             );
@@ -21,7 +24,7 @@ export const login = catchAsync(
         const { userAgent, ip } = getClientInfo(req);
 
         const tokens =
-            await services.refreshToken.generateTokenPair(
+            await refreshTokenService.generateTokenPair(
                 user.getUserId(),
                 userAgent,
                 ip
@@ -33,8 +36,7 @@ export const login = catchAsync(
             user: {
                 userId: user.getUserId(),
                 email: user.getEmail(),
-                username: user.getUsername(),
-                role: user.getRole()
+                username: user.getUsername()
             }
         });
     }
@@ -42,12 +44,11 @@ export const login = catchAsync(
 
 export const logout = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const validatedInput = refreshTokenSchema.parse(
             req.body
         );
 
-        await services.refreshToken.revokeSessionByToken(
+        await refreshTokenService.revokeSessionByToken(
             validatedInput.refreshToken
         );
 
@@ -57,13 +58,12 @@ export const logout = catchAsync(
 
 export const refreshToken = catchAsync(
     async (req: Request, res: Response) => {
-        const { services } = req.container!;
         const validatedInput = refreshTokenSchema.parse(
             req.body
         );
 
         const tokens =
-            await services.refreshToken.refreshAccessToken(
+            await refreshTokenService.refreshAccessToken(
                 validatedInput.refreshToken
             );
 

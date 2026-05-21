@@ -59,7 +59,6 @@ model Comment {
   post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
   parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId])
   replies           Comment[] @relation("CommentReplies")
-  userLikeComment   UserLikeComment[]
 
   @@map("comment")
 }
@@ -87,7 +86,6 @@ model User {
   comments          Comment[]
   posts             Post[]
   userLikePost      UserLikePost[]
-  userLikeComment   UserLikeComment[]
   userLikeAnime     UserLikeAnime[]
   userRateAnime     UserRateAnime[]
   userWatchAnime    UserWatchAnime[]
@@ -144,11 +142,12 @@ model Anime {
   malMean           Float @map("mal_mean")
   malRank           Int @map("mal_rank")
   mean              Float
+  rank              Int
   numEpisodes       Int @map("num_episodes")
   status            String
-  mediaType         String   @default("tv") @map("media_type")
   nextUpdate        DateTime @map("next_update")
   likes             Int
+  genres            String[]
   studios           String[]
 
   challenges        Challenge[]
@@ -156,31 +155,10 @@ model Anime {
   userLikeAnime     UserLikeAnime[]
   userRateAnime     UserRateAnime[]
   userWatchAnime    UserWatchAnime[]
-  animeGenres       AnimeGenre[]
 
   broadcast         Broadcast @relation(fields: [broadcastId], references: [broadcastId])
 
   @@map("anime")
-}
-
-model Genre {
-  genreId     Int          @id @default(autoincrement()) @map("genre_id")
-  name        String       @unique
-  animeGenres AnimeGenre[]
-
-  @@map("genre")
-}
-
-model AnimeGenre {
-  animeGenreId  Int   @id @default(autoincrement()) @map("anime_genre_id")
-  animeId       Int   @map("anime_id")
-  genreId       Int   @map("genre_id")
-
-  anime         Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
-  genre         Genre @relation(fields: [genreId], references: [genreId], onDelete: Cascade)
-
-  @@unique([animeId, genreId])
-  @@map("anime_genre")
 }
 
 model Broadcast {
@@ -234,17 +212,6 @@ model UserLikePost {
   @@map("user_like_post")
 }
 
-model UserLikeComment {
-  userLikeCommentId Int @id @default(autoincrement()) @map("user_like_comment_id")
-  userId            Int @map("user_id")
-  commentId         Int @map("comment_id")
-
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  comment           Comment @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
-
-  @@map("user_like_comment")
-}
-
 model AnimePost {
   animePostId       Int @id @default(autoincrement()) @map("anime_post_id")
   animeId           Int @map("anime_id")
@@ -271,7 +238,7 @@ model UserRateAnime {
   userRateAnimeId   Int @id @default(autoincrement()) @map("user_rate_anime_id")
   userId            Int @map("user_id")
   animeId           Int @map("anime_id")
-  rate              Int
+  rate              Float
 
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
@@ -284,20 +251,12 @@ model UserWatchAnime {
   userId            Int @map("user_id")
   animeId           Int @map("anime_id")
   numEpisodes       Int @map("num_episodes")
-  state             AnimeState
+  state             String
 
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@map("user_watch_anime")
-}
-
-enum AnimeState {
-  COMPLETED
-  WATCHING
-  ON_HOLD
-  DROPPED
-  PLAN_TO_WATCH
 }
 
 model UserSocialAccount {

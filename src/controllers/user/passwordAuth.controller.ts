@@ -1,20 +1,19 @@
 import { Request, Response } from 'express';
 
+import { passwordAuthService } from '../../infraestructure/container/user.container';
+
 import { catchAsync } from '../../utils/http/catchAsync';
 import { buildUrl } from '../../utils/http/redirect';
 
 import { userResetPassword } from '../../domain/schemas/user/user.schemas';
-import { AppError } from '../../exceptions/exceptions';
+import { AuthError } from '../../domain/errors/auth.errors';
 
 export const forgotPassword = catchAsync(
     async (req: Request, res: Response) => {
         try {
-            const { services } = req.container!;
             const username = req.params.username as string;
 
-            await services.passwordAuth.forgotPassoword(
-                username
-            );
+            await passwordAuthService.forgotPassoword(username);
 
             // La SOLICITUD de cambio de cotraseña se ha mandado
             res.redirect(
@@ -29,7 +28,7 @@ export const forgotPassword = catchAsync(
             );
         } catch (error) {
             // La SOLICITUD de cambio de contraseña no se ha mandado y manda el motivo
-            if (error instanceof AppError) {
+            if (error instanceof AuthError) {
                 return res.redirect(
                     buildUrl({
                         domain:
@@ -38,7 +37,7 @@ export const forgotPassword = catchAsync(
                                 ? process.env.CLIENT_URL_DEV!
                                 : process.env.CLIENT_URL_PROD!,
                         path: '/password-forgot',
-                        params: { status: 'error', message: error.code }
+                        params: { status: error.redirectStatus! }
                     })
                 );
             }
@@ -51,7 +50,6 @@ export const forgotPassword = catchAsync(
 export const resetPassword = catchAsync(
     async (req: Request, res: Response) => {
         try {
-            const { services } = req.container!;
             const data = {
                 username: req.params.username,
                 token: req.query.token,
@@ -61,7 +59,7 @@ export const resetPassword = catchAsync(
 
             const validatedInput = userResetPassword.parse(data);
 
-            await services.passwordAuth.resetPassword(
+            await passwordAuthService.resetPassword(
                 validatedInput
             );
 
@@ -78,7 +76,7 @@ export const resetPassword = catchAsync(
             );
         } catch (error) {
             // La contraseña no se ha cambiado y manda el motivo
-            if (error instanceof AppError) {
+            if (error instanceof AuthError) {
                 return res.redirect(
                     buildUrl({
                         domain:
@@ -87,7 +85,7 @@ export const resetPassword = catchAsync(
                                 ? process.env.CLIENT_URL_DEV!
                                 : process.env.CLIENT_URL_PROD!,
                         path: '/password-changed',
-                        params: { status: 'error', message: error.code }
+                        params: { status: error.redirectStatus! }
                     })
                 );
             }

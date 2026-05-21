@@ -5,9 +5,6 @@ export class Comment {
     private parentCommentId: number | null;
     private message: string;
     private likes: number;
-    private user?: { username: string; profileImage: string };
-    private hasReplies?: boolean;
-    private replyCount?: number;
 
     private constructor(
         commentId: number,
@@ -15,10 +12,7 @@ export class Comment {
         postId: number,
         parentCommentId: number | null,
         message: string,
-        likes: number,
-        user?: { username: string; profileImage: string },
-        hasReplies?: boolean,
-        replyCount?: number
+        likes: number
     ) {
         this.commentId = commentId;
         this.userId = userId;
@@ -26,9 +20,6 @@ export class Comment {
         this.parentCommentId = parentCommentId;
         this.message = message;
         this.likes = likes;
-        this.user = user;
-        this.hasReplies = hasReplies;
-        this.replyCount = replyCount;
     }
 
     public static fromPersistence(data: {
@@ -38,9 +29,6 @@ export class Comment {
         parentCommentId: number | null;
         message: string;
         likes: number;
-        user?: { username: string; profileImage: string };
-        hasReplies?: boolean;
-        replyCount?: number;
     }): Comment {
         return new Comment(
             data.commentId,
@@ -48,10 +36,7 @@ export class Comment {
             data.postId,
             data.parentCommentId,
             data.message,
-            data.likes,
-            data.user,
-            data.hasReplies,
-            data.replyCount
+            data.likes
         );
     }
 
@@ -71,28 +56,6 @@ export class Comment {
         return this.parentCommentId;
     }
 
-    getMessage(): string {
-        return this.message;
-    }
-
-    getLikes(): number {
-        return this.likes;
-    }
-
-    getUser():
-        | { username: string; profileImage: string }
-        | undefined {
-        return this.user;
-    }
-
-    getReplyCount(): number | undefined {
-        return this.replyCount;
-    }
-
-    getHasReplies(): boolean | undefined {
-        return this.hasReplies;
-    }
-
     toString(): string {
         return `
             commentId=${this.commentId},
@@ -100,10 +63,7 @@ export class Comment {
             postId=${this.postId},
             parentCommentId=${this.parentCommentId},
             message=${this.message},
-            likes=${this.likes},
-            user=${this.user ? JSON.stringify(this.user) : 'null'},
-            hasReplies=${this.hasReplies},
-            replyCount=${this.replyCount}
+            likes=${this.likes}
         `;
     }
 }
