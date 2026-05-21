@@ -9,6 +9,14 @@ import {
     ConflictError,
     NotFoundError
 } from '../../exceptions/exceptions';
+import {
+    FindOptions,
+    PaginatedResponse
+} from '../../domain/schemas/find.schemas';
+import {
+    LikedAnimeListItem,
+    LikedPostListItem
+} from '../../domain/schemas/publication/like.schemas';
 
 export class LikeService {
     constructor(
@@ -261,5 +269,55 @@ export class LikeService {
             anime.getAnimeId(),
             userId
         );
+    }
+
+    async getLikedAnimesByUserId(
+        userId: number,
+        findOptions: FindOptions
+    ): Promise<PaginatedResponse<LikedAnimeListItem>> {
+        const result =
+            await this.likeRepository.findLikedAnimesByUserId(
+                userId,
+                findOptions
+            );
+
+        const pages = Math.ceil(
+            result.total / findOptions.pagination.limit
+        );
+
+        return {
+            data: result.data,
+            pagination: {
+                page: findOptions.pagination.page,
+                limit: findOptions.pagination.limit,
+                total: result.total,
+                pages
+            }
+        };
+    }
+
+    async getLikedPostsByUserId(
+        userId: number,
+        findOptions: FindOptions
+    ): Promise<PaginatedResponse<LikedPostListItem>> {
+        const result =
+            await this.likeRepository.findLikedPostsByUserId(
+                userId,
+                findOptions
+            );
+
+        const pages = Math.ceil(
+            result.total / findOptions.pagination.limit
+        );
+
+        return {
+            data: result.data,
+            pagination: {
+                page: findOptions.pagination.page,
+                limit: findOptions.pagination.limit,
+                total: result.total,
+                pages
+            }
+        };
     }
 }

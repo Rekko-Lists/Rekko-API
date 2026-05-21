@@ -1,4 +1,9 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import {
+    Router,
+    Request,
+    Response,
+    NextFunction
+} from 'express';
 import {
     getUser,
     postUser,
@@ -25,6 +30,10 @@ import {
     uploadBannerImage,
     uploadBackgroundImage
 } from '../../../controllers/user/upload.controller';
+import {
+    getLikedAnimesByUserId,
+    getLikedPostsByUserId
+} from '../../../controllers/user/like.controller';
 
 import {
     validateUsername,
@@ -44,10 +53,22 @@ router
     .get(parseQueryOptions, validateUserQuery, getUsers)
     .post(postUser);
 
-router.get('/:id', (req: Request, res: Response, next: NextFunction) => {
-    if (!/^\d+$/.test(String(req.params.id))) return next('route');
-    return getUserById(req, res, next);
-});
+router.get(
+    '/:id',
+    (req: Request, res: Response, next: NextFunction) => {
+        if (!/^\d+$/.test(String(req.params.id)))
+            return next('route');
+        return getUserById(req, res, next);
+    }
+);
+
+router
+    .route('/:userid/liked-animes')
+    .get(parseQueryOptions, getLikedAnimesByUserId);
+
+router
+    .route('/:userid/liked-posts')
+    .get(parseQueryOptions, getLikedPostsByUserId);
 
 router.use('/:username', validateUsername);
 
@@ -65,7 +86,9 @@ router
     .route('/:username/change-email/confirm')
     .get(changeEmailConfirm);
 
-router.route('/:username/verify-email').post(ownershipMiddleware, verifyEmailRequest);
+router
+    .route('/:username/verify-email')
+    .post(ownershipMiddleware, verifyEmailRequest);
 
 router.route('/:username/verify-email/confirm').get(verifyEmail);
 
