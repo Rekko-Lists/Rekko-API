@@ -6,9 +6,13 @@ import {
 } from '../../exceptions/exceptions';
 
 interface PrismaError {
+    name?: string;
     code?: string;
+    errorCode?: string;
     meta?: {
         target?: string[];
+        table?: string;
+        column?: string;
     };
     message: string;
     stack?: string;
@@ -21,8 +25,20 @@ function getErrorStack(error: unknown): string | null {
 export function handlePrismaError(error: unknown): never {
     const prismaError = error as PrismaError;
     const stack = getErrorStack(error);
+    const prismaCode = prismaError.code ?? prismaError.errorCode;
 
-    switch (prismaError.code) {
+    if (prismaError.name === 'PrismaClientInitializationError') {
+        throw new InternalServerError(
+            'Could not connect to the database.',
+            'INTERNAL_DATABASE_CONNECTION_ERROR',
+            {
+                originalError: prismaError.message,
+                stack
+            }
+        );
+    }
+
+    switch (prismaCode) {
         case 'P2002':
             const fieldNames =
                 prismaError.meta?.target?.join(', ') ??
@@ -50,13 +66,37 @@ export function handlePrismaError(error: unknown): never {
                 { code: 'P2014' }
             );
 
+        case 'P2021':
+            throw new InternalServerError(
+                'The database table expected by Prisma does not exist.',
+                'INTERNAL_DATABASE_SCHEMA_ERROR',
+                {
+                    prismaCode: 'P2021',
+                    table: prismaError.meta?.table,
+                    originalError: prismaError.message
+                }
+            );
+
+        case 'P2022':
+            throw new InternalServerError(
+                'The database column expected by Prisma does not exist.',
+                'INTERNAL_DATABASE_SCHEMA_ERROR',
+                {
+                    prismaCode: 'P2022',
+                    column: prismaError.meta?.column,
+                    originalError: prismaError.message
+                }
+            );
+
         default:
             throw new InternalServerError(
                 'An unexpected database error occurred.',
                 'INTERNAL_DATABASE_ERROR',
                 {
-                    prismaCode: prismaError.code,
-                    originalError: prismaError.message
+                    prismaCode,
+                    originalError: prismaError.message,
+                    errorName: prismaError.name,
+                    stack
                 }
             );
     }
