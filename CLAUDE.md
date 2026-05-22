@@ -895,3 +895,60 @@ Lo mas util para frontend seria generar despues un contrato mas formal en alguno
 - colección Postman / Insomnia
 - SDK TypeScript con tipos de request/response
 
+---
+
+## Estado del proyecto al 2026-05-22 — notas para el siguiente agente
+
+### Que se acaba de implementar
+
+Se añadieron posts, comentarios, likes, watch list y rating de animes. Todo fue revisado y corregido en la misma sesion. El codigo **compila sin errores** (`npx tsc --noEmit` limpio).
+
+### Migracion pendiente de aplicar
+
+Se creo la migracion `prisma/migrations/20260522000000_fix_unique_constraints_and_cascade/migration.sql` pero **no se ha ejecutado** contra la BD todavia. Contiene:
+
+- `UNIQUE (user_id, post_id)` en `user_like_post`
+- `UNIQUE (user_id, comment_id)` en `user_like_comment`
+- `UNIQUE (user_id, anime_id)` en `user_like_anime`, `user_rate_anime`, `user_watch_anime`
+- Cambio del FK de `comment.parent_comment_id` a `ON DELETE CASCADE`
+
+Antes de arrancar en produccion hay que ejecutar `npx prisma migrate deploy`.
+
+### Decisiones de diseno que pueden sorprender
+
+**userId nullable en Post y Comment** — La BD tiene `userId Int?` con `onDelete: SetNull` en ambas tablas. Las entidades `Post.ts` y `Comment.ts` tipan `userId` como `number | null`. Cuando el autor de un post o comentario elimina su cuenta, el contenido permanece con `userId = null`. La logica de borrado permite eliminar ese contenido huerfano a cualquier usuario autenticado (no solo al owner) porque no hay owner que reclamarlo.
+
+**Contador de likes en columna propia** — Los modelos `post`, `comment` y `anime` tienen un campo `likes: Int` que se incrementa/decrementa dentro de una transaccion Prisma junto con la creacion/borrado del registro en la tabla de likes. No se calcula on-the-fly. Esto es rapido de leer pero requiere que las dos operaciones vayan siempre en la misma transaccion (ya corregido).
+
+**Watch list como upsert** — `POST /anime/watch` crea el registro si no existe o lo actualiza si ya existe. No hay endpoint separado `PUT`. El estado (`watching`, `completed`, etc.) se transforma en el enum de Prisma `AnimeState` dentro del schema Zod.
+
+**Validacion de episodios excluye animes en emision** — Si `anime.numEpisodes === 0` (en curso, total desconocido) se salta la validacion del limite superior y se acepta cualquier numero >= 0.
+
+**Paginacion** — El limite maximo es 110 elementos por pagina (antes era 20, se subio intencionalmente). Afecta a todos los endpoints que usan `findOptionsSchema`.
+
+### roleMiddleware existe pero solo se usa en seed
+
+`src/middlewares/role.middleware.ts` esta implementado y el JWT ya incluye `role`. Solo se usa en `GET /anime/seed` (requiere `ADMIN`). Si se añaden rutas de moderacion o admin habra que aplicarlo. El middleware se importa y usa asi:
+
+```ts
+import { roleMiddleware } from '../../../middlewares/role.middleware';
+router.route('/algo').patch(authMiddleware, roleMiddleware(['ADMIN', 'MODERATOR']), handler);
+```
+
+### Patrones repetidos a seguir
+
+- Todos los endpoints paginados usan `parseQueryOptions` middleware que rellena `req.findOptions`.
+- Posts y comentarios devuelven `hasLiked: boolean` usando `optionalAuthMiddleware` — si hay token se incluye el estado, si no hay token es siempre `false`.
+- Los servicios de lista (`getUserRateList`, `getUserWatchList`, `getLikedAnimesByUserId`) devuelven array vacio sin lanzar 404. Los servicios de coleccion general (`getPosts`, `getPostsByUsername`) si lanzan 404 si no hay resultados. Esta asimetria existe; si se unifica habra que tocar el frontend.
+- Las rutas de publicacion estan en `src/infraestructure/router/publication/` (no en la raiz de `router/`).
+- Los repositorios de anime estan en `src/domain/repositories/anime/` — sus imports internos usan `../../entities/` y `../../schemas/` (dos niveles arriba, no uno).
+
+### Que queda por hacer (conocido)
+
+- Aplicar la migracion en BD.
+- Los endpoints `GET /auth/sessions` y `DELETE /auth/sessions/:id` devuelven `501 Not implemented`.
+- No hay paginacion ni filtros en `GET /comment/by-parent/:parentId` para threads profundos.
+- No hay endpoint de edicion de posts ni comentarios (`PATCH`).
+- No hay endpoint de busqueda de posts por texto (hay busqueda de animes y usuarios en `/api/search` pero no de posts).
+- La API no tiene documentacion OpenAPI/Swagger formal todavia.
+
