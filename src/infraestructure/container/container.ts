@@ -33,6 +33,7 @@ import { UploadService } from '../../services/user/upload.service';
 import { PostService } from '../../services/publication/post.service';
 import { LikeService } from '../../services/publication/like.service';
 import { CommentService } from '../../services/publication/comment.service';
+import { RecommendationsService } from '../../services/anime/recommendations.service';
 
 // ===== REPOSITORIES INITIALIZATION =====
 const animeRepository = new AnimePrismaRepository(prisma);
@@ -129,6 +130,10 @@ const commentService = new CommentService(
     likeService
 );
 
+const recommendationsService = new RecommendationsService(
+    animeRepository
+);
+
 // ===== CONTAINER EXPORT =====
 export const container = {
     repositories: {
@@ -161,7 +166,8 @@ export const container = {
         like: likeService,
         mal: malService,
         rate: rateService,
-        watch: watchService
+        watch: watchService,
+        recommendations: recommendationsService
     }
 } as const;
 
