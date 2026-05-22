@@ -1,6 +1,6 @@
 export class Post {
     private readonly postId: number;
-    private readonly userId: number;
+    private readonly userId: number | null;
     private title: string;
     private description: string | null;
     private photo: string | null;
@@ -9,7 +9,7 @@ export class Post {
 
     private constructor(
         postId: number,
-        userId: number,
+        userId: number | null,
         title: string,
         description: string | null,
         photo: string | null,
@@ -27,7 +27,7 @@ export class Post {
 
     public static fromPersistence(data: {
         postId: number;
-        userId: number;
+        userId: number | null;
         title: string;
         description: string | null;
         photo: string | null;
@@ -49,7 +49,7 @@ export class Post {
         return this.postId;
     }
 
-    getUserId(): number {
+    getUserId(): number | null {
         return this.userId;
     }
 
