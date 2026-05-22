@@ -17,3 +17,16 @@ export const createCommentSchema = z.object({
 export type CreateCommentInput = z.infer<
     typeof createCommentSchema
 >;
+
+export type EnrichedComment = {
+    commentId: number;
+    message: string;
+    likes: number;
+    userId: number | null;
+    user: { username: string; profileImage: string } | undefined;
+    postId: number;
+    parentCommentId: number | null;
+    replyCount: number | undefined;
+    hasReplies: boolean | undefined;
+    hasLiked: boolean;
+};
