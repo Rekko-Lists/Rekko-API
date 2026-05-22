@@ -15,6 +15,11 @@ export class AnimeDTO {
     likes: number;
     genres: string[];
     studios: string[];
+    duration: number | null;
+    premieredSeason: string | null;
+    premieredYear: number | null;
+    rating: string | null;
+    demographic: string | null;
     broadcast?: {
         dayOfWeek: string;
         startTime: string;
@@ -37,6 +42,11 @@ export class AnimeDTO {
         likes: number;
         genres: string[];
         studios: string[];
+        duration: number | null;
+        premieredSeason: string | null;
+        premieredYear: number | null;
+        rating: string | null;
+        demographic: string | null;
         broadcast?: {
             dayOfWeek: string;
             startTime: string;
@@ -58,6 +68,11 @@ export class AnimeDTO {
         this.likes = data.likes;
         this.genres = data.genres;
         this.studios = data.studios;
+        this.duration = data.duration;
+        this.premieredSeason = data.premieredSeason;
+        this.premieredYear = data.premieredYear;
+        this.rating = data.rating;
+        this.demographic = data.demographic;
         this.broadcast = data.broadcast;
     }
 }
