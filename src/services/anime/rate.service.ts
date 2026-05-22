@@ -1,4 +1,4 @@
-import { UserRateAnimeRepository } from '../../domain/repositories/UserRateAnime.repository';
+import { UserRateAnimeRepository } from '../../domain/repositories/anime/UserRateAnime.repository';
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
 import { AnimeService } from './anime.service';
 import { UserRateAnime } from '../../domain/entities/UserRateAnime';
@@ -39,8 +39,7 @@ export class RateService {
         if (userRate) {
             userRate =
                 await this.userRateAnimeRepository.updateRate(
-                    userId,
-                    animeId,
+                    userRate.getUserRateAnimeId(),
                     rating
                 );
         } else {

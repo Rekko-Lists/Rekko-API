@@ -1,5 +1,5 @@
 import { UserRateAnime } from '../../../../domain/entities/UserRateAnime';
-import { UserRateAnimeRepository } from '../../../../domain/repositories/UserRateAnime.repository';
+import { UserRateAnimeRepository } from '../../../../domain/repositories/anime/UserRateAnime.repository';
 import {
     FindOptions,
     FindRepository
@@ -124,22 +124,12 @@ export class UserRateAnimePrismaRepository implements UserRateAnimeRepository {
     }
 
     async updateRate(
-        userId: number,
-        animeId: number,
+        userRateAnimeId: number,
         rate: number
     ): Promise<UserRateAnime | null> {
         try {
-            const existing = await this.findByUserAndAnime(
-                userId,
-                animeId
-            );
-            if (!existing) return null;
-
             const record = await this.db.userRateAnime.update({
-                where: {
-                    userRateAnimeId:
-                        existing.getUserRateAnimeId()
-                },
+                where: { userRateAnimeId },
                 data: { rate }
             });
             return UserRateAnime.fromPersistence(record);

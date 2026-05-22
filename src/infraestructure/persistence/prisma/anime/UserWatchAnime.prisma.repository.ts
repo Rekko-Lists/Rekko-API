@@ -1,5 +1,5 @@
 import { UserWatchAnime } from '../../../../domain/entities/UserWatchAnime';
-import { UserWatchAnimeRepository } from '../../../../domain/repositories/UserWatchAnime.repository';
+import { UserWatchAnimeRepository } from '../../../../domain/repositories/anime/UserWatchAnime.repository';
 import {
     FindOptions,
     FindRepository
