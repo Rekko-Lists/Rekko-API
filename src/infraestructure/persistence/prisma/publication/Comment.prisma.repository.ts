@@ -1,4 +1,5 @@
 import { Comment } from '../../../../domain/entities/Comment';
+import { CommentRepository } from '../../../../domain/repositories/publication/Comment.repository';
 import {
     FindOptions,
     FindRepository
@@ -7,7 +8,7 @@ import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
 import { buildPrismaPageQuery } from '../../../../utils/prisma/prismaHelper';
 
-export class CommentPrismaRepository {
+export class CommentPrismaRepository implements CommentRepository {
     constructor(private readonly db = prisma) {}
 
     async create(
@@ -49,28 +50,16 @@ export class CommentPrismaRepository {
 
     async delete(id: number): Promise<boolean> {
         try {
-            await this.deleteRepliesRecursive(id);
+            // The DB cascade (onDelete: Cascade on parentComment relation)
+            // handles recursive deletion of all replies atomically.
+            await this.db.comment.delete({
+                where: { commentId: id }
+            });
             return true;
         } catch (error) {
             handlePrismaError(error);
         }
     }
-
-    private deleteRepliesRecursive = async (
-        commentId: number
-    ) => {
-        const replies = await this.db.comment.findMany({
-            where: { parentCommentId: commentId }
-        });
-
-        for (const reply of replies) {
-            await this.deleteRepliesRecursive(reply.commentId);
-        }
-
-        await this.db.comment.delete({
-            where: { commentId }
-        });
-    };
 
     async findByPostId(
         postId: number,

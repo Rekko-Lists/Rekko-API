@@ -10,7 +10,10 @@ import {
     ValidationError,
     AuthorizationError
 } from '../../exceptions/exceptions';
-import { CreateCommentInput } from '../../domain/schemas/publication/comment.schemas';
+import {
+    CreateCommentInput,
+    EnrichedComment
+} from '../../domain/schemas/publication/comment.schemas';
 import { LikeService } from './like.service';
 
 export class CommentService {
@@ -72,7 +75,8 @@ export class CommentService {
             throw new NotFoundError('Comment not found');
         }
 
-        if (comment.getUserId() !== userId) {
+        const commentUserId = comment.getUserId();
+        if (commentUserId !== null && commentUserId !== userId) {
             throw new AuthorizationError(
                 'You do not have permission to delete this comment'
             );
@@ -174,15 +178,10 @@ export class CommentService {
         };
     }
 
-    async enrichCommentWithLikesStatus(
+    private toEnrichedComment(
         comment: Comment,
-        userId?: number
-    ): Promise<any> {
-        const hasLiked = await this.likeService.hasUserLikedComment(
-            comment.getCommentId(),
-            userId
-        );
-
+        hasLiked: boolean
+    ): EnrichedComment {
         return {
             commentId: comment.getCommentId(),
             message: comment.getMessage(),
@@ -197,13 +196,35 @@ export class CommentService {
         };
     }
 
+    async enrichCommentWithLikesStatus(
+        comment: Comment,
+        userId?: number
+    ): Promise<EnrichedComment> {
+        const hasLiked =
+            await this.likeService.hasUserLikedComment(
+                comment.getCommentId(),
+                userId
+            );
+        return this.toEnrichedComment(comment, hasLiked);
+    }
+
     async enrichCommentsWithLikesStatus(
         comments: Comment[],
         userId?: number
-    ): Promise<any[]> {
-        return Promise.all(
-            comments.map((comment) =>
-                this.enrichCommentWithLikesStatus(comment, userId)
+    ): Promise<EnrichedComment[]> {
+        if (comments.length === 0) return [];
+
+        const likedIds = userId
+            ? await this.likeService.getLikedCommentIds(
+                  comments.map((c) => c.getCommentId()),
+                  userId
+              )
+            : new Set<number>();
+
+        return comments.map((comment) =>
+            this.toEnrichedComment(
+                comment,
+                likedIds.has(comment.getCommentId())
             )
         );
     }

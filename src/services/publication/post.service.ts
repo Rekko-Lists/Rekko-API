@@ -10,7 +10,10 @@ import {
     AuthorizationError
 } from '../../exceptions/exceptions';
 import { CloudinaryHandler } from '../../infraestructure/services/storage/cloudinary.service';
-import { CreatePostInput } from '../../domain/schemas/publication/post.schemas';
+import {
+    CreatePostInput,
+    EnrichedPost
+} from '../../domain/schemas/publication/post.schemas';
 import { IMAGE_CONFIG } from '../../domain/schemas/img.schema';
 import { LikeService } from './like.service';
 
@@ -108,19 +111,19 @@ export class PostService {
         userId: number
     ): Promise<void> {
         const post = await this.postRepository.findById(postId);
-        if (!post || post.getUserId() !== userId) {
+
+        if (!post) {
+            throw new NotFoundError('Post', postId);
+        }
+
+        const postUserId = post.getUserId();
+        if (postUserId !== null && postUserId !== userId) {
             throw new AuthorizationError(
                 'Cannot delete this post'
             );
         }
 
-        const deleted = await this.postRepository.delete({
-            postId
-        });
-
-        if (!deleted) {
-            throw new NotFoundError('Post', postId);
-        }
+        await this.postRepository.delete({ postId });
     }
 
     async getPostsByUsername(
@@ -203,15 +206,10 @@ export class PostService {
         };
     }
 
-    async enrichPostWithLikesStatus(
+    private toEnrichedPost(
         post: Post,
-        userId?: number
-    ): Promise<any> {
-        const hasLiked = await this.likeService.hasUserLikedPost(
-            post.getPostId(),
-            userId
-        );
-
+        hasLiked: boolean
+    ): EnrichedPost {
         return {
             postId: post.getPostId(),
             title: post.getTitle(),
@@ -224,13 +222,34 @@ export class PostService {
         };
     }
 
+    async enrichPostWithLikesStatus(
+        post: Post,
+        userId?: number
+    ): Promise<EnrichedPost> {
+        const hasLiked = await this.likeService.hasUserLikedPost(
+            post.getPostId(),
+            userId
+        );
+        return this.toEnrichedPost(post, hasLiked);
+    }
+
     async enrichPostsWithLikesStatus(
         posts: Post[],
         userId?: number
-    ): Promise<any[]> {
-        return Promise.all(
-            posts.map((post) =>
-                this.enrichPostWithLikesStatus(post, userId)
+    ): Promise<EnrichedPost[]> {
+        if (posts.length === 0) return [];
+
+        const likedIds = userId
+            ? await this.likeService.getLikedPostIds(
+                  posts.map((p) => p.getPostId()),
+                  userId
+              )
+            : new Set<number>();
+
+        return posts.map((post) =>
+            this.toEnrichedPost(
+                post,
+                likedIds.has(post.getPostId())
             )
         );
     }
