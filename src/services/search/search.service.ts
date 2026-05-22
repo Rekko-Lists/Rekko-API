@@ -15,6 +15,10 @@ import { rankByRelevance } from '../../utils/search/search';
 import { AnimeDuplicator } from './animeDuplicator.service';
 import { AnimeRanker } from '../../utils/anime/animeRanker';
 import { Paginator } from '../../utils/pagination/paginator';
+import {
+    findStaleAnimeMalIds,
+    triggerBackgroundRefresh
+} from '../anime/refreshStaleAnimes';
 
 export class SearchService {
     private readonly deduplicator: AnimeDuplicator;
@@ -142,6 +146,18 @@ export class SearchService {
         } else {
             merged = dbAnimes;
         }
+
+        // Respect TTL: trigger background refresh for stale DB rows.
+        // Only DB-originated entities can be stale — MAL-fresh ones were
+        // just fetched and have `nextUpdate` 7 days in the future.
+        // Checking the merged set keeps the call site symmetrical with
+        // `getCatalogue`; `findStaleAnimeMalIds` filters internally.
+        const staleMalIds = findStaleAnimeMalIds(merged);
+        triggerBackgroundRefresh(
+            staleMalIds,
+            this.malService,
+            this.animeRepository
+        );
 
         const ranked =
             merged.length > 0 && query
