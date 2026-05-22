@@ -1,4 +1,5 @@
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
+import { AnimeRelationRepository } from '../../domain/repositories/anime/AnimeRelation.repository';
 import { MalAnimeData } from '../../domain/schemas/anime/mal.schemas';
 import { MalService } from './mal.service';
 import {
@@ -11,16 +12,19 @@ import {
     NotFoundError
 } from '../../exceptions/exceptions';
 import { Anime } from '../../domain/entities/Anime';
+import { AnimeRelation } from '../../domain/entities/AnimeRelation';
 import { Paginator } from '../../utils/pagination/paginator';
 import {
     findStaleAnimeMalIds,
     triggerBackgroundRefresh
 } from './refreshStaleAnimes';
+import { prisma } from '../../infraestructure/database/prisma.client';
 
 export class AnimeService {
     constructor(
         private readonly animeRepository: AnimeRepository,
-        private readonly malService: MalService
+        private readonly malService: MalService,
+        private readonly animeRelationRepository: AnimeRelationRepository
     ) {}
 
     async getAnimes(
@@ -64,11 +68,12 @@ export class AnimeService {
 
         if (dbAnime) {
             if (dbAnime.isStale()) {
-                triggerBackgroundRefresh(
-                    [dbAnime.getMalId()],
-                    this.malService,
-                    this.animeRepository
-                );
+                this.updateAnimeFromMal(malId).catch((error) => {
+                    console.warn(
+                        '[getAnimeByMalId] Background update failed:',
+                        error
+                    );
+                });
             }
 
             return dbAnime;
@@ -79,8 +84,28 @@ export class AnimeService {
         const mappedAnime =
             this.malService.mapMalToAnime(malAnime);
 
-        const createdAnime = await this.animeRepository.create(
-            mappedAnime as any
+        const createdAnime = await prisma.$transaction(
+            async (tx: any) => {
+                const created = await this.animeRepository.create(
+                    mappedAnime as any,
+                    tx
+                );
+
+                if (!created) return null;
+
+                if (
+                    mappedAnime.relatedAnime &&
+                    mappedAnime.relatedAnime.length > 0
+                ) {
+                    await this.animeRelationRepository.upsertMany(
+                        created.getAnimeId(),
+                        mappedAnime.relatedAnime,
+                        tx
+                    );
+                }
+
+                return created;
+            }
         );
 
         if (createdAnime) return createdAnime;
@@ -91,6 +116,49 @@ export class AnimeService {
         if (existingAnime) return existingAnime;
 
         throw new ConflictError('Anime already exists but could not be loaded.');
+    }
+
+    private async updateAnimeFromMal(
+        malId: number
+    ): Promise<void> {
+        const malAnime = await this.malService.getAnimeById(malId);
+        const mappedAnime = this.malService.mapMalToAnime(malAnime);
+
+        await prisma.$transaction(async (tx: any) => {
+            const updated = await this.animeRepository.updateAnime(
+                malId,
+                mappedAnime as any,
+                tx
+            );
+
+            if (
+                updated &&
+                mappedAnime.relatedAnime &&
+                mappedAnime.relatedAnime.length > 0
+            ) {
+                await this.animeRelationRepository.upsertMany(
+                    updated.getAnimeId(),
+                    mappedAnime.relatedAnime,
+                    tx
+                );
+            }
+        });
+    }
+
+    async getRelatedAnimes(
+        malId: number
+    ): Promise<AnimeRelation[]> {
+        const anime = await this.animeRepository.findByMalId(malId);
+
+        if (!anime) {
+            throw new NotFoundError(
+                `Anime with MAL ID ${malId} was not found`
+            );
+        }
+
+        return this.animeRelationRepository.findByAnimeId(
+            anime.getAnimeId()
+        );
     }
 
     async getSeasonalAnimes(

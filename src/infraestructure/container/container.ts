@@ -2,6 +2,7 @@ import { prisma } from '../database/prisma.client';
 
 // ===== REPOSITORIES =====
 import { AnimePrismaRepository } from '../persistence/prisma/anime/Anime.prisma.repository';
+import { AnimeRelationPrismaRepository } from '../persistence/prisma/anime/AnimeRelation.prisma.repository';
 import { UserPrismaRepository } from '../persistence/prisma/user/User.prisma.repository';
 import { EmailAuthPrismaRepository } from '../persistence/prisma/user/EmailAuth.prisma.repository';
 import { PasswordAuthPrismaRepository } from '../persistence/prisma/user/PasswordAuth.prisma.repository';
@@ -37,6 +38,9 @@ import { RecommendationsService } from '../../services/anime/recommendations.ser
 
 // ===== REPOSITORIES INITIALIZATION =====
 const animeRepository = new AnimePrismaRepository(prisma);
+const animeRelationRepository = new AnimeRelationPrismaRepository(
+    prisma
+);
 const userRepository = new UserPrismaRepository(prisma);
 const emailAuthRepository = new EmailAuthPrismaRepository(
     prisma
@@ -67,7 +71,8 @@ const malService = new MalService(malAuthService);
 // ===== ANIME SERVICES =====
 const animeService = new AnimeService(
     animeRepository,
-    malService
+    malService,
+    animeRelationRepository
 );
 const rateService = new RateService(
     userRateAnimeRepository,
@@ -138,6 +143,7 @@ const recommendationsService = new RecommendationsService(
 export const container = {
     repositories: {
         anime: animeRepository,
+        animeRelation: animeRelationRepository,
         user: userRepository,
         emailAuth: emailAuthRepository,
         passwordAuth: passwordAuthRepository,

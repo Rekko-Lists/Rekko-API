@@ -30,6 +30,7 @@ import {
     getSimilarAnimes,
     getPostsByAnime
 } from '../../../controllers/anime/recommendations.controller';
+import { getRelatedAnimes } from '../../../controllers/anime/animeRelation.controller';
 
 const router = Router();
 
@@ -80,6 +81,8 @@ router.route('/:malid/similar').get(getSimilarAnimes);
 router
     .route('/:malid/posts')
     .get(optionalAuthMiddleware, parseQueryOptions, getPostsByAnime);
+
+router.route('/:malid/related').get(getRelatedAnimes);
 
 router.route('/:malid').get(getAnime);
 

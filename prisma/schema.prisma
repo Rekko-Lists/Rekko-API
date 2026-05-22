@@ -161,10 +161,30 @@ model Anime {
   userRateAnime     UserRateAnime[]
   userWatchAnime    UserWatchAnime[]
   animeGenres       AnimeGenre[]
+  relations         AnimeRelation[] @relation("AnimeRelationSource")
+  relatedFrom       AnimeRelation[] @relation("AnimeRelationTarget")
 
   broadcast         Broadcast @relation(fields: [broadcastId], references: [broadcastId])
 
   @@map("anime")
+}
+
+model AnimeRelation {
+  animeRelationId  Int      @id @default(autoincrement()) @map("anime_relation_id")
+  animeId          Int      @map("anime_id")
+  relatedMalId     Int      @map("related_mal_id")
+  relatedAnimeId   Int?     @map("related_anime_id")
+  relationType     String   @map("relation_type")
+  relationLabel    String   @map("relation_label")
+  relatedTitle     String   @map("related_title")
+  relatedImage     String?  @map("related_image")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  anime            Anime    @relation("AnimeRelationSource", fields: [animeId], references: [animeId], onDelete: Cascade)
+  relatedAnime     Anime?   @relation("AnimeRelationTarget", fields: [relatedAnimeId], references: [animeId], onDelete: SetNull)
+
+  @@unique([animeId, relatedMalId])
+  @@map("anime_relation")
 }
 
 model Genre {

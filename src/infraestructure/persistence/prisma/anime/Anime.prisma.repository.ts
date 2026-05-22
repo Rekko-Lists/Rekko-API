@@ -43,19 +43,21 @@ export class AnimePrismaRepository implements AnimeRepository {
         };
     }
 
-    async create(entity: Anime): Promise<Anime | null> {
+    async create(entity: Anime, tx?: any): Promise<Anime | null> {
+        const client = tx ?? this.db;
         try {
             const animeData = entity as any;
             const {
                 broadcast,
                 genres,
+                relatedAnime: _relatedAnime,
                 ...animeWithoutRelations
             } = animeData;
 
             const createdBroadcast =
-                await this.createBroadcast(broadcast);
+                await this.createBroadcast(broadcast, client);
 
-            const created = await this.db.anime.create({
+            const created = await client.anime.create({
                 data: {
                     ...animeWithoutRelations,
                     broadcast: {
@@ -87,12 +89,16 @@ export class AnimePrismaRepository implements AnimeRepository {
         }
     }
 
-    async createBroadcast(broadcast: {
-        dayOfWeek: string;
-        startTime: string;
-    }): Promise<Broadcast> {
+    async createBroadcast(
+        broadcast: {
+            dayOfWeek: string;
+            startTime: string;
+        },
+        tx?: any
+    ): Promise<Broadcast> {
+        const client = tx ?? this.db;
         try {
-            const bro = await this.db.broadcast.create({
+            const bro = await client.broadcast.create({
                 data: {
                     dayOfWeek: broadcast?.dayOfWeek || 'unknown',
                     startTime: broadcast?.startTime || '00:00'
@@ -113,6 +119,7 @@ export class AnimePrismaRepository implements AnimeRepository {
                     const {
                         broadcast,
                         genres,
+                        relatedAnime: _relatedAnime,
                         ...animeDataWithoutRelations
                     } = animeData;
 
@@ -150,12 +157,19 @@ export class AnimePrismaRepository implements AnimeRepository {
 
     async updateAnime(
         malId: number,
-        animeData: any
+        animeData: any,
+        tx?: any
     ): Promise<Anime | null> {
+        const client = tx ?? this.db;
         try {
-            const { broadcast, genres, ...anime } = animeData;
+            const {
+                broadcast,
+                genres,
+                relatedAnime: _relatedAnime,
+                ...anime
+            } = animeData;
 
-            const updated = await this.db.anime.update({
+            const updated = await client.anime.update({
                 where: { malId },
                 data: {
                     ...anime,
