@@ -57,7 +57,7 @@ model Comment {
 
   user              User? @relation(fields: [userId], references: [userId], onDelete: SetNull)
   post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
-  parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId])
+  parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId], onDelete: Cascade)
   replies           Comment[] @relation("CommentReplies")
   userLikeComment   UserLikeComment[]
 
@@ -231,6 +231,7 @@ model UserLikePost {
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
 
+  @@unique([userId, postId])
   @@map("user_like_post")
 }
 
@@ -242,6 +243,7 @@ model UserLikeComment {
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   comment           Comment @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
 
+  @@unique([userId, commentId])
   @@map("user_like_comment")
 }
 
@@ -264,6 +266,7 @@ model UserLikeAnime {
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
+  @@unique([userId, animeId])
   @@map("user_like_anime")
 }
 
@@ -276,6 +279,7 @@ model UserRateAnime {
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
+  @@unique([userId, animeId])
   @@map("user_rate_anime")
 }
 
@@ -289,6 +293,7 @@ model UserWatchAnime {
   user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
+  @@unique([userId, animeId])
   @@map("user_watch_anime")
 }
 
