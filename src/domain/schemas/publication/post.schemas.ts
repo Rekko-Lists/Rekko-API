@@ -41,3 +41,14 @@ export type PostWhereUnique = z.infer<
     typeof postWhereUniqueSchema
 >;
 export type PostUpdateInput = z.infer<typeof postUpdateSchema>;
+
+export type EnrichedPost = {
+    postId: number;
+    title: string;
+    description: string | null;
+    photo: string | null;
+    likes: number;
+    userId: number | null;
+    user: { username: string; profileImage: string } | undefined;
+    hasLiked: boolean;
+};

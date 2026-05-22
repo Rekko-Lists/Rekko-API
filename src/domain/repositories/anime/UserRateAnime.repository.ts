@@ -1,9 +1,9 @@
-import { UserRateAnime } from '../entities/UserRateAnime';
+import { UserRateAnime } from '../../entities/UserRateAnime';
 import {
     FindOptions,
     FindRepository
-} from '../schemas/find.schemas';
-import { UserRateListItem } from '../schemas/anime/rate.schemas';
+} from '../../schemas/find.schemas';
+import { UserRateListItem } from '../../schemas/anime/rate.schemas';
 
 export interface UserRateAnimeRepository {
     create(entity: UserRateAnime): Promise<UserRateAnime | null>;
@@ -21,8 +21,7 @@ export interface UserRateAnimeRepository {
     ): Promise<FindRepository<UserRateListItem>>;
 
     updateRate(
-        userId: number,
-        animeId: number,
+        userRateAnimeId: number,
         rate: number
     ): Promise<UserRateAnime | null>;
 

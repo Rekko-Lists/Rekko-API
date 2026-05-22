@@ -11,6 +11,7 @@ import {
 import { parseQueryOptions } from '../../../middlewares/queryOptions.middleware';
 import { validateSeasonParams } from '../../../middlewares/validators/anime.validator';
 import { authMiddleware } from '../../../middlewares/auth.middleware';
+import { roleMiddleware } from '../../../middlewares/role.middleware';
 import {
     deleteRate,
     getRate,
@@ -27,7 +28,9 @@ const router = Router();
 router.route('/').get(parseQueryOptions, getAnimes);
 
 router.route('/genres').get(getGenres);
-router.route('/seed').get(authMiddleware, seedAnimes);
+router
+    .route('/seed')
+    .get(authMiddleware, roleMiddleware(['ADMIN']), seedAnimes);
 
 router
     .route('/season')

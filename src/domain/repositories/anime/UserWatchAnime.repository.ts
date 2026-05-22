@@ -1,9 +1,9 @@
-import { UserWatchAnime } from '../entities/UserWatchAnime';
+import { UserWatchAnime } from '../../entities/UserWatchAnime';
 import {
     FindOptions,
     FindRepository
-} from '../schemas/find.schemas';
-import { UserWatchListItem } from '../schemas/anime/watch.schemas';
+} from '../../schemas/find.schemas';
+import { UserWatchListItem } from '../../schemas/anime/watch.schemas';
 
 export interface UserWatchAnimeRepository {
     create(

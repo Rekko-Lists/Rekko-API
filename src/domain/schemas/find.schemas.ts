@@ -25,7 +25,7 @@ export const findOptionsSchema = z.object({
                 .number()
                 .int('Must be integer')
                 .min(1, 'Limit must be at least 1')
-                .max(100, 'Maximum limit is 100')
+                .max(110, 'Maximum limit is 110')
                 .default(10)
         })
         .default({ page: 1, limit: 10 }),

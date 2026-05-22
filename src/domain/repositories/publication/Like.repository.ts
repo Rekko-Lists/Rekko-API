@@ -13,6 +13,11 @@ export interface LikeRepository {
         userId: number
     ): Promise<boolean>;
 
+    findLikedPostIdsByUser(
+        postIds: number[],
+        userId: number
+    ): Promise<Set<number>>;
+
     createPostLike(
         postId: number,
         userId: number
@@ -27,6 +32,11 @@ export interface LikeRepository {
         commentId: number,
         userId: number
     ): Promise<boolean>;
+
+    findLikedCommentIdsByUser(
+        commentIds: number[],
+        userId: number
+    ): Promise<Set<number>>;
 
     createCommentLike(
         commentId: number,

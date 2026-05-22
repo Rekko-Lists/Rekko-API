@@ -1,6 +1,6 @@
 export class Comment {
     private readonly commentId: number;
-    private readonly userId: number;
+    private readonly userId: number | null;
     private readonly postId: number;
     private parentCommentId: number | null;
     private message: string;
@@ -11,7 +11,7 @@ export class Comment {
 
     private constructor(
         commentId: number,
-        userId: number,
+        userId: number | null,
         postId: number,
         parentCommentId: number | null,
         message: string,
@@ -33,7 +33,7 @@ export class Comment {
 
     public static fromPersistence(data: {
         commentId: number;
-        userId: number;
+        userId: number | null;
         postId: number;
         parentCommentId: number | null;
         message: string;
@@ -59,7 +59,7 @@ export class Comment {
         return this.commentId;
     }
 
-    getUserId() {
+    getUserId(): number | null {
         return this.userId;
     }
 

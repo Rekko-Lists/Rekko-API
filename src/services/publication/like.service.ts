@@ -93,6 +93,17 @@ export class LikeService {
         );
     }
 
+    async getLikedPostIds(
+        postIds: number[],
+        userId: number
+    ): Promise<Set<number>> {
+        if (postIds.length === 0) return new Set();
+        return this.likeRepository.findLikedPostIdsByUser(
+            postIds,
+            userId
+        );
+    }
+
     async likeComment(
         commentId: number,
         userId: number
@@ -162,6 +173,17 @@ export class LikeService {
         if (!userId) return false;
         return this.likeRepository.hasUserLikedComment(
             commentId,
+            userId
+        );
+    }
+
+    async getLikedCommentIds(
+        commentIds: number[],
+        userId: number
+    ): Promise<Set<number>> {
+        if (commentIds.length === 0) return new Set();
+        return this.likeRepository.findLikedCommentIdsByUser(
+            commentIds,
             userId
         );
     }
