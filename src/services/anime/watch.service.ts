@@ -1,4 +1,4 @@
-import { UserWatchAnimeRepository } from '../../domain/repositories/UserWatchAnime.repository';
+import { UserWatchAnimeRepository } from '../../domain/repositories/anime/UserWatchAnime.repository';
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
 import { AnimeService } from './anime.service';
 import { UserWatchAnime } from '../../domain/entities/UserWatchAnime';
@@ -33,9 +33,10 @@ export class WatchService {
             );
         }
 
+        const totalEpisodes = anime.getNumEpisodes();
         if (
             numEpisodes < 0 ||
-            numEpisodes > anime.getNumEpisodes()
+            (totalEpisodes > 0 && numEpisodes > totalEpisodes)
         ) {
             throw new ValidationError(
                 'Invalid number of episodes provided.'
