@@ -8,12 +8,23 @@ export const getAnimes = catchAsync(
     async (req: Request, res: Response) => {
         const findOptions = (req as any).findOptions;
         const { services } = req.container!;
+        const userId = req.user?.userId;
 
         const result =
             await services.anime.getCatalogue(findOptions);
 
+        const userStateMap = userId
+            ? await services.anime.buildUserStateMap(
+                  result.data,
+                  userId
+              )
+            : undefined;
+
         ok(res, 'Animes found', {
-            animes: AnimeMapper.toDTOs(result.data),
+            animes: AnimeMapper.toDTOs(
+                result.data,
+                userStateMap
+            ),
             pagination: {
                 page: result.pagination.page,
                 limit: result.pagination.limit,
@@ -39,11 +50,21 @@ export const getAnime = catchAsync(
         }
 
         const { services } = req.container!;
+        const userId = req.user?.userId;
         const anime =
             await services.anime.getAnimeByMalId(malId);
 
+        const userState = userId
+            ? (
+                  await services.anime.buildUserStateMap(
+                      [anime],
+                      userId
+                  )
+              ).get(anime.getAnimeId())
+            : undefined;
+
         ok(res, 'Anime found', {
-            anime: AnimeMapper.toDTO(anime)
+            anime: AnimeMapper.toDTO(anime, userState)
         });
     }
 );

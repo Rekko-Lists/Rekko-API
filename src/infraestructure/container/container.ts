@@ -66,7 +66,10 @@ const malService = new MalService(malAuthService);
 // ===== ANIME SERVICES =====
 const animeService = new AnimeService(
     animeRepository,
-    malService
+    malService,
+    likeRepository,
+    userRateAnimeRepository,
+    userWatchAnimeRepository
 );
 const rateService = new RateService(
     userRateAnimeRepository,

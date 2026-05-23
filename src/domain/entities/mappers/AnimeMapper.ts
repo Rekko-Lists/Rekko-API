@@ -1,8 +1,11 @@
 import { Anime } from '../Anime';
-import { AnimeDTO } from '../dtos/AnimeDTO';
+import { AnimeDTO, AnimeUserState } from '../dtos/AnimeDTO';
 
 export class AnimeMapper {
-    static toDTO(anime: Anime): AnimeDTO {
+    static toDTO(
+        anime: Anime,
+        userState?: AnimeUserState
+    ): AnimeDTO {
         return new AnimeDTO({
             malId: anime.getMalId(),
             name: anime.getName(),
@@ -19,11 +22,20 @@ export class AnimeMapper {
             likes: anime.getLikes(),
             genres: anime.getGenres(),
             studios: anime.getStudios(),
-            broadcast: anime.getBroadcast()
+            broadcast: anime.getBroadcast(),
+            userState
         });
     }
 
-    static toDTOs(animes: Anime[]): AnimeDTO[] {
-        return animes.map((anime) => this.toDTO(anime));
+    static toDTOs(
+        animes: Anime[],
+        statesByAnimeId?: Map<number, AnimeUserState>
+    ): AnimeDTO[] {
+        return animes.map((anime) =>
+            this.toDTO(
+                anime,
+                statesByAnimeId?.get(anime.getAnimeId())
+            )
+        );
     }
 }

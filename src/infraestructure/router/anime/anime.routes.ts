@@ -10,7 +10,10 @@ import {
 } from '../../../controllers/anime/anime.controller';
 import { parseQueryOptions } from '../../../middlewares/queryOptions.middleware';
 import { validateSeasonParams } from '../../../middlewares/validators/anime.validator';
-import { authMiddleware } from '../../../middlewares/auth.middleware';
+import {
+    authMiddleware,
+    optionalAuthMiddleware
+} from '../../../middlewares/auth.middleware';
 import { roleMiddleware } from '../../../middlewares/role.middleware';
 import {
     deleteRate,
@@ -25,7 +28,9 @@ import {
 
 const router = Router();
 
-router.route('/').get(parseQueryOptions, getAnimes);
+router
+    .route('/')
+    .get(optionalAuthMiddleware, parseQueryOptions, getAnimes);
 
 router.route('/genres').get(getGenres);
 router
@@ -63,6 +68,6 @@ router
     .post(authMiddleware, likeAnime)
     .delete(authMiddleware, unlikeAnime);
 
-router.route('/:malid').get(getAnime);
+router.route('/:malid').get(optionalAuthMiddleware, getAnime);
 
 export default router;

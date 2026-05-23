@@ -231,6 +231,22 @@ export class LikePrismaRepository implements LikeRepository {
         }
     }
 
+    async findLikedAnimeIdsByUser(
+        animeIds: number[],
+        userId: number
+    ): Promise<Set<number>> {
+        if (animeIds.length === 0) return new Set();
+        try {
+            const records = await this.db.userLikeAnime.findMany({
+                where: { userId, animeId: { in: animeIds } },
+                select: { animeId: true }
+            });
+            return new Set(records.map((r: any) => r.animeId));
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async createAnimeLike(
         animeId: number,
         userId: number

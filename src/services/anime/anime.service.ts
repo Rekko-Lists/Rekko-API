@@ -12,12 +12,67 @@ import {
 } from '../../exceptions/exceptions';
 import { Anime } from '../../domain/entities/Anime';
 import { Paginator } from '../../utils/pagination/paginator';
+import { LikeRepository } from '../../domain/repositories/publication/Like.repository';
+import { UserRateAnimeRepository } from '../../domain/repositories/anime/UserRateAnime.repository';
+import { UserWatchAnimeRepository } from '../../domain/repositories/anime/UserWatchAnime.repository';
+import { AnimeUserState } from '../../domain/entities/dtos/AnimeDTO';
 
 export class AnimeService {
     constructor(
         private readonly animeRepository: AnimeRepository,
-        private readonly malService: MalService
+        private readonly malService: MalService,
+        private readonly likeRepository: LikeRepository,
+        private readonly userRateAnimeRepository: UserRateAnimeRepository,
+        private readonly userWatchAnimeRepository: UserWatchAnimeRepository
     ) {}
+
+    /**
+     * Builds a map of animeId -> AnimeUserState for the given user.
+     * Performs at most 3 batched queries (likes, rates, watches).
+     * Animes with no relation are omitted from the map.
+     */
+    async buildUserStateMap(
+        animes: Anime[],
+        userId: number
+    ): Promise<Map<number, AnimeUserState>> {
+        const map = new Map<number, AnimeUserState>();
+        if (animes.length === 0) return map;
+
+        const animeIds = animes.map((a) => a.getAnimeId());
+
+        const [likedIds, ratesById, watchById] =
+            await Promise.all([
+                this.likeRepository.findLikedAnimeIdsByUser(
+                    animeIds,
+                    userId
+                ),
+                this.userRateAnimeRepository.findRatesByUserAndAnimeIds(
+                    animeIds,
+                    userId
+                ),
+                this.userWatchAnimeRepository.findWatchByUserAndAnimeIds(
+                    animeIds,
+                    userId
+                )
+            ]);
+
+        for (const animeId of animeIds) {
+            const state: AnimeUserState = {};
+            if (likedIds.has(animeId)) state.hasLiked = true;
+            const rate = ratesById.get(animeId);
+            if (rate !== undefined) state.rate = rate;
+            const watch = watchById.get(animeId);
+            if (watch) {
+                state.watchState = watch.state;
+                state.watchedEpisodes = watch.numEpisodes;
+            }
+            if (Object.keys(state).length > 0) {
+                map.set(animeId, state);
+            }
+        }
+
+        return map;
+    }
 
     async getAnimes(
         findOptions: FindOptions
