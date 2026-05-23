@@ -206,6 +206,48 @@ export class PostService {
         };
     }
 
+    /**
+     * Variante de `getPostsByMalId` para la vista de detalle de anime.
+     * - Devuelve `data: []` con `total: 0` en lugar de lanzar NotFoundError
+     *   cuando no hay posts (consistente con `getUserRateList`).
+     * - Sigue lanzando si el caller pide una pagina fuera de rango.
+     */
+    async getPostsByMalIdGraceful(
+        malId: number,
+        findOptions: FindOptions
+    ): Promise<PaginatedResponse<Post>> {
+        const result = await this.postRepository.findByMalId(
+            malId,
+            findOptions
+        );
+
+        const total = result?.total ?? 0;
+        const data = result?.data ?? [];
+        const maxPages =
+            total > 0
+                ? Math.ceil(total / findOptions.pagination.limit)
+                : 0;
+
+        if (
+            total > 0 &&
+            findOptions.pagination.page > maxPages
+        ) {
+            throw new NotFoundError(
+                `Page ${findOptions.pagination.page} does not exist. Max pages: ${maxPages}`
+            );
+        }
+
+        return {
+            data,
+            pagination: {
+                page: findOptions.pagination.page,
+                limit: findOptions.pagination.limit,
+                total,
+                pages: maxPages
+            }
+        };
+    }
+
     private toEnrichedPost(
         post: Post,
         hasLiked: boolean
