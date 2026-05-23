@@ -12,7 +12,7 @@ import {
 
 export class MalService {
     private readonly animeFields =
-        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type,average_episode_duration,start_season,rating';
+        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type,average_episode_duration,start_season,rating,related_anime';
 
     constructor(private readonly malApiService: MalApiService) {}
 
@@ -192,7 +192,34 @@ export class MalService {
                     'Unknown',
                 startTime:
                     malData.broadcast?.start_time || '00:00'
-            }
+            },
+            relatedAnime: this.mapMalRelatedAnime(malData)
         };
+    }
+
+    mapMalRelatedAnime(malData: MalAnimeData): Array<{
+        relatedMalId: number;
+        relationType: string;
+        relationLabel: string;
+        relatedTitle: string;
+        relatedImage: string | null;
+    }> {
+        if (
+            !malData.related_anime ||
+            malData.related_anime.length === 0
+        ) {
+            return [];
+        }
+
+        return malData.related_anime.map((entry) => ({
+            relatedMalId: entry.node.id,
+            relationType: entry.relation_type,
+            relationLabel: entry.relation_type_formatted,
+            relatedTitle: entry.node.title,
+            relatedImage:
+                entry.node.main_picture?.large ||
+                entry.node.main_picture?.medium ||
+                null
+        }));
     }
 }
