@@ -20,6 +20,7 @@ export class AnimeDTO {
     numEpisodes: number;
     status: string;
     likes: number;
+    members: number;
     genres: string[];
     studios: string[];
     duration: number | null;
@@ -48,6 +49,7 @@ export class AnimeDTO {
         numEpisodes: number;
         status: string;
         likes: number;
+        members: number;
         genres: string[];
         studios: string[];
         duration: number | null;
@@ -75,6 +77,7 @@ export class AnimeDTO {
         this.numEpisodes = data.numEpisodes;
         this.status = data.status;
         this.likes = data.likes;
+        this.members = data.members;
         this.genres = data.genres;
         this.studios = data.studios;
         this.duration = data.duration;

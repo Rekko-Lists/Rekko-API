@@ -9,11 +9,11 @@ generator client {
 }
 
 /**
-generator erd {
-  provider = "prisma-erd-generator"
-  output   = "./ERD.svg"
-}
-*/
+ * generator erd {
+ * provider = "prisma-erd-generator"
+ * output   = "./ERD.svg"
+ * }
+ */
 
 datasource db {
   provider = "postgresql"
@@ -21,79 +21,79 @@ datasource db {
 }
 
 model RefreshToken {
-  refreshTokenId    Int @id @default(autoincrement()) @map("refresh_token_id")
-  userId            Int @map("user_id")
-  token             String
-  createdAt         DateTime @default(now()) @map("created_at")
-  expiresAt         DateTime @map("expires_at")
-  revokedAt         DateTime? @map("revoked_at")
-  userAgent         String @map("user_agent")
-  ip                String
+  refreshTokenId Int       @id @default(autoincrement()) @map("refresh_token_id")
+  userId         Int       @map("user_id")
+  token          String
+  createdAt      DateTime  @default(now()) @map("created_at")
+  expiresAt      DateTime  @map("expires_at")
+  revokedAt      DateTime? @map("revoked_at")
+  userAgent      String    @map("user_agent")
+  ip             String
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("refresh_token")
 }
 
 model OAuthAccount {
-  oauthAccountId    Int @id @default(autoincrement()) @map("oauth_account_id")
-  userId            Int @map("user_id")
-  providerUserId    String @map("provider_user_id")
-  provider          String
+  oauthAccountId Int    @id @default(autoincrement()) @map("oauth_account_id")
+  userId         Int    @map("user_id")
+  providerUserId String @map("provider_user_id")
+  provider       String
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  @@map("oauth_account")
   @@unique([provider, providerUserId])
+  @@map("oauth_account")
 }
 
 model Comment {
-  commentId         Int @id @default(autoincrement()) @map("comment_id")
-  userId            Int? @map("user_id")
-  postId            Int @map("post_id")
-  parentCommentId   Int? @map("parent_comment_id")
-  message           String
-  likes             Int
+  commentId       Int    @id @default(autoincrement()) @map("comment_id")
+  userId          Int?   @map("user_id")
+  postId          Int    @map("post_id")
+  parentCommentId Int?   @map("parent_comment_id")
+  message         String
+  likes           Int
 
-  user              User? @relation(fields: [userId], references: [userId], onDelete: SetNull)
-  post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
-  parentComment     Comment? @relation("CommentReplies", fields: [parentCommentId], references: [commentId], onDelete: Cascade)
-  replies           Comment[] @relation("CommentReplies")
-  userLikeComment   UserLikeComment[]
+  user            User?             @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  post            Post              @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  parentComment   Comment?          @relation("CommentReplies", fields: [parentCommentId], references: [commentId], onDelete: Cascade)
+  replies         Comment[]         @relation("CommentReplies")
+  userLikeComment UserLikeComment[]
 
   @@map("comment")
 }
 
 model User {
-  userId                    Int @id @default(autoincrement()) @map("user_id")
-  email                     String @unique
-  password                  String
-  username                  String @unique
-  biography                 String?
-  reputation                Int @default(0)
-  profileImage              String @map("profile_image")
-  profileImagePublicId      String? @map("profile_image_public_id")
-  bannerImage               String? @map("banner_image")
-  bannerImagePublicId       String? @map("banner_image_public_id")
-  backgroundImage           String? @map("background_image")
-  backgroundImagePublicId   String? @map("background_image_public_id")
-  role                      UserRole @default(USER)
-  emailVerified             Boolean @default(false) @map("email_verified")
-  createdAt                 DateTime @default(now()) @map("created_at")
-  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at")
+  userId                  Int      @id @default(autoincrement()) @map("user_id")
+  email                   String   @unique
+  password                String
+  username                String   @unique
+  biography               String?
+  reputation              Int      @default(0)
+  profileImage            String   @map("profile_image")
+  profileImagePublicId    String?  @map("profile_image_public_id")
+  bannerImage             String?  @map("banner_image")
+  bannerImagePublicId     String?  @map("banner_image_public_id")
+  backgroundImage         String?  @map("background_image")
+  backgroundImagePublicId String?  @map("background_image_public_id")
+  role                    UserRole @default(USER)
+  emailVerified           Boolean  @default(false) @map("email_verified")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @default(now()) @updatedAt @map("updated_at")
 
-  refreshTokens     RefreshToken[]
-  oauthAccounts     OAuthAccount[]
-  comments          Comment[]
-  posts             Post[]
-  userLikePost      UserLikePost[]
-  userLikeComment   UserLikeComment[]
-  userLikeAnime     UserLikeAnime[]
-  userRateAnime     UserRateAnime[]
-  userWatchAnime    UserWatchAnime[]
-  userSocialAccount UserSocialAccount[]
-  emailRequest      EmailChangeRequest? @relation("UserEmailChangeRequest")
-  passwordRequest   PasswordChangeRequest? @relation("UserPasswordChangeRequest")
+  refreshTokens       RefreshToken[]
+  oauthAccounts       OAuthAccount[]
+  comments            Comment[]
+  posts               Post[]
+  userLikePost        UserLikePost[]
+  userLikeComment     UserLikeComment[]
+  userLikeAnime       UserLikeAnime[]
+  userRateAnime       UserRateAnime[]
+  userWatchAnime      UserWatchAnime[]
+  userSocialAccount   UserSocialAccount[]
+  emailRequest        EmailChangeRequest?       @relation("UserEmailChangeRequest")
+  passwordRequest     PasswordChangeRequest?    @relation("UserPasswordChangeRequest")
   verificationRequest EmailVerificationRequest? @relation("UserEmailVerification")
 
   @@map("user")
@@ -106,8 +106,8 @@ enum UserRole {
 }
 
 model SocialAccount {
-  socialAccountId   Int @id @default(autoincrement()) @map("social_account_id")
-  name              String @unique
+  socialAccountId Int    @id @default(autoincrement()) @map("social_account_id")
+  name            String @unique
 
   userSocialAccount UserSocialAccount[]
 
@@ -115,73 +115,74 @@ model SocialAccount {
 }
 
 model Post {
-  postId            Int @id @default(autoincrement()) @map("post_id")
-  userId            Int? @map("user_id")
-  title             String
-  description       String?
-  photo             String?
-  likes             Int
+  postId      Int     @id @default(autoincrement()) @map("post_id")
+  userId      Int?    @map("user_id")
+  title       String
+  description String?
+  photo       String?
+  likes       Int
 
-  comments          Comment[]
-  userLikePost      UserLikePost[]
-  animes            AnimePost[]
+  comments     Comment[]
+  userLikePost UserLikePost[]
+  animes       AnimePost[]
 
-  user              User? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [userId], onDelete: SetNull)
 
   @@map("post")
 }
 
 model Anime {
-  animeId           Int @id @default(autoincrement()) @map("anime_id")
-  malId             Int @unique @map("mal_id")
-  broadcastId       Int @unique @map("broadcast_id")
-  name              String @unique
-  synopsis          String
-  imgMedium         String @map("img_medium")
-  imgLarge          String @map("img_large")
-  startDate         DateTime @map("start_date")
-  endDate           DateTime @map("end_date")
-  malMean           Float @map("mal_mean")
-  malRank           Int @map("mal_rank")
-  mean              Float
-  numEpisodes       Int @map("num_episodes")
-  status            String
-  mediaType         String   @default("tv") @map("media_type")
-  duration          Int?     @map("duration")
-  premieredSeason   String?  @map("premiered_season")
-  premieredYear     Int?     @map("premiered_year")
-  rating            String?  @map("rating")
-  nextUpdate        DateTime @map("next_update")
-  likes             Int
-  studios           String[]
+  animeId         Int      @id @default(autoincrement()) @map("anime_id")
+  malId           Int      @unique @map("mal_id")
+  broadcastId     Int      @unique @map("broadcast_id")
+  name            String   @unique
+  synopsis        String
+  imgMedium       String   @map("img_medium")
+  imgLarge        String   @map("img_large")
+  startDate       DateTime @map("start_date")
+  endDate         DateTime @map("end_date")
+  malMean         Float    @map("mal_mean")
+  malRank         Int      @map("mal_rank")
+  mean            Float
+  numEpisodes     Int      @map("num_episodes")
+  status          String
+  mediaType       String   @default("tv") @map("media_type")
+  duration        Int?     @map("duration")
+  premieredSeason String?  @map("premiered_season")
+  premieredYear   Int?     @map("premiered_year")
+  rating          String?  @map("rating")
+  nextUpdate      DateTime @map("next_update")
+  likes           Int
+  members         Int      @default(0)
+  studios         String[]
 
-  challenges        Challenge[]
-  animes            AnimePost[]
-  userLikeAnime     UserLikeAnime[]
-  userRateAnime     UserRateAnime[]
-  userWatchAnime    UserWatchAnime[]
-  animeGenres       AnimeGenre[]
-  relations         AnimeRelation[] @relation("AnimeRelationSource")
-  relatedFrom       AnimeRelation[] @relation("AnimeRelationTarget")
+  challenges     Challenge[]
+  animes         AnimePost[]
+  userLikeAnime  UserLikeAnime[]
+  userRateAnime  UserRateAnime[]
+  userWatchAnime UserWatchAnime[]
+  animeGenres    AnimeGenre[]
+  relations      AnimeRelation[]  @relation("AnimeRelationSource")
+  relatedFrom    AnimeRelation[]  @relation("AnimeRelationTarget")
 
-  broadcast         Broadcast @relation(fields: [broadcastId], references: [broadcastId])
+  broadcast Broadcast @relation(fields: [broadcastId], references: [broadcastId])
 
   @@map("anime")
 }
 
 model AnimeRelation {
-  animeRelationId  Int      @id @default(autoincrement()) @map("anime_relation_id")
-  animeId          Int      @map("anime_id")
-  relatedMalId     Int      @map("related_mal_id")
-  relatedAnimeId   Int?     @map("related_anime_id")
-  relationType     String   @map("relation_type")
-  relationLabel    String   @map("relation_label")
-  relatedTitle     String   @map("related_title")
-  relatedImage     String?  @map("related_image")
-  createdAt        DateTime @default(now()) @map("created_at")
+  animeRelationId Int      @id @default(autoincrement()) @map("anime_relation_id")
+  animeId         Int      @map("anime_id")
+  relatedMalId    Int      @map("related_mal_id")
+  relatedAnimeId  Int?     @map("related_anime_id")
+  relationType    String   @map("relation_type")
+  relationLabel   String   @map("relation_label")
+  relatedTitle    String   @map("related_title")
+  relatedImage    String?  @map("related_image")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  anime            Anime    @relation("AnimeRelationSource", fields: [animeId], references: [animeId], onDelete: Cascade)
-  relatedAnime     Anime?   @relation("AnimeRelationTarget", fields: [relatedAnimeId], references: [animeId], onDelete: SetNull)
+  anime        Anime  @relation("AnimeRelationSource", fields: [animeId], references: [animeId], onDelete: Cascade)
+  relatedAnime Anime? @relation("AnimeRelationTarget", fields: [relatedAnimeId], references: [animeId], onDelete: SetNull)
 
   @@unique([animeId, relatedMalId])
   @@map("anime_relation")
@@ -196,64 +197,64 @@ model Genre {
 }
 
 model AnimeGenre {
-  animeGenreId  Int   @id @default(autoincrement()) @map("anime_genre_id")
-  animeId       Int   @map("anime_id")
-  genreId       Int   @map("genre_id")
+  animeGenreId Int @id @default(autoincrement()) @map("anime_genre_id")
+  animeId      Int @map("anime_id")
+  genreId      Int @map("genre_id")
 
-  anime         Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
-  genre         Genre @relation(fields: [genreId], references: [genreId], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [genreId], onDelete: Cascade)
 
   @@unique([animeId, genreId])
   @@map("anime_genre")
 }
 
 model Broadcast {
-  broadcastId       Int @id @default(autoincrement()) @map("broadcast_id")
-  dayOfWeek         String @map("day_of_week")
-  startTime         String @map("start_time")
+  broadcastId Int    @id @default(autoincrement()) @map("broadcast_id")
+  dayOfWeek   String @map("day_of_week")
+  startTime   String @map("start_time")
 
-  anime             Anime?
+  anime Anime?
 
   @@map("broadcast")
 }
 
 model Challenge {
-  challengeId       Int @id @default(autoincrement()) @map("challenge_id")
-  typeId            Int @map("type_id")
-  dayId             Int @map("day_id")
-  animeId           Int @map("anime_id")
-  data              Json @db.JsonB
+  challengeId Int  @id @default(autoincrement()) @map("challenge_id")
+  typeId      Int  @map("type_id")
+  dayId       Int  @map("day_id")
+  animeId     Int  @map("anime_id")
+  data        Json @db.JsonB
 
-  type              Type @relation(fields: [typeId], references: [typeId])
-  day               Day @relation(fields: [dayId], references: [dayId])
-  anime             Anime @relation(fields: [animeId], references: [animeId])
+  type  Type  @relation(fields: [typeId], references: [typeId])
+  day   Day   @relation(fields: [dayId], references: [dayId])
+  anime Anime @relation(fields: [animeId], references: [animeId])
 
   @@map("challenge")
 }
 
 model Type {
-  typeId            Int @id @default(autoincrement()) @map("type_id")
-  name              String
-  challenges        Challenge[]
+  typeId     Int         @id @default(autoincrement()) @map("type_id")
+  name       String
+  challenges Challenge[]
 
   @@map("type")
 }
 
 model Day {
-  dayId             Int @id @default(autoincrement()) @map("day_id")
-  date              String @unique
-  challenges        Challenge[]
+  dayId      Int         @id @default(autoincrement()) @map("day_id")
+  date       String      @unique
+  challenges Challenge[]
 
   @@map("day")
 }
 
 model UserLikePost {
-  userLikePostId    Int @id @default(autoincrement()) @map("user_like_post_id")
-  userId            Int @map("user_id")
-  postId            Int @map("post_id")
+  userLikePostId Int @id @default(autoincrement()) @map("user_like_post_id")
+  userId         Int @map("user_id")
+  postId         Int @map("post_id")
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  post              Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@map("user_like_post")
@@ -264,58 +265,58 @@ model UserLikeComment {
   userId            Int @map("user_id")
   commentId         Int @map("comment_id")
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  comment           Comment @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [commentId], onDelete: Cascade)
 
   @@unique([userId, commentId])
   @@map("user_like_comment")
 }
 
 model AnimePost {
-  animePostId       Int @id @default(autoincrement()) @map("anime_post_id")
-  animeId           Int @map("anime_id")
-  postId            Int @map("post_id")
+  animePostId Int @id @default(autoincrement()) @map("anime_post_id")
+  animeId     Int @map("anime_id")
+  postId      Int @map("post_id")
 
-  anime             Anime @relation(fields: [animeId], references: [animeId])
-  post              Post @relation(fields: [postId], references: [postId])
+  anime Anime @relation(fields: [animeId], references: [animeId])
+  post  Post  @relation(fields: [postId], references: [postId])
 
   @@map("anime_post")
 }
 
 model UserLikeAnime {
-  userLikeAnimeId   Int @id @default(autoincrement()) @map("user_like_anime_id")
-  userId            Int @map("user_id")
-  animeId           Int @map("anime_id")
+  userLikeAnimeId Int @id @default(autoincrement()) @map("user_like_anime_id")
+  userId          Int @map("user_id")
+  animeId         Int @map("anime_id")
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@unique([userId, animeId])
   @@map("user_like_anime")
 }
 
 model UserRateAnime {
-  userRateAnimeId   Int @id @default(autoincrement()) @map("user_rate_anime_id")
-  userId            Int @map("user_id")
-  animeId           Int @map("anime_id")
-  rate              Int
+  userRateAnimeId Int @id @default(autoincrement()) @map("user_rate_anime_id")
+  userId          Int @map("user_id")
+  animeId         Int @map("anime_id")
+  rate            Int
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@unique([userId, animeId])
   @@map("user_rate_anime")
 }
 
 model UserWatchAnime {
-  userWatchAnimeId  Int @id @default(autoincrement()) @map("user_watch_anime_id")
-  userId            Int @map("user_id")
-  animeId           Int @map("anime_id")
-  numEpisodes       Int @map("num_episodes")
-  state             AnimeState
+  userWatchAnimeId Int        @id @default(autoincrement()) @map("user_watch_anime_id")
+  userId           Int        @map("user_id")
+  animeId          Int        @map("anime_id")
+  numEpisodes      Int        @map("num_episodes")
+  state            AnimeState
 
-  user              User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  anime             Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
 
   @@unique([userId, animeId])
   @@map("user_watch_anime")
@@ -330,56 +331,56 @@ enum AnimeState {
 }
 
 model UserSocialAccount {
-  userSocialAccountId   Int @id @default(autoincrement()) @map("user_social_account_id")
-  userId                Int @map("user_id")
-  socialAccountId       Int @map("social_account_id")
-  socialUrl             String @map("social_url")
+  userSocialAccountId Int    @id @default(autoincrement()) @map("user_social_account_id")
+  userId              Int    @map("user_id")
+  socialAccountId     Int    @map("social_account_id")
+  socialUrl           String @map("social_url")
 
-  user                  User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  socialAccount         SocialAccount @relation(fields: [socialAccountId], references: [socialAccountId])
+  user          User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [socialAccountId])
 
   @@map("user_social_account")
 }
 
 model EmailChangeRequest {
-  emailChangeRequestId  Int @id @default(autoincrement()) @map("email_change_request_id")
-  userId                Int @unique @map("user_id")
-  newEmail              String @unique
-  token                 String @unique
-  expiresAt             DateTime @map("expires_at")
-  confirmed             Boolean @default(false)
-  updatedAt             DateTime @updatedAt @map("updated_at")
-  createdAt             DateTime @default(now()) @map("created_at")
+  emailChangeRequestId Int      @id @default(autoincrement()) @map("email_change_request_id")
+  userId               Int      @unique @map("user_id")
+  newEmail             String   @unique
+  token                String   @unique
+  expiresAt            DateTime @map("expires_at")
+  confirmed            Boolean  @default(false)
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  createdAt            DateTime @default(now()) @map("created_at")
 
-  user                  User @relation("UserEmailChangeRequest", fields: [userId], references: [userId], onDelete: Cascade)
+  user User @relation("UserEmailChangeRequest", fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("email_change_request")
 }
 
 model PasswordChangeRequest {
-  passwordChangeRequestId Int @id @default(autoincrement()) @map("password_change_request_id")
-  userId                  Int @unique @map("user_id")
-  token                   String @unique
+  passwordChangeRequestId Int      @id @default(autoincrement()) @map("password_change_request_id")
+  userId                  Int      @unique @map("user_id")
+  token                   String   @unique
   expiresAt               DateTime @map("expires_at")
-  confirmed               Boolean @default(false)
+  confirmed               Boolean  @default(false)
   updatedAt               DateTime @updatedAt @map("updated_at")
   createdAt               DateTime @default(now()) @map("created_at")
 
-  user                    User @relation("UserPasswordChangeRequest", fields: [userId], references: [userId], onDelete: Cascade)
+  user User @relation("UserPasswordChangeRequest", fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("password_change_request")
 }
 
 model EmailVerificationRequest {
-  emailVerificationRequestId Int @id @default(autoincrement()) @map("email_verification_request_id")
-  userId                     Int @unique @map("user_id")
-  token                      String @unique
+  emailVerificationRequestId Int      @id @default(autoincrement()) @map("email_verification_request_id")
+  userId                     Int      @unique @map("user_id")
+  token                      String   @unique
   expiresAt                  DateTime @map("expires_at")
-  confirmed                  Boolean @default(false)
+  confirmed                  Boolean  @default(false)
   updatedAt                  DateTime @updatedAt @map("updated_at")
   createdAt                  DateTime @default(now()) @map("created_at")
 
-  user                       User @relation("UserEmailVerification", fields: [userId], references: [userId], onDelete: Cascade)
+  user User @relation("UserEmailVerification", fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("email_verification_request")
 }
