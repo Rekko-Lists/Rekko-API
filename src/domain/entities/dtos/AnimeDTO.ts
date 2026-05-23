@@ -1,3 +1,10 @@
+export type AnimeUserState = {
+    hasLiked?: boolean;
+    rate?: number;
+    watchState?: string;
+    watchedEpisodes?: number;
+};
+
 export class AnimeDTO {
     animeId?: number;
     malId: number;
@@ -24,6 +31,7 @@ export class AnimeDTO {
         dayOfWeek: string;
         startTime: string;
     };
+    userState?: AnimeUserState;
 
     constructor(data: {
         animeId?: number;
@@ -51,6 +59,7 @@ export class AnimeDTO {
             dayOfWeek: string;
             startTime: string;
         };
+        userState?: AnimeUserState;
     }) {
         this.animeId = data.animeId;
         this.malId = data.malId;
@@ -74,5 +83,11 @@ export class AnimeDTO {
         this.rating = data.rating;
         this.demographic = data.demographic;
         this.broadcast = data.broadcast;
+        if (
+            data.userState &&
+            Object.keys(data.userState).length > 0
+        ) {
+            this.userState = data.userState;
+        }
     }
 }

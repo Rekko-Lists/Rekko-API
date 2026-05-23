@@ -1,5 +1,5 @@
 import { Anime } from '../Anime';
-import { AnimeDTO } from '../dtos/AnimeDTO';
+import { AnimeDTO, AnimeUserState } from '../dtos/AnimeDTO';
 
 const DEMOGRAPHIC_WHITELIST = [
     'Shounen',
@@ -32,7 +32,10 @@ export class AnimeMapper {
         return null;
     }
 
-    static toDTO(anime: Anime): AnimeDTO {
+    static toDTO(
+        anime: Anime,
+        userState?: AnimeUserState
+    ): AnimeDTO {
         const genres = anime.getGenres();
 
         return new AnimeDTO({
@@ -56,11 +59,20 @@ export class AnimeMapper {
             premieredYear: anime.getPremieredYear(),
             rating: anime.getRating(),
             demographic: this.deriveDemographic(genres),
-            broadcast: anime.getBroadcast()
+            broadcast: anime.getBroadcast(),
+            userState
         });
     }
 
-    static toDTOs(animes: Anime[]): AnimeDTO[] {
-        return animes.map((anime) => this.toDTO(anime));
+    static toDTOs(
+        animes: Anime[],
+        statesByAnimeId?: Map<number, AnimeUserState>
+    ): AnimeDTO[] {
+        return animes.map((anime) =>
+            this.toDTO(
+                anime,
+                statesByAnimeId?.get(anime.getAnimeId())
+            )
+        );
     }
 }

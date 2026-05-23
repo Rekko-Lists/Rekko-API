@@ -34,7 +34,9 @@ import { getRelatedAnimes } from '../../../controllers/anime/animeRelation.contr
 
 const router = Router();
 
-router.route('/').get(parseQueryOptions, getAnimes);
+router
+    .route('/')
+    .get(optionalAuthMiddleware, parseQueryOptions, getAnimes);
 
 router.route('/genres').get(getGenres);
 router
@@ -84,6 +86,6 @@ router
 
 router.route('/:malid/related').get(getRelatedAnimes);
 
-router.route('/:malid').get(getAnime);
+router.route('/:malid').get(optionalAuthMiddleware, getAnime);
 
 export default router;

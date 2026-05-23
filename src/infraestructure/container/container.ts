@@ -72,7 +72,10 @@ const malService = new MalService(malAuthService);
 const animeService = new AnimeService(
     animeRepository,
     malService,
-    animeRelationRepository
+    animeRelationRepository,
+    likeRepository,
+    userRateAnimeRepository,
+    userWatchAnimeRepository
 );
 const rateService = new RateService(
     userRateAnimeRepository,

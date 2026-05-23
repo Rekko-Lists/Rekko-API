@@ -20,6 +20,11 @@ export interface UserRateAnimeRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<UserRateListItem>>;
 
+    findRatesByUserAndAnimeIds(
+        animeIds: number[],
+        userId: number
+    ): Promise<Map<number, number>>;
+
     updateRate(
         userRateAnimeId: number,
         rate: number

@@ -123,6 +123,24 @@ export class UserRateAnimePrismaRepository implements UserRateAnimeRepository {
         }
     }
 
+    async findRatesByUserAndAnimeIds(
+        animeIds: number[],
+        userId: number
+    ): Promise<Map<number, number>> {
+        if (animeIds.length === 0) return new Map();
+        try {
+            const records = await this.db.userRateAnime.findMany({
+                where: { userId, animeId: { in: animeIds } },
+                select: { animeId: true, rate: true }
+            });
+            return new Map(
+                records.map((r: any) => [r.animeId, r.rate])
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async updateRate(
         userRateAnimeId: number,
         rate: number

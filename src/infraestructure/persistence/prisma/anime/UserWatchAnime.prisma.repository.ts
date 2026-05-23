@@ -129,6 +129,34 @@ export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository 
         }
     }
 
+    async findWatchByUserAndAnimeIds(
+        animeIds: number[],
+        userId: number
+    ): Promise<Map<number, { state: string; numEpisodes: number }>> {
+        if (animeIds.length === 0) return new Map();
+        try {
+            const records = await this.db.userWatchAnime.findMany({
+                where: { userId, animeId: { in: animeIds } },
+                select: {
+                    animeId: true,
+                    state: true,
+                    numEpisodes: true
+                }
+            });
+            return new Map(
+                records.map((r: any) => [
+                    r.animeId,
+                    {
+                        state: String(r.state).toLowerCase(),
+                        numEpisodes: r.numEpisodes
+                    }
+                ])
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async updateProgress(
         userId: number,
         animeId: number,
