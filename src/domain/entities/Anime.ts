@@ -17,6 +17,10 @@ export class Anime {
     private likes: number;
     private genres: string[];
     private studios: string[];
+    private duration: number | null;
+    private premieredSeason: string | null;
+    private premieredYear: number | null;
+    private rating: string | null;
     private broadcast?: { dayOfWeek: string; startTime: string };
 
     private constructor(
@@ -38,6 +42,10 @@ export class Anime {
         likes: number,
         genres: string[],
         studios: string[],
+        duration: number | null,
+        premieredSeason: string | null,
+        premieredYear: number | null,
+        rating: string | null,
         broadcast?: { dayOfWeek: string; startTime: string }
     ) {
         this.animeId = animeId;
@@ -58,6 +66,10 @@ export class Anime {
         this.likes = likes;
         this.genres = genres;
         this.studios = studios;
+        this.duration = duration;
+        this.premieredSeason = premieredSeason;
+        this.premieredYear = premieredYear;
+        this.rating = rating;
         this.broadcast = broadcast;
     }
 
@@ -80,6 +92,10 @@ export class Anime {
         likes: number;
         genres: string[];
         studios: string[];
+        duration?: number | null;
+        premieredSeason?: string | null;
+        premieredYear?: number | null;
+        rating?: string | null;
         broadcast?: { dayOfWeek: string; startTime: string };
     }): Anime {
         return new Anime(
@@ -101,6 +117,10 @@ export class Anime {
             data.likes,
             data.genres,
             data.studios,
+            data.duration ?? null,
+            data.premieredSeason ?? null,
+            data.premieredYear ?? null,
+            data.rating ?? null,
             data.broadcast
         );
     }
@@ -177,6 +197,22 @@ export class Anime {
         return this.studios;
     }
 
+    getDuration(): number | null {
+        return this.duration;
+    }
+
+    getPremieredSeason(): string | null {
+        return this.premieredSeason;
+    }
+
+    getPremieredYear(): number | null {
+        return this.premieredYear;
+    }
+
+    getRating(): string | null {
+        return this.rating;
+    }
+
     getBroadcast():
         | { dayOfWeek: string; startTime: string }
         | undefined {
@@ -205,6 +241,10 @@ export class Anime {
             likes: this.likes,
             genres: this.genres,
             studios: this.studios,
+            duration: this.duration,
+            premieredSeason: this.premieredSeason,
+            premieredYear: this.premieredYear,
+            rating: this.rating,
             broadcast: this.broadcast
                 ? {
                       dayOfWeek: this.broadcast.dayOfWeek,
@@ -233,7 +273,11 @@ export class Anime {
             nextUpdate=${this.nextUpdate},
             likes=${this.likes},
             genres=${this.genres},
-            studios=${this.studios}
+            studios=${this.studios},
+            duration=${this.duration},
+            premieredSeason=${this.premieredSeason},
+            premieredYear=${this.premieredYear},
+            rating=${this.rating}
         `;
     }
 }

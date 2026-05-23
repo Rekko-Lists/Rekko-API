@@ -1,4 +1,5 @@
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
+import { AnimeRelationRepository } from '../../domain/repositories/anime/AnimeRelation.repository';
 import { MalAnimeData } from '../../domain/schemas/anime/mal.schemas';
 import { MalService } from './mal.service';
 import {
@@ -11,16 +12,23 @@ import {
     NotFoundError
 } from '../../exceptions/exceptions';
 import { Anime } from '../../domain/entities/Anime';
+import { AnimeRelation } from '../../domain/entities/AnimeRelation';
 import { Paginator } from '../../utils/pagination/paginator';
 import { LikeRepository } from '../../domain/repositories/publication/Like.repository';
 import { UserRateAnimeRepository } from '../../domain/repositories/anime/UserRateAnime.repository';
 import { UserWatchAnimeRepository } from '../../domain/repositories/anime/UserWatchAnime.repository';
 import { AnimeUserState } from '../../domain/entities/dtos/AnimeDTO';
+import {
+    findStaleAnimeMalIds,
+    triggerBackgroundRefresh
+} from './refreshStaleAnimes';
+import { prisma } from '../../infraestructure/database/prisma.client';
 
 export class AnimeService {
     constructor(
         private readonly animeRepository: AnimeRepository,
         private readonly malService: MalService,
+        private readonly animeRelationRepository: AnimeRelationRepository,
         private readonly likeRepository: LikeRepository,
         private readonly userRateAnimeRepository: UserRateAnimeRepository,
         private readonly userWatchAnimeRepository: UserWatchAnimeRepository
@@ -114,10 +122,7 @@ export class AnimeService {
             await this.animeRepository.findByMalId(malId);
 
         if (dbAnime) {
-            const nextUpdate = dbAnime.getNextUpdate();
-            const now = new Date();
-
-            if (nextUpdate && nextUpdate < now) {
+            if (dbAnime.isStale()) {
                 this.updateAnimeFromMal(malId).catch((error) => {
                     console.warn(
                         '[getAnimeByMalId] Background update failed:',
@@ -134,8 +139,28 @@ export class AnimeService {
         const mappedAnime =
             this.malService.mapMalToAnime(malAnime);
 
-        const createdAnime = await this.animeRepository.create(
-            mappedAnime as any
+        const createdAnime = await prisma.$transaction(
+            async (tx: any) => {
+                const created = await this.animeRepository.create(
+                    mappedAnime as any,
+                    tx
+                );
+
+                if (!created) return null;
+
+                if (
+                    mappedAnime.relatedAnime &&
+                    mappedAnime.relatedAnime.length > 0
+                ) {
+                    await this.animeRelationRepository.upsertMany(
+                        created.getAnimeId(),
+                        mappedAnime.relatedAnime,
+                        tx
+                    );
+                }
+
+                return created;
+            }
         );
 
         if (createdAnime) return createdAnime;
@@ -151,14 +176,43 @@ export class AnimeService {
     private async updateAnimeFromMal(
         malId: number
     ): Promise<void> {
-        const malAnime =
-            await this.malService.getAnimeById(malId);
-        const mappedAnime =
-            this.malService.mapMalToAnime(malAnime);
+        const malAnime = await this.malService.getAnimeById(malId);
+        const mappedAnime = this.malService.mapMalToAnime(malAnime);
 
-        await this.animeRepository.updateAnime(
-            malId,
-            mappedAnime as any
+        await prisma.$transaction(async (tx: any) => {
+            const updated = await this.animeRepository.updateAnime(
+                malId,
+                mappedAnime as any,
+                tx
+            );
+
+            if (
+                updated &&
+                mappedAnime.relatedAnime &&
+                mappedAnime.relatedAnime.length > 0
+            ) {
+                await this.animeRelationRepository.upsertMany(
+                    updated.getAnimeId(),
+                    mappedAnime.relatedAnime,
+                    tx
+                );
+            }
+        });
+    }
+
+    async getRelatedAnimes(
+        malId: number
+    ): Promise<AnimeRelation[]> {
+        const anime = await this.animeRepository.findByMalId(malId);
+
+        if (!anime) {
+            throw new NotFoundError(
+                `Anime with MAL ID ${malId} was not found`
+            );
+        }
+
+        return this.animeRelationRepository.findByAnimeId(
+            anime.getAnimeId()
         );
     }
 
@@ -289,6 +343,16 @@ export class AnimeService {
                 `Page ${page} does not exist. Max pages: ${maxPages}`
             );
         }
+
+        // Respect TTL: trigger background refresh for stale rows.
+        // Fire-and-forget — user gets the current (possibly stale) snapshot,
+        // next request sees fresh data.
+        const staleMalIds = findStaleAnimeMalIds(dbData.data);
+        triggerBackgroundRefresh(
+            staleMalIds,
+            this.malService,
+            this.animeRepository
+        );
 
         return {
             data: dbData.data,

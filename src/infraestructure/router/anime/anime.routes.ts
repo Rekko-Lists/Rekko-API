@@ -25,6 +25,12 @@ import {
     getWatch,
     postWatch
 } from '../../../controllers/anime/watch.controller';
+import {
+    getRecommendedViaPosts,
+    getSimilarAnimes,
+    getPostsByAnime
+} from '../../../controllers/anime/recommendations.controller';
+import { getRelatedAnimes } from '../../../controllers/anime/animeRelation.controller';
 
 const router = Router();
 
@@ -67,6 +73,18 @@ router
     .route('/:malid/like')
     .post(authMiddleware, likeAnime)
     .delete(authMiddleware, unlikeAnime);
+
+router
+    .route('/:malid/recommended-via-posts')
+    .get(parseQueryOptions, getRecommendedViaPosts);
+
+router.route('/:malid/similar').get(getSimilarAnimes);
+
+router
+    .route('/:malid/posts')
+    .get(optionalAuthMiddleware, parseQueryOptions, getPostsByAnime);
+
+router.route('/:malid/related').get(getRelatedAnimes);
 
 router.route('/:malid').get(optionalAuthMiddleware, getAnime);
 
