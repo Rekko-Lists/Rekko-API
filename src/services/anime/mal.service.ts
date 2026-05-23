@@ -14,6 +14,21 @@ export class MalService {
     private readonly animeFields =
         'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type,average_episode_duration,start_season,rating,related_anime';
 
+    /**
+     * In-memory TTL cache for MAL trending results.
+     *
+     * `getTrendingAnimes` is called on every catalogue request (e.g. by
+     * `AnimeService.getCatalogue`) just to discover new animes for background
+     * sync. The MAL round-trip dominates the catalogue latency, so we cache
+     * the result per (limit, offset) for 15 minutes — MAL's ranking moves
+     * slowly and consistency here is not critical.
+     */
+    private trendingCache = new Map<
+        string,
+        { data: MalAnimeData[]; expiresAt: number }
+    >();
+    private readonly TRENDING_CACHE_TTL_MS = 15 * 60 * 1000;
+
     constructor(private readonly malApiService: MalApiService) {}
 
     async searchAnimes(
@@ -49,6 +64,13 @@ export class MalService {
         limit: number = SEARCH_LIMITS.MAL_TRENDING_LIMIT,
         offset: number = 0
     ): Promise<Array<MalAnimeData>> {
+        const cacheKey = `${limit}:${offset}`;
+        const cached = this.trendingCache.get(cacheKey);
+
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.data;
+        }
+
         const response = await this.malApiService.fetchFromMal(
             '/anime/ranking',
             {
@@ -65,7 +87,14 @@ export class MalService {
         const data = await response.json();
         const validated = malSearchSchema.parse(data);
 
-        return validated.data.map((item) => item.node);
+        const result = validated.data.map((item) => item.node);
+
+        this.trendingCache.set(cacheKey, {
+            data: result,
+            expiresAt: Date.now() + this.TRENDING_CACHE_TTL_MS
+        });
+
+        return result;
     }
 
     async getAnimeById(malId: number): Promise<MalAnime> {
