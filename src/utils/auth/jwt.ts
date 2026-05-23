@@ -1,7 +1,8 @@
-import jwt from 'jsonwebtoken';
+import jwt, { TokenExpiredError as JwtTokenExpiredError } from 'jsonwebtoken';
 import {
     NotFoundError,
-    InvalidTokenError
+    InvalidTokenError,
+    TokenExpiredError
 } from '../../exceptions/exceptions';
 import { UserRole } from '../../domain/schemas/user/user.schemas';
 
@@ -61,6 +62,9 @@ export function verifyAccessToken(token: string): {
     } catch (error) {
         if (error instanceof InvalidTokenError) {
             throw error;
+        }
+        if (error instanceof JwtTokenExpiredError) {
+            throw new TokenExpiredError();
         }
         throw new InvalidTokenError(
             'Invalid or expired access token'
