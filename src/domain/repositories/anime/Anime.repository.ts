@@ -26,6 +26,8 @@ export interface AnimeRepository {
         tx?: any
     ): Promise<Anime | null>;
 
+    bumpNextUpdate(malId: number, deltaMs: number): Promise<void>;
+
     searchByName(query: string, limit: number): Promise<Anime[]>;
 
     find(

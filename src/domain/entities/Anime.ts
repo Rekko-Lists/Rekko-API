@@ -12,7 +12,9 @@ export class Anime {
     private readonly malRank: number;
     private mean: number;
     private numEpisodes: number;
-    private status: AnimeStatus;
+    // MAL devuelve `finished_airing`, `currently_airing`, `not_yet_aired`, etc.
+    // No es un set cerrado en código — guardamos el string tal cual.
+    private status: string;
     private nextUpdate: Date;
     private likes: number;
     private genres: string[];
@@ -37,7 +39,7 @@ export class Anime {
         malRank: number,
         mean: number,
         numEpisodes: number,
-        status: AnimeStatus,
+        status: string,
         nextUpdate: Date,
         likes: number,
         genres: string[],
@@ -87,7 +89,7 @@ export class Anime {
         malRank: number;
         mean: number;
         numEpisodes: number;
-        status: AnimeStatus;
+        status: string;
         nextUpdate: Date;
         likes: number;
         genres: string[];
@@ -177,7 +179,7 @@ export class Anime {
         return this.numEpisodes;
     }
 
-    getStatus(): AnimeStatus {
+    getStatus(): string {
         return this.status;
     }
 
@@ -280,12 +282,4 @@ export class Anime {
             rating=${this.rating}
         `;
     }
-}
-
-export enum AnimeStatus {
-    WATCHING = 'watching',
-    COMPLETED = 'completed',
-    ONHOLD = 'on_hold',
-    DROPPED = 'dropped',
-    PLANTOWATCH = 'plan_to_watch'
 }

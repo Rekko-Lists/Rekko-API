@@ -384,6 +384,20 @@ export class AnimePrismaRepository implements AnimeRepository {
         }
     }
 
+    async bumpNextUpdate(
+        malId: number,
+        deltaMs: number
+    ): Promise<void> {
+        try {
+            await this.db.anime.update({
+                where: { malId },
+                data: { nextUpdate: new Date(Date.now() + deltaMs) }
+            });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async updateMean(animeId: number, mean: number): Promise<Anime | null> {
         try {
             const updated = await this.db.anime.update({

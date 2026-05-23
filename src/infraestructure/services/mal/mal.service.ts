@@ -30,6 +30,9 @@ export class MalService {
     private tokenExpiresAt: number | null = null;
     private tokenStoreLoaded = false;
     private tokenStorePath: string;
+    // Lock para serializar refreshes: si ya hay uno en curso, los demás
+    // await sobre la misma promise en lugar de lanzar uno nuevo.
+    private refreshLock: Promise<void> | null = null;
     private authorizationRequests = new Map<
         string,
         MalRequest
@@ -155,7 +158,10 @@ export class MalService {
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.accessToken}`
-            }
+            },
+            // Cap total request a 15s — MAL puede ser lento pero raramente
+            // tarda más de esto. Antes era 8s y provocaba timeouts espurios.
+            signal: AbortSignal.timeout(15000)
         });
 
         if (response.status === 404) {
@@ -187,7 +193,19 @@ export class MalService {
 
         if (this.isTokenValid()) return;
 
-        await this.refreshAccessToken();
+        // Si ya hay un refresh en curso (otro slot concurrente lo inició),
+        // esperamos a que termine y re-chequeamos. Así solo se hace una
+        // llamada a MAL /token aunque lleguen N requests simultáneos.
+        if (this.refreshLock) {
+            await this.refreshLock;
+            if (this.isTokenValid()) return;
+        }
+
+        this.refreshLock = this.refreshAccessToken().finally(() => {
+            this.refreshLock = null;
+        });
+
+        await this.refreshLock;
     }
 
     private isTokenValid(): boolean {
@@ -222,7 +240,8 @@ export class MalService {
                 'Content-Type':
                     'application/x-www-form-urlencoded'
             },
-            body: params.toString()
+            body: params.toString(),
+            signal: AbortSignal.timeout(15000)
         });
 
         if (!response.ok) {

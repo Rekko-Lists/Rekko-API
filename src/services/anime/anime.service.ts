@@ -223,11 +223,22 @@ export class AnimeService {
     ): Promise<
         PaginatedResponse<Anime> & { withMalData: boolean }
     > {
-        const allAnimes =
-            await this.animeRepository.findBySeason(
+        // Esperamos a ambas para que `withMalData` refleje si MAL respondió.
+        // Si MAL falla, devolvemos solo lo de DB.
+        const [dbResult, malResult] = await Promise.allSettled([
+            this.animeRepository.findBySeason(year, season),
+            this.updateSeasonalAnimesFromMal(
                 year,
-                season
-            );
+                season,
+                findOptions.pagination.limit
+            )
+        ]);
+
+        if (dbResult.status === 'rejected') {
+            throw dbResult.reason;
+        }
+
+        const allAnimes = dbResult.value;
 
         if (!allAnimes || allAnimes.length === 0) {
             throw new NotFoundError(
@@ -235,21 +246,12 @@ export class AnimeService {
             );
         }
 
-        let withMalData = false;
-        this.updateSeasonalAnimesFromMal(
-            year,
-            season,
-            findOptions.pagination.limit
-        )
-            .then(() => {
-                withMalData = true;
-            })
-            .catch((error) => {
-                console.warn(
-                    'Failed to fetch seasonal animes from MAL:',
-                    error
-                );
-            });
+        if (malResult.status === 'rejected') {
+            console.warn(
+                '[getSeasonalAnimes] MAL fetch failed, using DB only:',
+                malResult.reason
+            );
+        }
 
         const paginator = new Paginator();
         const paginatedResult = paginator.paginate(
@@ -260,7 +262,7 @@ export class AnimeService {
 
         return {
             ...paginatedResult,
-            withMalData
+            withMalData: malResult.status === 'fulfilled'
         };
     }
 
