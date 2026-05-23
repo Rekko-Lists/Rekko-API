@@ -69,7 +69,19 @@ export const malAnimeDataSchema = z.object({
             start_time: z.string().optional()
         })
         .optional(),
-    media_type: z.string().optional()
+    media_type: z.string().optional(),
+    average_episode_duration: z
+        .number()
+        .nullable()
+        .optional(),
+    start_season: z
+        .object({
+            year: z.number().optional(),
+            season: z.string().optional()
+        })
+        .nullable()
+        .optional(),
+    rating: z.string().nullable().optional()
 });
 export type MalAnimeData = z.infer<typeof malAnimeDataSchema>;
 

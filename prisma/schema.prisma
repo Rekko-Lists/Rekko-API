@@ -147,6 +147,10 @@ model Anime {
   numEpisodes       Int @map("num_episodes")
   status            String
   mediaType         String   @default("tv") @map("media_type")
+  duration          Int?     @map("duration")
+  premieredSeason   String?  @map("premiered_season")
+  premieredYear     Int?     @map("premiered_year")
+  rating            String?  @map("rating")
   nextUpdate        DateTime @map("next_update")
   likes             Int
   studios           String[]
