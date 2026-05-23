@@ -12,6 +12,10 @@ import {
 } from '../../exceptions/exceptions';
 import { Anime } from '../../domain/entities/Anime';
 import { Paginator } from '../../utils/pagination/paginator';
+import {
+    findStaleAnimeMalIds,
+    triggerBackgroundRefresh
+} from './refreshStaleAnimes';
 
 export class AnimeService {
     constructor(
@@ -59,16 +63,12 @@ export class AnimeService {
             await this.animeRepository.findByMalId(malId);
 
         if (dbAnime) {
-            const nextUpdate = dbAnime.getNextUpdate();
-            const now = new Date();
-
-            if (nextUpdate && nextUpdate < now) {
-                this.updateAnimeFromMal(malId).catch((error) => {
-                    console.warn(
-                        '[getAnimeByMalId] Background update failed:',
-                        error
-                    );
-                });
+            if (dbAnime.isStale()) {
+                triggerBackgroundRefresh(
+                    [dbAnime.getMalId()],
+                    this.malService,
+                    this.animeRepository
+                );
             }
 
             return dbAnime;
@@ -91,20 +91,6 @@ export class AnimeService {
         if (existingAnime) return existingAnime;
 
         throw new ConflictError('Anime already exists but could not be loaded.');
-    }
-
-    private async updateAnimeFromMal(
-        malId: number
-    ): Promise<void> {
-        const malAnime =
-            await this.malService.getAnimeById(malId);
-        const mappedAnime =
-            this.malService.mapMalToAnime(malAnime);
-
-        await this.animeRepository.updateAnime(
-            malId,
-            mappedAnime as any
-        );
     }
 
     async getSeasonalAnimes(
@@ -234,6 +220,16 @@ export class AnimeService {
                 `Page ${page} does not exist. Max pages: ${maxPages}`
             );
         }
+
+        // Respect TTL: trigger background refresh for stale rows.
+        // Fire-and-forget — user gets the current (possibly stale) snapshot,
+        // next request sees fresh data.
+        const staleMalIds = findStaleAnimeMalIds(dbData.data);
+        triggerBackgroundRefresh(
+            staleMalIds,
+            this.malService,
+            this.animeRepository
+        );
 
         return {
             data: dbData.data,
