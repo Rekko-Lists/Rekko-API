@@ -52,6 +52,7 @@ export class AnimeMapper {
             numEpisodes: anime.getNumEpisodes(),
             status: anime.getStatus(),
             likes: anime.getLikes(),
+            members: anime.getMembers(),
             genres,
             studios: anime.getStudios(),
             duration: anime.getDuration(),

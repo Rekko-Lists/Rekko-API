@@ -17,6 +17,7 @@ export class Anime {
     private status: string;
     private nextUpdate: Date;
     private likes: number;
+    private members: number;
     private genres: string[];
     private studios: string[];
     private duration: number | null;
@@ -42,6 +43,7 @@ export class Anime {
         status: string,
         nextUpdate: Date,
         likes: number,
+        members: number,
         genres: string[],
         studios: string[],
         duration: number | null,
@@ -66,6 +68,7 @@ export class Anime {
         this.status = status;
         this.nextUpdate = nextUpdate;
         this.likes = likes;
+        this.members = members;
         this.genres = genres;
         this.studios = studios;
         this.duration = duration;
@@ -92,6 +95,7 @@ export class Anime {
         status: string;
         nextUpdate: Date;
         likes: number;
+        members: number;
         genres: string[];
         studios: string[];
         duration?: number | null;
@@ -117,6 +121,7 @@ export class Anime {
             data.status,
             data.nextUpdate,
             data.likes,
+            data.members,
             data.genres,
             data.studios,
             data.duration ?? null,
@@ -191,6 +196,10 @@ export class Anime {
         return this.likes;
     }
 
+    getMembers(): number {
+        return this.members;
+    }
+
     getGenres(): string[] {
         return this.genres;
     }
@@ -241,6 +250,7 @@ export class Anime {
             status: this.status,
             nextUpdate: this.nextUpdate,
             likes: this.likes,
+            members: this.members,
             genres: this.genres,
             studios: this.studios,
             duration: this.duration,
@@ -274,6 +284,7 @@ export class Anime {
             status=${this.status},
             nextUpdate=${this.nextUpdate},
             likes=${this.likes},
+            members=${this.members},
             genres=${this.genres},
             studios=${this.studios},
             duration=${this.duration},
