@@ -100,7 +100,8 @@ export class RefreshTokenService {
 
         const accessToken = signAccessToken(
             storedToken.getUserId(),
-            user.getRole() as any
+            user.getRole() as any,
+            user.getEmailVerified()
         );
 
         return { accessToken };
@@ -116,7 +117,8 @@ export class RefreshTokenService {
 
         const accessToken = signAccessToken(
             userId,
-            user.getRole() as any
+            user.getRole() as any,
+            user.getEmailVerified()
         );
         const refreshToken = await encodeRefreshToken({
             username: user.getUsername(),
