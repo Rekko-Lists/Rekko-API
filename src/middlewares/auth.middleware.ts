@@ -9,6 +9,7 @@ declare global {
             user?: {
                 userId: number;
                 role: UserRole;
+                emailVerified: boolean;
             };
         }
     }
@@ -33,7 +34,8 @@ export const authMiddleware = (
 
     req.user = {
         userId: decoded.userId,
-        role: decoded.role
+        role: decoded.role,
+        emailVerified: decoded.emailVerified
     };
 
     next();
@@ -57,7 +59,8 @@ export const optionalAuthMiddleware = (
 
         req.user = {
             userId: decoded.userId,
-            role: decoded.role
+            role: decoded.role,
+            emailVerified: decoded.emailVerified
         };
     } catch (error) {}
 
