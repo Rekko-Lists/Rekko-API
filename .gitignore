@@ -13,3 +13,7 @@ dist/
 
 # Firebase Service Account Key
 serviceAccountKey.json
+
+.claude/settings.local.json
+
+.agents
