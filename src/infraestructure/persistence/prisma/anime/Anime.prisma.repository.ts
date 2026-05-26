@@ -166,6 +166,9 @@ export class AnimePrismaRepository implements AnimeRepository {
                 broadcast,
                 genres,
                 relatedAnime: _relatedAnime,
+                likes: _likes,
+                mean: _mean,
+                members: _members,
                 ...anime
             } = animeData;
 

@@ -123,12 +123,12 @@ export class AnimeService {
 
         if (dbAnime) {
             if (dbAnime.isStale()) {
-                this.updateAnimeFromMal(malId).catch((error) => {
-                    console.warn(
-                        '[getAnimeByMalId] Background update failed:',
-                        error
-                    );
-                });
+                triggerBackgroundRefresh(
+                    [malId],
+                    this.malService,
+                    this.animeRepository,
+                    this.animeRelationRepository
+                );
             }
 
             return dbAnime;
@@ -171,33 +171,6 @@ export class AnimeService {
         if (existingAnime) return existingAnime;
 
         throw new ConflictError('Anime already exists but could not be loaded.');
-    }
-
-    private async updateAnimeFromMal(
-        malId: number
-    ): Promise<void> {
-        const malAnime = await this.malService.getAnimeById(malId);
-        const mappedAnime = this.malService.mapMalToAnime(malAnime);
-
-        await prisma.$transaction(async (tx: any) => {
-            const updated = await this.animeRepository.updateAnime(
-                malId,
-                mappedAnime as any,
-                tx
-            );
-
-            if (
-                updated &&
-                mappedAnime.relatedAnime &&
-                mappedAnime.relatedAnime.length > 0
-            ) {
-                await this.animeRelationRepository.upsertMany(
-                    updated.getAnimeId(),
-                    mappedAnime.relatedAnime,
-                    tx
-                );
-            }
-        });
     }
 
     async getRelatedAnimes(
@@ -353,7 +326,8 @@ export class AnimeService {
         triggerBackgroundRefresh(
             staleMalIds,
             this.malService,
-            this.animeRepository
+            this.animeRepository,
+            this.animeRelationRepository
         );
 
         return {

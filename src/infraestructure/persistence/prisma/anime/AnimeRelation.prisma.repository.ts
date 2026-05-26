@@ -11,6 +11,20 @@ export class AnimeRelationPrismaRepository
 {
     constructor(private readonly db = prisma) {}
 
+    private relationPriority(record: {
+        relationType: string;
+        relationLabel: string;
+    }): number {
+        const type = record.relationType.toLowerCase();
+        const label = record.relationLabel.toLowerCase();
+        const value = `${type} ${label}`;
+
+        if (value.includes('prequel')) return 0;
+        if (value.includes('sequel')) return 1;
+        if (value.includes('ova')) return 2;
+        return 3;
+    }
+
     async upsertMany(
         animeId: number,
         relations: AnimeRelationInput[],
@@ -82,19 +96,28 @@ export class AnimeRelationPrismaRepository
                 orderBy: { animeRelationId: 'asc' }
             });
 
-            return records.map((record: any) =>
-                AnimeRelation.fromPersistence({
-                    animeRelationId: record.animeRelationId,
-                    animeId: record.animeId,
-                    relatedMalId: record.relatedMalId,
-                    relatedAnimeId: record.relatedAnimeId,
-                    relationType: record.relationType,
-                    relationLabel: record.relationLabel,
-                    relatedTitle: record.relatedTitle,
-                    relatedImage: record.relatedImage,
-                    createdAt: record.createdAt
+            return records
+                .sort((a: any, b: any) => {
+                    const priorityDiff =
+                        this.relationPriority(a) -
+                        this.relationPriority(b);
+
+                    if (priorityDiff !== 0) return priorityDiff;
+                    return a.animeRelationId - b.animeRelationId;
                 })
-            );
+                .map((record: any) =>
+                    AnimeRelation.fromPersistence({
+                        animeRelationId: record.animeRelationId,
+                        animeId: record.animeId,
+                        relatedMalId: record.relatedMalId,
+                        relatedAnimeId: record.relatedAnimeId,
+                        relationType: record.relationType,
+                        relationLabel: record.relationLabel,
+                        relatedTitle: record.relatedTitle,
+                        relatedImage: record.relatedImage,
+                        createdAt: record.createdAt
+                    })
+                );
         } catch (error) {
             handlePrismaError(error);
         }
