@@ -9,8 +9,8 @@ import { prisma } from '../../infraestructure/database/prisma.client';
 import { handlePrismaError } from '../../infraestructure/errors/prisma.errors';
 
 type AnimeIdWithCount = {
-    anime_id: number;
-    related_count: bigint;
+    related_anime_id: number;
+    relation_count: number;
 };
 
 type RecommendedTotalRow = {
@@ -24,7 +24,7 @@ export class RecommendationsService {
 
     /**
      * Devuelve los animes más relacionados con el target via co-aparición
-     * en posts (tabla AnimePost), ordenados por COUNT(*) desc. Paginable.
+     * en posts, leyendo la tabla agregada AnimePostRecommendation.
      *
      * Si el malId no existe en la DB -> NotFoundError.
      * Si no hay co-apariciones -> data: [], pagination con total=0.
@@ -52,33 +52,19 @@ export class RecommendationsService {
             const rowsPromise = prisma.$queryRaw<
                 AnimeIdWithCount[]
             >`
-                SELECT ap2.anime_id, COUNT(*)::bigint AS related_count
-                FROM anime_post ap2
-                WHERE ap2.post_id IN (
-                    SELECT ap1.post_id
-                    FROM anime_post ap1
-                    WHERE ap1.anime_id = ${targetAnimeId}
-                )
-                AND ap2.anime_id <> ${targetAnimeId}
-                GROUP BY ap2.anime_id
-                ORDER BY related_count DESC, ap2.anime_id ASC
+                SELECT related_anime_id, relation_count
+                FROM anime_post_recommendation
+                WHERE anime_id = ${targetAnimeId}
+                ORDER BY relation_count DESC, related_anime_id ASC
                 LIMIT ${limit}
                 OFFSET ${skip}
             `;
             const totalRowsPromise = prisma.$queryRaw<
                 RecommendedTotalRow[]
             >`
-                SELECT COUNT(*)::bigint AS total FROM (
-                    SELECT ap2.anime_id
-                    FROM anime_post ap2
-                    WHERE ap2.post_id IN (
-                        SELECT ap1.post_id
-                        FROM anime_post ap1
-                        WHERE ap1.anime_id = ${targetAnimeId}
-                    )
-                    AND ap2.anime_id <> ${targetAnimeId}
-                    GROUP BY ap2.anime_id
-                ) AS sub
+                SELECT COUNT(*)::bigint AS total
+                FROM anime_post_recommendation
+                WHERE anime_id = ${targetAnimeId}
             `;
             const [rows, totalRows] = (await Promise.all([
                 rowsPromise,
@@ -97,9 +83,9 @@ export class RecommendationsService {
                 };
             }
 
-            const animeIds = rows.map((r) => r.anime_id);
+            const animeIds = rows.map((r) => r.related_anime_id);
             const counts = new Map<number, number>(
-                rows.map((r) => [r.anime_id, Number(r.related_count)])
+                rows.map((r) => [r.related_anime_id, r.relation_count])
             );
 
             const animes =
@@ -140,32 +126,26 @@ export class RecommendationsService {
             const rows = (await prisma.$queryRaw<
                 AnimeIdWithCount[]
             >`
-                SELECT ap2.anime_id, COUNT(*)::bigint AS related_count
-                FROM anime_post ap2
-                WHERE ap2.post_id IN (
-                    SELECT ap1.post_id
-                    FROM anime_post ap1
-                    WHERE ap1.anime_id = ${targetAnimeId}
-                )
-                AND ap2.anime_id <> ${targetAnimeId}
+                SELECT apr.related_anime_id, apr.relation_count
+                FROM anime_post_recommendation apr
+                WHERE apr.anime_id = ${targetAnimeId}
                 AND EXISTS (
                     SELECT 1
                     FROM anime_genre ag
-                    WHERE ag.anime_id = ap2.anime_id
+                    WHERE ag.anime_id = apr.related_anime_id
                       AND ag.genre_id IN (
                         SELECT ag2.genre_id
                         FROM anime_genre ag2
                         WHERE ag2.anime_id = ${targetAnimeId}
                       )
                 )
-                GROUP BY ap2.anime_id
-                ORDER BY related_count DESC, ap2.anime_id ASC
+                ORDER BY apr.relation_count DESC, apr.related_anime_id ASC
                 LIMIT ${limit}
             `) as AnimeIdWithCount[];
 
             if (rows.length === 0) return [];
 
-            const animeIds = rows.map((r) => r.anime_id);
+            const animeIds = rows.map((r) => r.related_anime_id);
             return this.findAnimesByIdsOrdered(animeIds);
         } catch (error) {
             handlePrismaError(error);

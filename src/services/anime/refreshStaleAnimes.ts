@@ -1,5 +1,7 @@
 import { Anime } from '../../domain/entities/Anime';
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
+import { AnimeRelationRepository } from '../../domain/repositories/anime/AnimeRelation.repository';
+import { prisma } from '../../infraestructure/database/prisma.client';
 import { MalService } from './mal.service';
 
 /**
@@ -40,15 +42,30 @@ let activeCount = 0;
 export async function refreshStaleAnime(
     malId: number,
     malService: MalService,
-    animeRepository: AnimeRepository
+    animeRepository: AnimeRepository,
+    animeRelationRepository: AnimeRelationRepository
 ): Promise<void> {
     try {
         const malAnime = await malService.getAnimeById(malId);
         const mappedAnime = malService.mapMalToAnime(malAnime);
 
-        // `updateAnime` usa nested writes -> Prisma garantiza atomicidad
-        // (anime + broadcast + animeGenres se actualizan en una transacción implícita).
-        await animeRepository.updateAnime(malId, mappedAnime as any);
+        await prisma.$transaction(async (tx: any) => {
+            const updated = await animeRepository.updateAnime(
+                malId,
+                mappedAnime as any,
+                tx
+            );
+
+            if (!updated || mappedAnime.relatedAnime.length === 0) {
+                return;
+            }
+
+            await animeRelationRepository.upsertMany(
+                updated.getAnimeId(),
+                mappedAnime.relatedAnime,
+                tx
+            );
+        });
     } catch (error) {
         // Best-effort: si el bump también falla (p.ej. pool agotado por
         // tráfico real), no es crítico. La próxima request volverá a marcarlo
@@ -94,7 +111,8 @@ export function findStaleAnimeMalIds(animes: Anime[]): number[] {
 export function triggerBackgroundRefresh(
     malIds: number[],
     malService: MalService,
-    animeRepository: AnimeRepository
+    animeRepository: AnimeRepository,
+    animeRelationRepository: AnimeRelationRepository
 ): void {
     if (malIds.length === 0) return;
 
@@ -108,7 +126,7 @@ export function triggerBackgroundRefresh(
 
     if (enqueued === 0) return;
 
-    pump(malService, animeRepository);
+    pump(malService, animeRepository, animeRelationRepository);
 }
 
 /**
@@ -118,7 +136,8 @@ export function triggerBackgroundRefresh(
  */
 function pump(
     malService: MalService,
-    animeRepository: AnimeRepository
+    animeRepository: AnimeRepository,
+    animeRelationRepository: AnimeRelationRepository
 ): void {
     while (
         activeCount < MAX_CONCURRENT_REFRESH &&
@@ -127,14 +146,23 @@ function pump(
         const malId = pending.shift()!;
         activeCount++;
 
-        refreshStaleAnime(malId, malService, animeRepository)
+        refreshStaleAnime(
+            malId,
+            malService,
+            animeRepository,
+            animeRelationRepository
+        )
             .catch((err) => {
                 console.error(`[refresh stale ${malId}]`, err);
             })
             .finally(() => {
                 activeCount--;
                 inFlight.delete(malId);
-                pump(malService, animeRepository);
+                pump(
+                    malService,
+                    animeRepository,
+                    animeRelationRepository
+                );
             });
     }
 }
