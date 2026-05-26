@@ -164,6 +164,8 @@ model Anime {
   animeGenres    AnimeGenre[]
   relations      AnimeRelation[]  @relation("AnimeRelationSource")
   relatedFrom    AnimeRelation[]  @relation("AnimeRelationTarget")
+  postRecommendations AnimePostRecommendation[] @relation("AnimePostRecommendationSource")
+  postRecommendedBy   AnimePostRecommendation[] @relation("AnimePostRecommendationTarget")
 
   broadcast Broadcast @relation(fields: [broadcastId], references: [broadcastId])
 
@@ -277,10 +279,26 @@ model AnimePost {
   animeId     Int @map("anime_id")
   postId      Int @map("post_id")
 
-  anime Anime @relation(fields: [animeId], references: [animeId])
-  post  Post  @relation(fields: [postId], references: [postId])
+  anime Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
+  post  Post  @relation(fields: [postId], references: [postId], onDelete: Cascade)
 
+  @@unique([animeId, postId])
   @@map("anime_post")
+}
+
+model AnimePostRecommendation {
+  animePostRecommendationId Int      @id @default(autoincrement()) @map("anime_post_recommendation_id")
+  animeId                   Int      @map("anime_id")
+  relatedAnimeId            Int      @map("related_anime_id")
+  relationCount             Int      @default(0) @map("relation_count")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  anime        Anime @relation("AnimePostRecommendationSource", fields: [animeId], references: [animeId], onDelete: Cascade)
+  relatedAnime Anime @relation("AnimePostRecommendationTarget", fields: [relatedAnimeId], references: [animeId], onDelete: Cascade)
+
+  @@unique([animeId, relatedAnimeId])
+  @@index([animeId, relationCount])
+  @@map("anime_post_recommendation")
 }
 
 model UserLikeAnime {
@@ -339,6 +357,7 @@ model UserSocialAccount {
   user          User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
   socialAccount SocialAccount @relation(fields: [socialAccountId], references: [socialAccountId])
 
+  @@unique([userId, socialAccountId])
   @@map("user_social_account")
 }
 

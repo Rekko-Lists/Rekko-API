@@ -16,3 +16,5 @@ serviceAccountKey.json
 
 # Claude settings
 .claude/
+
+.agents
