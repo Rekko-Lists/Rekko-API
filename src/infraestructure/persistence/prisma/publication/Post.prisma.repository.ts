@@ -7,7 +7,28 @@ import {
 import { PostWhereUnique } from '../../../../domain/schemas/publication/post.schemas';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
-import { buildPrismaPageQuery } from '../../../../utils/prisma/prismaHelper';
+import { buildPrismaPageQueryArray } from '../../../../utils/prisma/prismaHelper';
+
+const POST_INCLUDE = {
+    user: {
+        select: {
+            username: true,
+            profileImage: true
+        }
+    },
+    animes: {
+        include: {
+            anime: {
+                select: {
+                    malId: true,
+                    name: true,
+                    imgMedium: true,
+                    imgLarge: true
+                }
+            }
+        }
+    }
+} as const;
 
 export class PostPrismaRepository implements PostRepository {
     constructor(private readonly db = prisma) {}
@@ -72,9 +93,11 @@ export class PostPrismaRepository implements PostRepository {
             });
         }
 
+        const uniqueIds = [...new Set(animeIds)];
         await tx.animePostRecommendation.deleteMany({
             where: {
-                relationCount: { lte: 0 }
+                relationCount: { lte: 0 },
+                animeId: { in: uniqueIds }
             }
         });
     }
@@ -107,18 +130,11 @@ export class PostPrismaRepository implements PostRepository {
                             }
                         })
                     },
-                    include: {
-                        animes: {
-                            select: { animeId: true }
-                        }
-                    }
+                    include: POST_INCLUDE
                 });
 
                 await this.incrementRecommendationPairs(
-                    createdPost.animes.map(
-                        (animePost: { animeId: number }) =>
-                            animePost.animeId
-                    ),
+                    createdPost.animes.map((animePost: any) => animePost.animeId),
                     tx
                 );
 
@@ -135,14 +151,7 @@ export class PostPrismaRepository implements PostRepository {
         try {
             const post = await this.db.post.findUnique({
                 where: { postId: id },
-                include: {
-                    user: {
-                        select: {
-                            username: true,
-                            profileImage: true
-                        }
-                    }
-                }
+                include: POST_INCLUDE
             });
 
             return post ? Post.fromPersistence(post) : null;
@@ -155,7 +164,7 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { skip, take, orderBy } = buildPrismaPageQuery(
+            const { skip, take, orderBy } = buildPrismaPageQueryArray(
                 findOptions,
                 'postId'
             );
@@ -165,14 +174,7 @@ export class PostPrismaRepository implements PostRepository {
                     skip,
                     take,
                     orderBy,
-                    include: {
-                        user: {
-                            select: {
-                                username: true,
-                                profileImage: true
-                            }
-                        }
-                    }
+                    include: POST_INCLUDE
                 }),
                 this.db.post.count()
             ]);
@@ -195,7 +197,7 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { skip, take, orderBy } = buildPrismaPageQuery(
+            const { skip, take, orderBy } = buildPrismaPageQueryArray(
                 findOptions,
                 'postId'
             );
@@ -213,14 +215,7 @@ export class PostPrismaRepository implements PostRepository {
                     skip,
                     take,
                     orderBy,
-                    include: {
-                        user: {
-                            select: {
-                                username: true,
-                                profileImage: true
-                            }
-                        }
-                    }
+                    include: POST_INCLUDE
                 }),
                 this.db.post.count({
                     where: {
@@ -276,7 +271,7 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { skip, take, orderBy } = buildPrismaPageQuery(
+            const { skip, take, orderBy } = buildPrismaPageQueryArray(
                 findOptions,
                 'postId'
             );
@@ -295,14 +290,7 @@ export class PostPrismaRepository implements PostRepository {
                     skip,
                     take,
                     orderBy,
-                    include: {
-                        user: {
-                            select: {
-                                username: true,
-                                profileImage: true
-                            }
-                        }
-                    }
+                    include: POST_INCLUDE
                 }),
                 this.db.post.count({
                     where: {

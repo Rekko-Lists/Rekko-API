@@ -21,7 +21,7 @@ import { AnimeUserState } from '../../domain/entities/dtos/AnimeDTO';
 import {
     findStaleAnimeMalIds,
     triggerBackgroundRefresh
-} from './refreshStaleAnimes';
+} from './refreshStaleAnimes.service';
 import { prisma } from '../../infraestructure/database/prisma.client';
 
 export class AnimeService {
@@ -141,10 +141,11 @@ export class AnimeService {
 
         const createdAnime = await prisma.$transaction(
             async (tx: any) => {
-                const created = await this.animeRepository.create(
-                    mappedAnime as any,
-                    tx
-                );
+                const created =
+                    await this.animeRepository.create(
+                        mappedAnime as any,
+                        tx
+                    );
 
                 if (!created) return null;
 
@@ -170,13 +171,16 @@ export class AnimeService {
 
         if (existingAnime) return existingAnime;
 
-        throw new ConflictError('Anime already exists but could not be loaded.');
+        throw new ConflictError(
+            'Anime already exists but could not be loaded.'
+        );
     }
 
     async getRelatedAnimes(
         malId: number
     ): Promise<AnimeRelation[]> {
-        const anime = await this.animeRepository.findByMalId(malId);
+        const anime =
+            await this.animeRepository.findByMalId(malId);
 
         if (!anime) {
             throw new NotFoundError(
@@ -264,7 +268,7 @@ export class AnimeService {
         findOptions: FindOptions
     ): Promise<PaginatedResponseWithMalStatus<Anime>> {
         const { pagination } = findOptions;
-        const page  = pagination?.page  ?? 1;
+        const page = pagination?.page ?? 1;
         const limit = pagination?.limit ?? 10;
 
         // DB maneja paginación, sort y filtros directamente.
@@ -275,7 +279,10 @@ export class AnimeService {
         ]);
 
         if (dbResult.status === 'rejected') {
-            console.error('[getCatalogue] DB query failed:', dbResult.reason);
+            console.error(
+                '[getCatalogue] DB query failed:',
+                dbResult.reason
+            );
             throw dbResult.reason;
         }
         const dbData = dbResult.value;
@@ -292,18 +299,24 @@ export class AnimeService {
         // Background: detectar y guardar animes de MAL que no estén en DB
         if (malApiWorked) {
             const malAnimes = malResult.value;
-            const malIds    = malAnimes.map((m) => m.id);
+            const malIds = malAnimes.map((m) => m.id);
 
-            this.animeRepository.findExistingMalIds(malIds)
+            this.animeRepository
+                .findExistingMalIds(malIds)
                 .then((existingIds) => {
                     const existing = new Set(existingIds);
-                    const newOnes  = malAnimes.filter((m) => !existing.has(m.id));
+                    const newOnes = malAnimes.filter(
+                        (m) => !existing.has(m.id)
+                    );
                     if (newOnes.length > 0) {
                         return this.saveMalAnimes(newOnes);
                     }
                 })
                 .catch((err) =>
-                    console.error('[getCatalogue] Background save error:', err)
+                    console.error(
+                        '[getCatalogue] Background save error:',
+                        err
+                    )
                 );
         }
 
@@ -332,7 +345,12 @@ export class AnimeService {
 
         return {
             data: dbData.data,
-            pagination: { page, limit, total: dbData.total, pages: maxPages },
+            pagination: {
+                page,
+                limit,
+                total: dbData.total,
+                pages: maxPages
+            },
             withMalData: malApiWorked
         };
     }
@@ -343,7 +361,11 @@ export class AnimeService {
 
     async seedFromMal(
         pages: number = 10
-    ): Promise<{ saved: number; skipped: number; pages: number }> {
+    ): Promise<{
+        saved: number;
+        skipped: number;
+        pages: number;
+    }> {
         const pageSize = 500; // MAL ranking max per request
         let totalSaved = 0;
         let totalSkipped = 0;
@@ -352,20 +374,26 @@ export class AnimeService {
             const offset = page * pageSize;
 
             try {
-                const malAnimes = await this.malService.getTrendingAnimes(
-                    pageSize,
-                    offset
-                );
+                const malAnimes =
+                    await this.malService.getTrendingAnimes(
+                        pageSize,
+                        offset
+                    );
 
                 if (malAnimes.length === 0) break;
 
                 const malIds = malAnimes.map((m) => m.id);
                 const existingIds =
-                    await this.animeRepository.findExistingMalIds(malIds);
+                    await this.animeRepository.findExistingMalIds(
+                        malIds
+                    );
                 const existing = new Set(existingIds);
-                const newOnes = malAnimes.filter((m) => !existing.has(m.id));
+                const newOnes = malAnimes.filter(
+                    (m) => !existing.has(m.id)
+                );
 
-                totalSkipped += malAnimes.length - newOnes.length;
+                totalSkipped +=
+                    malAnimes.length - newOnes.length;
 
                 if (newOnes.length > 0) {
                     await this.saveMalAnimes(newOnes);
@@ -376,7 +404,9 @@ export class AnimeService {
 
                 // Respect MAL rate limits between pages
                 if (page < pages - 1) {
-                    await new Promise((resolve) => setTimeout(resolve, 1200));
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, 1200)
+                    );
                 }
             } catch (error) {
                 console.error(
@@ -387,7 +417,11 @@ export class AnimeService {
             }
         }
 
-        return { saved: totalSaved, skipped: totalSkipped, pages };
+        return {
+            saved: totalSaved,
+            skipped: totalSkipped,
+            pages
+        };
     }
 
     private async saveMalAnimes(

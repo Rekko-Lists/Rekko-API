@@ -1,4 +1,5 @@
 import { AppError } from './AppError';
+import { normalizeErrorContext } from './context';
 
 /**
  * AuthenticationError - Thrown when authentication fails
@@ -18,7 +19,7 @@ export class AuthenticationError extends AppError {
     ) {
         super(message, 401, code, true, {
             type: 'AUTHENTICATION',
-            ...context
+            ...normalizeErrorContext(context)
         });
         Object.setPrototypeOf(
             this,

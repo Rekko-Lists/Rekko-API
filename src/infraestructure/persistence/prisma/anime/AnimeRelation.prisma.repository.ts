@@ -87,6 +87,23 @@ export class AnimeRelationPrismaRepository
         }
     }
 
+    async deleteObsolete(
+        animeId: number,
+        keepMalIds: number[],
+        tx?: any
+    ): Promise<void> {
+        const client = tx ?? this.db;
+        try {
+            await client.animeRelation.deleteMany({
+                where: keepMalIds.length > 0
+                    ? { animeId, relatedMalId: { notIn: keepMalIds } }
+                    : { animeId }
+            });
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async findByAnimeId(
         animeId: number
     ): Promise<AnimeRelation[]> {

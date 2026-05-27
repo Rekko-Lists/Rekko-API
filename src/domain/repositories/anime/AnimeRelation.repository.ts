@@ -7,5 +7,11 @@ export interface AnimeRelationRepository {
         tx?: any
     ): Promise<void>;
 
+    deleteObsolete(
+        animeId: number,
+        keepMalIds: number[],
+        tx?: any
+    ): Promise<void>;
+
     findByAnimeId(animeId: number): Promise<AnimeRelation[]>;
 }

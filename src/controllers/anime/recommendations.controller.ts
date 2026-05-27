@@ -6,6 +6,11 @@ import { ValidationError } from '../../exceptions/exceptions';
 import { NotFoundError } from '../../exceptions/exceptions';
 import { FindOptions } from '../../domain/schemas/find.schemas';
 
+const POST_SORT_BY_FIELD: Record<string, string> = {
+    likes: 'likes',
+    postId: 'postId'
+};
+
 function parseMalId(raw: unknown): number {
     const str = String(raw);
     if (!/^\d+$/.test(str)) {
@@ -20,6 +25,35 @@ function parseMalId(raw: unknown): number {
         });
     }
     return malId;
+}
+
+function buildPostSortBy(req: Request): FindOptions['sort'] | undefined {
+    if (!req.query.sortBy) return undefined;
+
+    const sortBy = String(req.query.sortBy)
+        .split(',')
+        .map((field) => field.trim())
+        .filter(Boolean);
+    const sortOrders = req.query.sortOrder
+        ? String(req.query.sortOrder).split(',')
+        : [];
+
+    const sort = sortBy.flatMap((field, index) => {
+        const mappedField = POST_SORT_BY_FIELD[field];
+        if (!mappedField) return [];
+
+        return [
+            {
+                field: mappedField,
+                order:
+                    sortOrders[index]?.trim() === 'asc'
+                        ? ('asc' as const)
+                        : ('desc' as const)
+            }
+        ];
+    });
+
+    return sort.length > 0 ? sort : undefined;
 }
 
 /**
@@ -122,14 +156,15 @@ export const getPostsByAnime = catchAsync(
         }
 
         // 2) Default sort: likes desc, postId desc (tiebreaker estable).
+        const sortBy = buildPostSortBy(req);
         const sort =
-            baseFindOptions.sort &&
-            baseFindOptions.sort.length > 0
+            sortBy ??
+            (baseFindOptions.sort && baseFindOptions.sort.length > 0
                 ? baseFindOptions.sort
                 : [
                       { field: 'likes', order: 'desc' as const },
                       { field: 'postId', order: 'desc' as const }
-                  ];
+                  ]);
 
         const findOptions: FindOptions = {
             ...baseFindOptions,

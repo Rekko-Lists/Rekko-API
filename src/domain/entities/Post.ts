@@ -6,6 +6,12 @@ export class Post {
     private photo: string | null;
     private likes: number;
     private user?: { username: string; profileImage: string };
+    private animes: Array<{
+        malId: number;
+        name: string;
+        imgMedium: string;
+        imgLarge: string;
+    }>;
 
     private constructor(
         postId: number,
@@ -14,7 +20,13 @@ export class Post {
         description: string | null,
         photo: string | null,
         likes: number,
-        user?: { username: string; profileImage: string }
+        user?: { username: string; profileImage: string },
+        animes: Array<{
+            malId: number;
+            name: string;
+            imgMedium: string;
+            imgLarge: string;
+        }> = []
     ) {
         this.postId = postId;
         this.userId = userId;
@@ -23,6 +35,7 @@ export class Post {
         this.photo = photo;
         this.likes = likes;
         this.user = user;
+        this.animes = animes;
     }
 
     public static fromPersistence(data: {
@@ -33,6 +46,14 @@ export class Post {
         photo: string | null;
         likes: number;
         user?: { username: string; profileImage: string };
+        animes?: Array<{
+            anime?: {
+                malId: number;
+                name: string;
+                imgMedium: string;
+                imgLarge: string;
+            };
+        }>;
     }): Post {
         return new Post(
             data.postId,
@@ -41,7 +62,15 @@ export class Post {
             data.description,
             data.photo,
             data.likes,
-            data.user
+            data.user,
+            data.animes
+                ?.map((animePost) => animePost.anime)
+                .filter((anime): anime is {
+                    malId: number;
+                    name: string;
+                    imgMedium: string;
+                    imgLarge: string;
+                } => Boolean(anime)) ?? []
         );
     }
 
@@ -73,6 +102,15 @@ export class Post {
         | { username: string; profileImage: string }
         | undefined {
         return this.user;
+    }
+
+    getAnimes(): Array<{
+        malId: number;
+        name: string;
+        imgMedium: string;
+        imgLarge: string;
+    }> {
+        return this.animes;
     }
 
     toString(): string {

@@ -260,6 +260,7 @@ export class PostService {
             likes: post.getLikes(),
             userId: post.getUserId(),
             user: post.getUser(),
+            animes: post.getAnimes(),
             hasLiked
         };
     }

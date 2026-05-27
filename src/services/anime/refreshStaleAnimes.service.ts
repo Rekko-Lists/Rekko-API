@@ -56,9 +56,17 @@ export async function refreshStaleAnime(
                 tx
             );
 
-            if (!updated || mappedAnime.relatedAnime.length === 0) {
-                return;
-            }
+            if (!updated) return;
+
+            const newRelatedMalIds = mappedAnime.relatedAnime.map(
+                (r) => r.relatedMalId
+            );
+
+            await animeRelationRepository.deleteObsolete(
+                updated.getAnimeId(),
+                newRelatedMalIds,
+                tx
+            );
 
             await animeRelationRepository.upsertMany(
                 updated.getAnimeId(),
