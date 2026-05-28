@@ -29,11 +29,45 @@ const fileFilter = (
     }
 };
 
+const challengeFileFilter = (
+    req: Request,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback
+) => {
+    const allowedMimetypes = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'audio/mpeg',
+        'audio/mp3',
+        'audio/x-mpeg',
+        'audio/x-mp3'
+    ];
+
+    if (!allowedMimetypes.includes(file.mimetype)) {
+        cb(
+            new InvalidImageFormatError(
+                'Solo se permiten imágenes (JPG, PNG, WebP) y audio (MP3)'
+            )
+        );
+    } else {
+        cb(null, true);
+    }
+};
+
 export const uploadMiddleware = multer({
     storage,
     fileFilter,
     limits: {
         fileSize: 2 * 1024 * 1024
+    }
+});
+
+export const uploadChallengesMiddleware = multer({
+    storage,
+    fileFilter: challengeFileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 10MB para audio
     }
 });
 
