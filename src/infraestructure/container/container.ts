@@ -13,10 +13,15 @@ import { LikePrismaRepository } from '../persistence/prisma/publication/Like.pri
 import { CommentPrismaRepository } from '../persistence/prisma/publication/Comment.prisma.repository';
 import { UserRateAnimePrismaRepository } from '../persistence/prisma/anime/UserRateAnime.prisma.repository';
 import { UserWatchAnimePrismaRepository } from '../persistence/prisma/anime/UserWatchAnime.prisma.repository';
+import { ChallengePrismaRepository } from '../persistence/prisma/challenge/Challenge.prisma.repository';
+import { DayPrismaRepository } from '../persistence/prisma/challenge/Day.prisma.repository';
 
 // ===== EXTERNAL SERVICES (Mailer, Storage) =====
 import { EmailHandler } from '../services/mailer/nodemailer.service';
 import { CloudinaryHandler } from '../services/storage/cloudinary.service';
+import { ChallengeUploadHandler } from '../services/storage/challengeUpload.handler';
+import { ChallengeDataEnricher } from '../services/challenge/challengeData.enricher';
+import { ChallengeRequestParser } from '../services/challenge/challengeRequest.parser';
 import { MalService as MalApiService } from '../services/mal/mal.service';
 
 // ===== DOMAIN SERVICES =====
@@ -35,12 +40,12 @@ import { PostService } from '../../services/publication/post.service';
 import { LikeService } from '../../services/publication/like.service';
 import { CommentService } from '../../services/publication/comment.service';
 import { RecommendationsService } from '../../services/anime/recommendations.service';
+import { ChallengeService } from '../../services/challenge/challenge.service';
 
 // ===== REPOSITORIES INITIALIZATION =====
 const animeRepository = new AnimePrismaRepository(prisma);
-const animeRelationRepository = new AnimeRelationPrismaRepository(
-    prisma
-);
+const animeRelationRepository =
+    new AnimeRelationPrismaRepository(prisma);
 const userRepository = new UserPrismaRepository(prisma);
 const emailAuthRepository = new EmailAuthPrismaRepository(
     prisma
@@ -59,10 +64,21 @@ const userRateAnimeRepository =
     new UserRateAnimePrismaRepository(prisma);
 const userWatchAnimeRepository =
     new UserWatchAnimePrismaRepository(prisma);
+const dayRepository = new DayPrismaRepository(prisma);
+const challengeRepository = new ChallengePrismaRepository(
+    prisma
+);
 
 // ===== EXTERNAL SERVICES INITIALIZATION =====
 const emailHandler = new EmailHandler();
 const cloudinaryHandler = new CloudinaryHandler();
+const challengeUploadHandler = new ChallengeUploadHandler(
+    cloudinaryHandler
+);
+const challengeDataEnricher = new ChallengeDataEnricher(
+    challengeUploadHandler
+);
+const challengeRequestParser = new ChallengeRequestParser();
 
 // ===== MAL API SERVICE (Anime from MyAnimeList) =====
 const malAuthService = new MalApiService();
@@ -142,6 +158,12 @@ const recommendationsService = new RecommendationsService(
     animeRepository
 );
 
+const challengeService = new ChallengeService(
+    challengeRepository,
+    dayRepository,
+    animeService
+);
+
 // ===== CONTAINER EXPORT =====
 export const container = {
     repositories: {
@@ -154,11 +176,16 @@ export const container = {
         oauth: oauthRepository,
         post: postRepository,
         userRateAnime: userRateAnimeRepository,
-        userWatchAnime: userWatchAnimeRepository
+        userWatchAnime: userWatchAnimeRepository,
+        day: dayRepository,
+        challenge: challengeRepository
     },
     externalServices: {
         emailHandler,
         cloudinaryHandler,
+        challengeUploadHandler,
+        challengeDataEnricher,
+        challengeRequestParser,
         malAuth: malAuthService
     },
     services: {
@@ -176,7 +203,8 @@ export const container = {
         mal: malService,
         rate: rateService,
         watch: watchService,
-        recommendations: recommendationsService
+        recommendations: recommendationsService,
+        challenge: challengeService
     }
 } as const;
 
