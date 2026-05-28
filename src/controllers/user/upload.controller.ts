@@ -12,7 +12,7 @@ export const uploadProfileImage = catchAsync(
         if (!req.file)
             throw new ValidationError('No file was uploaded');
 
-        const result = await services.upload.uploadProfileImage({
+        await services.upload.uploadProfileImage({
             username,
             imageType: 'profileImage',
             imageBuffer: req.file.buffer,
@@ -20,7 +20,7 @@ export const uploadProfileImage = catchAsync(
             height: imageConfig.height
         });
 
-        created(res, result);
+        created(res, 'Profile Image updated');
     }
 );
 
@@ -33,7 +33,7 @@ export const uploadBannerImage = catchAsync(
         if (!req.file)
             throw new ValidationError('No file was uploaded');
 
-        const result = await services.upload.uploadProfileImage({
+        await services.upload.uploadProfileImage({
             username,
             imageType: 'bannerImage',
             imageBuffer: req.file.buffer,
@@ -41,7 +41,7 @@ export const uploadBannerImage = catchAsync(
             height: imageConfig.height
         });
 
-        created(res, result);
+        created(res, 'Banner Image updated');
     }
 );
 
@@ -54,7 +54,7 @@ export const uploadBackgroundImage = catchAsync(
         if (!req.file)
             throw new ValidationError('No file was uploaded');
 
-        const result = await services.upload.uploadProfileImage({
+        await services.upload.uploadProfileImage({
             username,
             imageType: 'backgroundImage',
             imageBuffer: req.file.buffer,
@@ -62,6 +62,6 @@ export const uploadBackgroundImage = catchAsync(
             height: imageConfig.height
         });
 
-        created(res, result);
+        created(res, 'Backgrpund Image updated');
     }
 );

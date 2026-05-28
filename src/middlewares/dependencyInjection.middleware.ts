@@ -9,14 +9,6 @@ export const injectDependencies = (
     res: Response,
     next: NextFunction
 ) => {
-    (req as any).container = container as Container;
+    req.container = container as Container;
     next();
 };
-
-declare global {
-    namespace Express {
-        interface Request {
-            container?: Container;
-        }
-    }
-}

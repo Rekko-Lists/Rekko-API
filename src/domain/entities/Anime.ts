@@ -1,3 +1,5 @@
+import { AnimeConstructorData } from '../schemas/anime/anime.schemas';
+
 export class Anime {
     private readonly animeId: number;
     private readonly malId: number;
@@ -26,56 +28,31 @@ export class Anime {
     private rating: string | null;
     private broadcast?: { dayOfWeek: string; startTime: string };
 
-    private constructor(
-        animeId: number,
-        malId: number,
-        broadcastId: number,
-        name: string,
-        synopsis: string,
-        imgMedium: string,
-        imgLarge: string,
-        startDate: Date,
-        endDate: Date,
-        malMean: number,
-        malRank: number,
-        mean: number,
-        numEpisodes: number,
-        status: string,
-        nextUpdate: Date,
-        likes: number,
-        members: number,
-        genres: string[],
-        studios: string[],
-        duration: number | null,
-        premieredSeason: string | null,
-        premieredYear: number | null,
-        rating: string | null,
-        broadcast?: { dayOfWeek: string; startTime: string }
-    ) {
-        this.animeId = animeId;
-        this.malId = malId;
-        this.broadcastId = broadcastId;
-        this.name = name;
-        this.synopsis = synopsis;
-        this.imgMedium = imgMedium;
-        this.imgLarge = imgLarge;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.malMean = malMean;
-        this.malRank = malRank;
-        this.mean = mean;
-        this.numEpisodes = numEpisodes;
-        this.status = status;
-        this.nextUpdate = nextUpdate;
-        this.likes = likes;
-        this.members = members;
-        this.genres = genres;
-        this.studios = studios;
-        this.duration = duration;
-        this.premieredSeason = premieredSeason;
-        this.premieredYear = premieredYear;
-        this.rating = rating;
-        this.broadcast = broadcast;
+    private constructor(data: AnimeConstructorData) {
+        this.animeId = data.animeId;
+        this.malId = data.malId;
+        this.broadcastId = data.broadcastId;
+        this.name = data.name;
+        this.synopsis = data.synopsis;
+        this.imgMedium = data.imgMedium;
+        this.imgLarge = data.imgLarge;
+        this.startDate = data.startDate;
+        this.endDate = data.endDate;
+        this.malMean = data.malMean;
+        this.malRank = data.malRank;
+        this.mean = data.mean;
+        this.numEpisodes = data.numEpisodes;
+        this.status = data.status;
+        this.nextUpdate = data.nextUpdate;
+        this.likes = data.likes;
+        this.members = data.members;
+        this.genres = data.genres;
+        this.studios = data.studios;
+        this.duration = data.duration;
+        this.premieredSeason = data.premieredSeason;
+        this.premieredYear = data.premieredYear;
+        this.rating = data.rating;
+        this.broadcast = data.broadcast;
     }
 
     public static fromPersistence(data: {
@@ -104,32 +81,34 @@ export class Anime {
         rating?: string | null;
         broadcast?: { dayOfWeek: string; startTime: string };
     }): Anime {
-        return new Anime(
-            data.animeId,
-            data.malId,
-            data.broadcastId,
-            data.name,
-            data.synopsis,
-            data.imgMedium,
-            data.imgLarge,
-            data.startDate,
-            data.endDate,
-            data.malMean,
-            data.malRank,
-            data.mean,
-            data.numEpisodes,
-            data.status,
-            data.nextUpdate,
-            data.likes,
-            data.members,
-            data.genres,
-            data.studios,
-            data.duration ?? null,
-            data.premieredSeason ?? null,
-            data.premieredYear ?? null,
-            data.rating ?? null,
-            data.broadcast
-        );
+        const constructorData: AnimeConstructorData = {
+            animeId: data.animeId,
+            malId: data.malId,
+            broadcastId: data.broadcastId,
+            name: data.name,
+            synopsis: data.synopsis,
+            imgMedium: data.imgMedium,
+            imgLarge: data.imgLarge,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            malMean: data.malMean,
+            malRank: data.malRank,
+            mean: data.mean,
+            numEpisodes: data.numEpisodes,
+            status: data.status,
+            nextUpdate: data.nextUpdate,
+            likes: data.likes,
+            members: data.members,
+            genres: data.genres,
+            studios: data.studios,
+            duration: data.duration ?? null,
+            premieredSeason: data.premieredSeason ?? null,
+            premieredYear: data.premieredYear ?? null,
+            rating: data.rating ?? null,
+            broadcast: data.broadcast
+        };
+
+        return new Anime(constructorData);
     }
 
     getAnimeId(): number {

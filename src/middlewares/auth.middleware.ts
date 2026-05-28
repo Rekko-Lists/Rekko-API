@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/auth/jwt';
 import { UserRole } from '../domain/schemas/user/user.schemas';
 import { InvalidTokenError } from '../exceptions/exceptions';
+import { PUBLIC_USER_ROUTE_PATTERNS } from '../constants';
+import { logger } from '../utils/logger';
 
 declare global {
     namespace Express {
@@ -62,35 +64,32 @@ export const optionalAuthMiddleware = (
             role: decoded.role,
             emailVerified: decoded.emailVerified
         };
-    } catch (error) {}
+    } catch (error) {
+        logger.warn('Optional auth token ignored', error);
+    }
 
     next();
 };
+
+function isPublicUserRoute(
+    method: string,
+    path: string
+): boolean {
+    const patterns =
+        PUBLIC_USER_ROUTE_PATTERNS[
+            method as keyof typeof PUBLIC_USER_ROUTE_PATTERNS
+        ];
+
+    return Boolean(patterns?.some((pattern) => pattern.test(path)));
+}
 
 export const userAuthMiddleware = (
     req: Request,
     res: Response,
     next: NextFunction
 ): void => {
-    if (req.method === 'GET') {
-        if (
-            req.path === '/' ||
-            /^\/[^/]+$/.test(req.path) ||
-            /^\/[^/]+\/verify-email\/confirm$/.test(req.path) ||
-            /^\/[^/]+\/change-email\/confirm$/.test(req.path)
-        ) {
-            return next();
-        }
-    }
-
-    if (req.method === 'POST') {
-        if (
-            req.path === '/' ||
-            /^\/[^/]+\/forgot-password$/.test(req.path) ||
-            /^\/[^/]+\/reset-password$/.test(req.path)
-        ) {
-            return next();
-        }
+    if (isPublicUserRoute(req.method, req.path)) {
+        return next();
     }
 
     authMiddleware(req, res, next);

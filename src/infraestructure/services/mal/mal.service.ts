@@ -12,13 +12,11 @@ import {
     MalApiError
 } from '../../../exceptions/exceptions';
 import { randomBytes } from 'crypto';
-import {
-    mkdir,
-    readFile,
-    writeFile,
-} from 'fs/promises';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
 import { existsSync } from 'fs';
+import { DEFAULTS } from '../../../constants';
+import { logger } from '../../../utils/logger';
 
 export class MalService {
     private baseUrl = 'https://api.myanimelist.net/v2';
@@ -74,7 +72,9 @@ export class MalService {
             this.refreshToken = tokenData.refreshToken;
             this.tokenExpiresAt = tokenData.tokenExpiresAt;
             this.tokenStoreLoaded = true;
-        } catch (error) {}
+        } catch (error) {
+            logger.warn('Failed to load MAL token store', error);
+        }
     }
 
     getAuthorizationUrl(
@@ -93,7 +93,7 @@ export class MalService {
 
         setTimeout(
             () => this.authorizationRequests.delete(state),
-            15 * 60 * 1000
+            DEFAULTS.MAL_AUTH_REQUEST_TTL_MS
         );
 
         const params = new URLSearchParams({
@@ -161,7 +161,9 @@ export class MalService {
             },
             // Cap total request a 15s — MAL puede ser lento pero raramente
             // tarda más de esto. Antes era 8s y provocaba timeouts espurios.
-            signal: AbortSignal.timeout(15000)
+            signal: AbortSignal.timeout(
+                DEFAULTS.MAL_REQUEST_TIMEOUT_MS
+            )
         });
 
         if (response.status === 404) {
@@ -212,7 +214,9 @@ export class MalService {
         return (
             this.accessToken !== null &&
             this.tokenExpiresAt !== null &&
-            Date.now() < this.tokenExpiresAt - 60 * 1000
+            Date.now() <
+                this.tokenExpiresAt -
+                    DEFAULTS.MAL_TOKEN_REFRESH_MARGIN_MS
         );
     }
 
@@ -241,7 +245,9 @@ export class MalService {
                     'application/x-www-form-urlencoded'
             },
             body: params.toString(),
-            signal: AbortSignal.timeout(15000)
+            signal: AbortSignal.timeout(
+                DEFAULTS.MAL_REQUEST_TIMEOUT_MS
+            )
         });
 
         if (!response.ok) {
@@ -284,8 +290,15 @@ export class MalService {
             this.accessToken = tokenData.accessToken;
             this.refreshToken = tokenData.refreshToken;
             this.tokenExpiresAt = tokenData.tokenExpiresAt;
-        } catch (error: any) {
-            if (error?.code !== 'ENOENT') {
+        } catch (error: unknown) {
+            const code =
+                typeof error === 'object' &&
+                error !== null &&
+                'code' in error
+                    ? error.code
+                    : undefined;
+
+            if (code !== 'ENOENT') {
                 throw error;
             }
         }

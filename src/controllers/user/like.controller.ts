@@ -2,11 +2,12 @@ import { Request, Response } from 'express';
 import { catchAsync } from '../../utils/http/catchAsync';
 import { ok } from '../../utils/http/response';
 import { ValidationError } from '../../exceptions/ValidationError';
+import { parseIntSafe } from '../../utils/parsing.util';
 
 const getUserIdParam = (req: Request): number => {
-    const userId = parseInt(req.params.userid as string);
+    const userId = parseIntSafe(req.params.userid as string);
 
-    if (isNaN(userId)) {
+    if (userId <= 0) {
         throw new ValidationError('Invalid user ID', {
             received: req.params.userid
         });
@@ -18,8 +19,14 @@ const getUserIdParam = (req: Request): number => {
 export const getLikedAnimesByUserId = catchAsync(
     async (req: Request, res: Response) => {
         const userId = getUserIdParam(req);
-        const findOptions = (req as any).findOptions;
+        const findOptions = req.findOptions!;
         const { services } = req.container!;
+
+        const animes =
+            await services.like.getLikedAnimesByUserId(
+                userId,
+                findOptions
+            );
 
         const result =
             await services.like.getLikedAnimesByUserId(

@@ -55,7 +55,10 @@ export const verifyEmail = catchAsync(
                                 ? process.env.CLIENT_URL_DEV!
                                 : process.env.CLIENT_URL_PROD!,
                         path: '/email-verified',
-                        params: { status: 'error', message: error.code }
+                        params: {
+                            status: 'error',
+                            message: error.code
+                        }
                     })
                 );
             }
@@ -80,7 +83,7 @@ export const changeEmail = catchAsync(
                 validatedInput
             );
 
-        ok(res, 'Email request sended succesfully.', result);
+        ok(res, 'Email request sent successfully.', result);
     }
 );
 
@@ -119,7 +122,10 @@ export const changeEmailConfirm = catchAsync(
                                 ? process.env.CLIENT_URL_DEV!
                                 : process.env.CLIENT_URL_PROD!,
                         path: '/email-changed',
-                        params: { status: 'error', message: error.code }
+                        params: {
+                            status: 'error',
+                            message: error.code
+                        }
                     })
                 );
             }

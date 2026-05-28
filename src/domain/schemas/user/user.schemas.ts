@@ -223,3 +223,23 @@ export const userFieldMappings = {
     posts: { config: true },
     oauthAccounts: { config: true }
 };
+
+export const userConstructorDataSchema = z.object({
+    userId: z.number().int(),
+    email: z.email(),
+    password: z.string(),
+    username: z.string().min(1),
+    reputation: z.number().int().default(0),
+    profileImage: z.string().default(''),
+    bannerImage: z.string().default(''),
+    backgroundImage: z.string().default(''),
+    role: userRole,
+    emailVerified: z.boolean().default(false),
+    createdAt: z.date(),
+    biography: z.string().optional(),
+    profileImagePublicId: z.string().optional(),
+    bannerImagePublicId: z.string().optional(),
+    backgroundImagePublicId: z.string().optional()
+});
+
+export type UserConstructorData = z.infer<typeof userConstructorDataSchema>;

@@ -26,7 +26,7 @@ export const postUser = catchAsync(
 
         created(
             res,
-            'User created succesfully. Check your email and verify'
+            'User created successfully. Check your email to verify'
         );
     }
 );
@@ -45,7 +45,7 @@ export const patchUser = catchAsync(
             username
         );
 
-        ok(res, 'User profile updated succesfully.', updated);
+        ok(res, 'User profile updated successfully.', updated);
     }
 );
 
@@ -53,7 +53,7 @@ export const getUsers = catchAsync(
     async (req: Request, res: Response) => {
         const { services } = req.container!;
         const users = await services.user.getUsers(
-            (req as any).findOptions as FindOptions
+            req.findOptions as FindOptions
         );
 
         ok(res, 'Users found.', users);
@@ -64,7 +64,7 @@ export const getUser = catchAsync(
     async (req: Request, res: Response) => {
         const { services } = req.container!;
         const username = req.params.username as string;
-        const fields = (req as any).findOptions?.select;
+        const fields = req.findOptions?.select ?? [];
 
         const user = await services.user.getUserData(
             username,
@@ -83,7 +83,7 @@ export const deleteUser = catchAsync(
         const deleted =
             await services.user.deleteByUsername(username);
 
-        ok(res, 'User deleted succesfully.', deleted);
+        ok(res, 'User deleted successfully.', deleted);
     }
 );
 
@@ -101,7 +101,7 @@ export const changeUsername = catchAsync(
             validatedInput
         );
 
-        ok(res, 'Email changed succesfully.', result);
+        ok(res, 'Username changed successfully.', result);
     }
 );
 
@@ -118,7 +118,7 @@ export const socialAccounts = catchAsync(
             validateSocialAccounts
         );
 
-        ok(res, 'Social Accounts updated succesfully.', user);
+        ok(res, 'Social accounts updated successfully.', user);
     }
 );
 
@@ -134,7 +134,7 @@ export const patchReputation = catchAsync(
 
         await services.user.updateReputation(validatedInput);
 
-        ok(res, 'Reputation updated succesfully.');
+        ok(res, 'Reputation updated successfully.');
     }
 );
 

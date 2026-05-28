@@ -7,27 +7,36 @@ import {
     TokenExpiredError
 } from '../../exceptions/exceptions';
 import { UserRole } from '../../domain/schemas/user/user.schemas';
+import { JWT_TOKEN_EXPIRY } from '../../constants';
 
-export function sign10MinToken(purpose: string) {
+interface TemporaryTokenPayload {
+    purpose: string;
+    iat?: number;
+    exp?: number;
+}
+
+export function sign10MinToken(purpose: string): string {
     return jwt.sign(
         { purpose },
         process.env.JWT_SECRET as string,
-        { expiresIn: '10m' }
+        { expiresIn: JWT_TOKEN_EXPIRY.TEMPORARY_TOKEN }
     );
 }
 
 export function verifyToken(
     token: string,
     expectedPurpose: string
-): void {
+): TemporaryTokenPayload {
     const decoded = jwt.verify(
         token,
         process.env.JWT_SECRET as string
-    ) as any;
+    ) as TemporaryTokenPayload;
 
     if (decoded.purpose !== expectedPurpose) {
         throw new NotFoundError('Invalid token purpose');
     }
+
+    return decoded;
 }
 
 export function signAccessToken(
@@ -38,32 +47,33 @@ export function signAccessToken(
     return jwt.sign(
         { userId, role, emailVerified, type: 'access' },
         process.env.JWT_SECRET as string,
-        { expiresIn: '15m' }
+        { expiresIn: JWT_TOKEN_EXPIRY.ACCESS_TOKEN }
     );
 }
 
-export function verifyAccessToken(token: string): {
+interface AccessTokenPayload {
     userId: number;
     role: UserRole;
     emailVerified: boolean;
-    type: string;
-} {
+    type: 'access';
+    iat?: number;
+    exp?: number;
+}
+
+export function verifyAccessToken(
+    token: string
+): AccessTokenPayload {
     try {
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET as string
-        ) as any;
+        ) as AccessTokenPayload;
 
         if (decoded.type !== 'access') {
             throw new InvalidTokenError('Invalid token type');
         }
 
-        return {
-            userId: decoded.userId,
-            role: decoded.role,
-            emailVerified: decoded.emailVerified,
-            type: 'access'
-        };
+        return decoded;
     } catch (error) {
         if (error instanceof InvalidTokenError) {
             throw error;

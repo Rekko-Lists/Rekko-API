@@ -1,7 +1,8 @@
 import { hashBcrypt } from '../../utils/auth/bcrypt.util';
 import {
     CreateUserInput,
-    SocialAccount
+    SocialAccount,
+    UserConstructorData
 } from '../schemas/user/user.schemas';
 
 export class User {
@@ -22,38 +23,23 @@ export class User {
     private biography?: string;
     private socialAccounts: SocialAccount[] = [];
 
-    private constructor(
-        userId: number,
-        email: string,
-        password: string,
-        username: string,
-        reputation: number,
-        profileImage: string,
-        bannerImage: string,
-        backgroundImage: string,
-        role: UserRole = UserRole.USER,
-        emailVerified: boolean = false,
-        createdAt: Date,
-        biography?: string,
-        profileImagePublicId?: string,
-        bannerImagePublicId?: string,
-        backgroundImagePublicId?: string
-    ) {
-        this.userId = userId;
-        this.email = email;
-        this.password = password;
-        this.username = username;
-        this.reputation = reputation;
-        this.profileImage = profileImage;
-        this.profileImagePublicId = profileImagePublicId;
-        this.bannerImage = bannerImage;
-        this.bannerImagePublicId = bannerImagePublicId;
-        this.backgroundImage = backgroundImage;
-        this.backgroundImagePublicId = backgroundImagePublicId;
-        this.role = role;
-        this.emailVerified = emailVerified;
-        this.createdAt = createdAt;
-        this.biography = biography;
+    private constructor(data: UserConstructorData) {
+        this.userId = data.userId;
+        this.email = data.email;
+        this.password = data.password;
+        this.username = data.username;
+        this.reputation = data.reputation;
+        this.profileImage = data.profileImage;
+        this.profileImagePublicId = data.profileImagePublicId;
+        this.bannerImage = data.bannerImage;
+        this.bannerImagePublicId = data.bannerImagePublicId;
+        this.backgroundImage = data.backgroundImage;
+        this.backgroundImagePublicId =
+            data.backgroundImagePublicId;
+        this.role = UserRole[data.role as keyof typeof UserRole];
+        this.emailVerified = data.emailVerified;
+        this.createdAt = data.createdAt;
+        this.biography = data.biography;
     }
 
     public static fromPersistence(data: {
@@ -74,23 +60,25 @@ export class User {
         biography?: string;
         userSocialAccount?: any[];
     }): User {
-        const user = new User(
-            data.userId,
-            data.email,
-            data.password,
-            data.username,
-            data.reputation ?? 0,
-            data.profileImage,
-            data.bannerImage,
-            data.backgroundImage,
-            data.role ?? UserRole.USER,
-            data.emailVerified ?? false,
-            data.createdAt,
-            data.biography ?? '',
-            data.profileImagePublicId,
-            data.bannerImagePublicId,
-            data.backgroundImagePublicId
-        );
+        const constructorData: UserConstructorData = {
+            userId: data.userId,
+            email: data.email,
+            password: data.password,
+            username: data.username,
+            reputation: data.reputation ?? 0,
+            profileImage: data.profileImage,
+            bannerImage: data.bannerImage,
+            backgroundImage: data.backgroundImage,
+            role: data.role ?? UserRole.USER,
+            emailVerified: data.emailVerified ?? false,
+            createdAt: data.createdAt,
+            biography: data.biography ?? '',
+            profileImagePublicId: data.profileImagePublicId,
+            bannerImagePublicId: data.bannerImagePublicId,
+            backgroundImagePublicId: data.backgroundImagePublicId
+        };
+
+        const user = new User(constructorData);
 
         if (
             data.userSocialAccount &&

@@ -26,8 +26,6 @@ export const parseQueryOptions = (
                     ? req.query.limit
                     : undefined
             },
-            // sortField y sortOrder aceptan valores comma-separated para multi-sort
-            // ej: sortField=malRank,likes&sortOrder=asc,desc
             sort: req.query.sortField
                 ? (req.query.sortField as string)
                       .split(',')
@@ -44,8 +42,7 @@ export const parseQueryOptions = (
             filters
         });
 
-        (req as any).findOptions = findOptions;
-
+        req.findOptions = findOptions;
         next();
     } catch (error) {
         next(error);

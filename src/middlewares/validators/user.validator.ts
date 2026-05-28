@@ -27,10 +27,9 @@ export const validateUserQuery = (
     res: Response,
     next: NextFunction
 ) => {
-    const findOptions: FindOptions = (req as any)
-        .findOptions as FindOptions;
+    const findOptions = req.findOptions as FindOptions;
 
-    if (findOptions.select) {
+    if (findOptions?.select) {
         findOptions.select.forEach((field: string) => {
             userSelectableField.parse(field);
         });

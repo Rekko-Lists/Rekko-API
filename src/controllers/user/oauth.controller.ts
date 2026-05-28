@@ -23,7 +23,7 @@ export const oauthGoogle = catchAsync(
                 clientInfo.ip
             );
 
-        ok(res, 'Google OAuth account created succesfully', {
+        ok(res, 'Google OAuth account created successfully', {
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken
         });
@@ -46,7 +46,7 @@ export const oauthDiscord = catchAsync(
                 clientInfo.ip
             );
 
-        ok(res, 'Discord OAuth account created succesfully', {
+        ok(res, 'Discord OAuth account created successfully', {
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken
         });
