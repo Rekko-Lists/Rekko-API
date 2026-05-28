@@ -5,7 +5,7 @@ import userRouter from './user/user.routes';
 import postRouter from './publication/post.routes';
 import commentRouter from './publication/comment.routes';
 import animeRouter from './anime/anime.routes';
-import challengeRouter from './challenge.routes';
+import challengeRouter from './challenge/challenge.routes';
 import malRouter from './anime/mal.routes';
 import searchRouter from './search/search.routes';
 import {
@@ -26,6 +26,6 @@ router.use('/anime', animeRouter);
 router.use('/api/search', searchRouter);
 router.use('/post', postRouter);
 router.use('/comment', commentRouter);
-router.use('/challenge', challengeRouter);
+router.use('/challenges', challengeRouter);
 
 export default router;

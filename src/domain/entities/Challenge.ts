@@ -3,14 +3,14 @@ export class Challenge {
     private readonly typeId: number;
     private readonly dayId: number;
     private readonly animeId: number;
-    private data: JSON;
+    private readonly data: Record<string, any>;
 
     private constructor(
         challengeId: number,
         typeId: number,
         dayId: number,
         animeId: number,
-        data: JSON
+        data: Record<string, any>
     ) {
         this.challengeId = challengeId;
         this.typeId = typeId;
@@ -24,7 +24,7 @@ export class Challenge {
         typeId: number;
         dayId: number;
         animeId: number;
-        data: JSON;
+        data: Record<string, any>;
     }): Challenge {
         return new Challenge(
             data.challengeId,
@@ -33,6 +33,15 @@ export class Challenge {
             data.animeId,
             data.data
         );
+    }
+
+    public static create(
+        typeId: number,
+        dayId: number,
+        animeId: number,
+        data: Record<string, any>
+    ): Challenge {
+        return new Challenge(0, typeId, dayId, animeId, data);
     }
 
     getChallengeId(): number {
@@ -51,13 +60,17 @@ export class Challenge {
         return this.animeId;
     }
 
+    getData(): Record<string, any> {
+        return this.data;
+    }
+
     toString(): string {
         return `
             challengeId=${this.challengeId},
             typeId=${this.typeId},
             dayId=${this.dayId},
             animeId=${this.animeId},
-            data=${this.data}
+            data=${JSON.stringify(this.data)}
         `;
     }
 }
