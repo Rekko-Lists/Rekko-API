@@ -8,6 +8,10 @@ import { PostWhereUnique } from '../../../../domain/schemas/publication/post.sch
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
 import { buildPrismaPageQueryArray } from '../../../../utils/prisma/prismaHelper';
+import {
+    ANIME_WEEKLY_POST_WEIGHT,
+    getUtcWeekStart
+} from '../../../../utils/date/week';
 
 const POST_INCLUDE = {
     user: {
@@ -27,11 +31,38 @@ const POST_INCLUDE = {
                 }
             }
         }
+    },
+    _count: {
+        select: { comments: true }
     }
 } as const;
 
 export class PostPrismaRepository implements PostRepository {
     constructor(private readonly db = prisma) {}
+
+    private buildWhere(
+        findOptions: FindOptions
+    ): Record<string, any> {
+        const createdAt = findOptions.filters?.createdAt;
+        if (!createdAt) return {};
+
+        return {
+            createdAt: {
+                ...(createdAt.gte !== undefined && {
+                    gte: new Date(String(createdAt.gte))
+                }),
+                ...(createdAt.gt !== undefined && {
+                    gt: new Date(String(createdAt.gt))
+                }),
+                ...(createdAt.lte !== undefined && {
+                    lte: new Date(String(createdAt.lte))
+                }),
+                ...(createdAt.lt !== undefined && {
+                    lt: new Date(String(createdAt.lt))
+                })
+            }
+        };
+    }
 
     private buildDirectedPairs(animeIds: number[]): Array<{
         animeId: number;
@@ -102,6 +133,57 @@ export class PostPrismaRepository implements PostRepository {
         });
     }
 
+    private async incrementWeeklyPostActivity(
+        animeIds: number[],
+        createdAt: Date,
+        tx: any
+    ): Promise<void> {
+        const weekStart = getUtcWeekStart(createdAt);
+        const uniqueIds = [...new Set(animeIds)];
+
+        for (const animeId of uniqueIds) {
+            await tx.animeWeeklyActivity.upsert({
+                where: {
+                    animeId_weekStart: { animeId, weekStart }
+                },
+                update: {
+                    postCount: { increment: 1 },
+                    score: { increment: ANIME_WEEKLY_POST_WEIGHT }
+                },
+                create: {
+                    animeId,
+                    weekStart,
+                    postCount: 1,
+                    animeLikeCount: 0,
+                    score: ANIME_WEEKLY_POST_WEIGHT
+                }
+            });
+        }
+    }
+
+    private async decrementWeeklyPostActivity(
+        animeIds: number[],
+        createdAt: Date,
+        tx: any
+    ): Promise<void> {
+        const weekStart = getUtcWeekStart(createdAt);
+        const uniqueIds = [...new Set(animeIds)];
+
+        for (const animeId of uniqueIds) {
+            await tx.animeWeeklyActivity.updateMany({
+                where: {
+                    animeId,
+                    weekStart,
+                    postCount: { gt: 0 }
+                },
+                data: {
+                    postCount: { decrement: 1 },
+                    score: { decrement: ANIME_WEEKLY_POST_WEIGHT }
+                }
+            });
+        }
+    }
+
     async create(
         userId: number,
         title: string,
@@ -112,34 +194,50 @@ export class PostPrismaRepository implements PostRepository {
         try {
             const uniqueMalIds = [...new Set(animeIds)];
 
-            const post = await this.db.$transaction(async (tx: any) => {
-                const createdPost = await tx.post.create({
-                    data: {
-                        userId,
-                        title,
-                        description,
-                        photo,
-                        likes: 0,
-                        ...(uniqueMalIds.length > 0 && {
-                            animes: {
-                                create: uniqueMalIds.map((malId) => ({
-                                    anime: {
-                                        connect: { malId }
-                                    }
-                                }))
-                            }
-                        })
-                    },
-                    include: POST_INCLUDE
-                });
+            const post = await this.db.$transaction(
+                async (tx: any) => {
+                    const createdPost = await tx.post.create({
+                        data: {
+                            userId,
+                            title,
+                            description,
+                            photo,
+                            likes: 0,
+                            ...(uniqueMalIds.length > 0 && {
+                                animes: {
+                                    create: uniqueMalIds.map(
+                                        (malId) => ({
+                                            anime: {
+                                                connect: {
+                                                    malId
+                                                }
+                                            }
+                                        })
+                                    )
+                                }
+                            })
+                        },
+                        include: POST_INCLUDE
+                    });
 
-                await this.incrementRecommendationPairs(
-                    createdPost.animes.map((animePost: any) => animePost.animeId),
-                    tx
-                );
+                    await this.incrementRecommendationPairs(
+                        createdPost.animes.map(
+                            (animePost: any) => animePost.animeId
+                        ),
+                        tx
+                    );
 
-                return createdPost;
-            });
+                    await this.incrementWeeklyPostActivity(
+                        createdPost.animes.map(
+                            (animePost: any) => animePost.animeId
+                        ),
+                        createdPost.createdAt,
+                        tx
+                    );
+
+                    return createdPost;
+                }
+            );
 
             return Post.fromPersistence(post);
         } catch (error) {
@@ -164,19 +262,19 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { skip, take, orderBy } = buildPrismaPageQueryArray(
-                findOptions,
-                'postId'
-            );
+            const { skip, take, orderBy } =
+                buildPrismaPageQueryArray(findOptions, 'postId');
+            const where = this.buildWhere(findOptions);
 
             const [posts, total] = await Promise.all([
                 this.db.post.findMany({
+                    where,
                     skip,
                     take,
                     orderBy,
                     include: POST_INCLUDE
                 }),
-                this.db.post.count()
+                this.db.post.count({ where })
             ]);
 
             const formattedPosts = posts.map((post: any) =>
@@ -192,15 +290,45 @@ export class PostPrismaRepository implements PostRepository {
         }
     }
 
+    async findPopularWeekly(limit: number): Promise<Post[]> {
+        try {
+            const weekStart = getUtcWeekStart();
+            const grouped = await this.db.userLikePost.groupBy({
+                by: ['postId'],
+                where: { createdAt: { gte: weekStart } },
+                _count: { postId: true },
+                orderBy: { _count: { postId: 'desc' } },
+                take: limit
+            });
+
+            const postIds = grouped.map((item: any) => item.postId);
+            if (postIds.length === 0) return [];
+
+            const posts = await this.db.post.findMany({
+                where: { postId: { in: postIds } },
+                include: POST_INCLUDE
+            });
+
+            const byId = new Map(
+                posts.map((post: any) => [post.postId, post])
+            );
+
+            return postIds
+                .map((postId: number) => byId.get(postId))
+                .filter(Boolean)
+                .map((post: any) => Post.fromPersistence(post));
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async findByUsername(
         username: string,
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { skip, take, orderBy } = buildPrismaPageQueryArray(
-                findOptions,
-                'postId'
-            );
+            const { skip, take, orderBy } =
+                buildPrismaPageQueryArray(findOptions, 'postId');
 
             const [posts, total] = await Promise.all([
                 this.db.post.findMany({
@@ -245,18 +373,33 @@ export class PostPrismaRepository implements PostRepository {
     async delete(where: PostWhereUnique): Promise<boolean> {
         try {
             await this.db.$transaction(async (tx: any) => {
+                const post = await tx.post.findUnique({
+                    where,
+                    select: { createdAt: true }
+                });
+
                 const animePosts = await tx.animePost.findMany({
                     where,
                     select: { animeId: true }
                 });
 
+                const animeIds = animePosts.map(
+                    (animePost: { animeId: number }) =>
+                        animePost.animeId
+                );
+
                 await this.decrementRecommendationPairs(
-                    animePosts.map(
-                        (animePost: { animeId: number }) =>
-                            animePost.animeId
-                    ),
+                    animeIds,
                     tx
                 );
+
+                if (post) {
+                    await this.decrementWeeklyPostActivity(
+                        animeIds,
+                        post.createdAt,
+                        tx
+                    );
+                }
 
                 await tx.post.delete({ where });
             });
@@ -271,10 +414,8 @@ export class PostPrismaRepository implements PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>> {
         try {
-            const { skip, take, orderBy } = buildPrismaPageQueryArray(
-                findOptions,
-                'postId'
-            );
+            const { skip, take, orderBy } =
+                buildPrismaPageQueryArray(findOptions, 'postId');
 
             const [posts, total] = await Promise.all([
                 this.db.post.findMany({
@@ -331,14 +472,7 @@ export class PostPrismaRepository implements PostRepository {
                     }
                 },
                 take: limit,
-                include: {
-                    user: {
-                        select: {
-                            username: true,
-                            profileImage: true
-                        }
-                    }
-                }
+                include: POST_INCLUDE
             });
 
             return posts.map((post: any) =>

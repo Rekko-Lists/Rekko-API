@@ -23,7 +23,7 @@ router.use('/oauth', oauthRouter);
 router.use('/user', userAuthMiddleware, userRouter);
 router.use('/mal', malRouter);
 router.use('/anime', animeRouter);
-router.use('/api/search', searchRouter);
+router.use('/search', searchRouter);
 router.use('/post', postRouter);
 router.use('/comment', commentRouter);
 router.use('/challenges', challengeRouter);

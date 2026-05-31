@@ -49,6 +49,8 @@ export type EnrichedPost = {
     description: string | null;
     photo: string | null;
     likes: number;
+    createdAt: Date;
+    commentCount: number;
     userId: number | null;
     user: { username: string; profileImage: string } | undefined;
     animes: Array<{

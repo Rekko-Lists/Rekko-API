@@ -20,6 +20,7 @@ import { UserWatchAnimeRepository } from '../../domain/repositories/anime/UserWa
 import { AnimeUserState } from '../../domain/entities/dtos/AnimeDTO';
 import {
     findStaleAnimeMalIds,
+    refreshStaleAnime,
     triggerBackgroundRefresh
 } from './refreshStaleAnimes.service';
 import { prisma } from '../../infraestructure/database/prisma.client';
@@ -188,9 +189,39 @@ export class AnimeService {
             );
         }
 
-        return this.animeRelationRepository.findByAnimeId(
+        let relations = await this.animeRelationRepository.findByAnimeId(
             anime.getAnimeId()
         );
+
+        if (relations.length === 0 && anime.isStale()) {
+            try {
+                await refreshStaleAnime(
+                    malId,
+                    this.malService,
+                    this.animeRepository,
+                    this.animeRelationRepository
+                );
+
+                relations =
+                    await this.animeRelationRepository.findByAnimeId(
+                        anime.getAnimeId()
+                    );
+            } catch (error) {
+                console.warn(
+                    `[getRelatedAnimes ${malId}] relation refresh failed`,
+                    error
+                );
+            }
+        } else if (relations.length > 0 && anime.isStale()) {
+            triggerBackgroundRefresh(
+                [malId],
+                this.malService,
+                this.animeRepository,
+                this.animeRelationRepository
+            );
+        }
+
+        return relations;
     }
 
     async getSeasonalAnimes(
@@ -271,8 +302,6 @@ export class AnimeService {
         const page = pagination?.page ?? 1;
         const limit = pagination?.limit ?? 10;
 
-        // DB maneja paginación, sort y filtros directamente.
-        // MAL corre en paralelo solo para descubrir animes nuevos en background.
         const [dbResult, malResult] = await Promise.allSettled([
             this.animeRepository.find(findOptions),
             this.malService.getTrendingAnimes(500)
@@ -285,8 +314,8 @@ export class AnimeService {
             );
             throw dbResult.reason;
         }
-        const dbData = dbResult.value;
 
+        const dbData = dbResult.value;
         const malApiWorked = malResult.status === 'fulfilled';
 
         if (!malApiWorked) {
@@ -296,7 +325,6 @@ export class AnimeService {
             );
         }
 
-        // Background: detectar y guardar animes de MAL que no estén en DB
         if (malApiWorked) {
             const malAnimes = malResult.value;
             const malIds = malAnimes.map((m) => m.id);
@@ -335,7 +363,10 @@ export class AnimeService {
         // Respect TTL: trigger background refresh for stale rows.
         // Fire-and-forget — user gets the current (possibly stale) snapshot,
         // next request sees fresh data.
-        const staleMalIds = findStaleAnimeMalIds(dbData.data);
+        // Limit to 3 per catalogue request so the queue doesn't flood with
+        // dozens of low-priority catalogue entries ahead of anime-detail
+        // refreshes (where related animes are actually needed).
+        const staleMalIds = findStaleAnimeMalIds(dbData.data).slice(0, 3);
         triggerBackgroundRefresh(
             staleMalIds,
             this.malService,
@@ -357,6 +388,61 @@ export class AnimeService {
 
     async getGenres(): Promise<string[]> {
         return this.animeRepository.findAllGenres();
+    }
+
+    async getTopSeasonalAnimes(limit: number): Promise<Anime[]> {
+        const { year, season } = getCurrentSeasonJst();
+        return this.animeRepository.findTopSeasonal(
+            year,
+            season,
+            limit
+        );
+    }
+
+    async getPopularAnimes(limit: number): Promise<Anime[]> {
+        const animes = await this.animeRepository.findPopularWeekly(limit);
+        if (animes.length > 0) return animes;
+
+        const fallback = await this.animeRepository.find({
+            pagination: { page: 1, limit },
+            sort: [
+                { field: 'members', order: 'desc' },
+                { field: 'likes', order: 'desc' }
+            ]
+        });
+        return fallback.data;
+    }
+
+    async getPopularUpcomingAnimes(limit: number): Promise<Anime[]> {
+        const animes = await this.animeRepository.findPopularWeekly(
+            limit,
+            'not_yet_aired'
+        );
+        if (animes.length > 0) return animes;
+
+        return this.getTopUpcomingAnimes(limit);
+    }
+
+    async getAiringTodayAnimes(limit: number): Promise<Anime[]> {
+        const dayOfWeek = getCurrentJstDayName();
+        return this.animeRepository.findAiringTodayJst(
+            dayOfWeek,
+            limit
+        );
+    }
+
+    async getTopUpcomingAnimes(limit: number): Promise<Anime[]> {
+        return this.animeRepository.findTopByStatus(
+            'not_yet_aired',
+            limit
+        );
+    }
+
+    async getTopAiringAnimes(limit: number): Promise<Anime[]> {
+        return this.animeRepository.findTopByStatus(
+            'currently_airing',
+            limit
+        );
     }
 
     async seedFromMal(
@@ -391,6 +477,9 @@ export class AnimeService {
                 const newOnes = malAnimes.filter(
                     (m) => !existing.has(m.id)
                 );
+                const existingOnes = malAnimes.filter((m) =>
+                    existing.has(m.id)
+                );
 
                 totalSkipped +=
                     malAnimes.length - newOnes.length;
@@ -399,6 +488,10 @@ export class AnimeService {
                     await this.saveMalAnimes(newOnes);
                     totalSaved += newOnes.length;
                 }
+
+                await this.backfillExistingRelationsFromMal(
+                    existingOnes
+                );
 
                 if (malAnimes.length < pageSize) break;
 
@@ -430,8 +523,94 @@ export class AnimeService {
         const animesData = malAnimes.map((m) =>
             this.malService.mapMalToAnime(m)
         );
-        await this.animeRepository.createTransactionErrorHandling(
+        const createdMalIds =
+            await this.animeRepository.createTransactionErrorHandling(
             animesData as any
         );
+
+        if (createdMalIds.length === 0) return;
+
+        const relationsByMalId = new Map<number, any[]>(
+            animesData.map((anime: any) => [
+                anime.malId,
+                anime.relatedAnime ?? []
+            ])
+        );
+
+        for (const malId of createdMalIds) {
+            const relations = relationsByMalId.get(malId) ?? [];
+            if (relations.length === 0) continue;
+
+            try {
+                const anime =
+                    await this.animeRepository.findByMalId(malId);
+                if (!anime) continue;
+
+                await this.animeRelationRepository.upsertMany(
+                    anime.getAnimeId(),
+                    relations
+                );
+            } catch (error) {
+                console.error(
+                    `[saveMalAnimes] Failed to persist relations for ${malId}`,
+                    error
+                );
+            }
+        }
     }
+
+    private async backfillExistingRelationsFromMal(
+        malAnimes: MalAnimeData[]
+    ): Promise<void> {
+        for (const malAnime of malAnimes) {
+            const mappedAnime = this.malService.mapMalToAnime(malAnime);
+            if (mappedAnime.relatedAnime.length === 0) continue;
+
+            try {
+                const anime = await this.animeRepository.findByMalId(
+                    mappedAnime.malId
+                );
+                if (!anime) continue;
+
+                const existingRelations =
+                    await this.animeRelationRepository.findByAnimeId(
+                        anime.getAnimeId()
+                    );
+
+                if (existingRelations.length > 0) continue;
+
+                await this.animeRelationRepository.upsertMany(
+                    anime.getAnimeId(),
+                    mappedAnime.relatedAnime
+                );
+            } catch (error) {
+                console.error(
+                    `[seedFromMal] Failed to backfill relations for ${mappedAnime.malId}`,
+                    error
+                );
+            }
+        }
+    }
+}
+
+function getCurrentSeasonJst(): { year: number; season: string } {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: 'numeric'
+    }).formatToParts(new Date());
+    const year = Number(parts.find((part) => part.type === 'year')?.value);
+    const month = Number(parts.find((part) => part.type === 'month')?.value);
+
+    if (month <= 3) return { year, season: 'winter' };
+    if (month <= 6) return { year, season: 'spring' };
+    if (month <= 9) return { year, season: 'summer' };
+    return { year, season: 'fall' };
+}
+
+function getCurrentJstDayName(): string {
+    return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Tokyo',
+        weekday: 'long'
+    }).format(new Date());
 }

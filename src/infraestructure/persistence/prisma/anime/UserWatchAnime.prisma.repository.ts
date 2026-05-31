@@ -167,6 +167,16 @@ export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository 
                 ])
             );
         } catch (error) {
+            const err = error as any;
+            // Pool exhaustion (EMAXCONNSESSION) or schema mismatch returns an
+            // unknown error code — degrade gracefully so the page still renders.
+            if (!err?.code?.startsWith('P2')) {
+                console.error(
+                    '[UserWatchAnime] findWatchByUserAndAnimeIds degraded:',
+                    err?.message ?? err
+                );
+                return new Map();
+            }
             handlePrismaError(error);
         }
     }

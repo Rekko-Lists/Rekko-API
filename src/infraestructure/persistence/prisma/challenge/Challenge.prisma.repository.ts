@@ -4,11 +4,19 @@ import {
     FindOptions,
     FindRepository
 } from '../../../../domain/schemas/find.schemas';
-import { ChallengeFilters } from '../../../../domain/schemas/challenge/challenge.schemas';
+import {
+    ChallengeFilters,
+    ChallengeWithRelations
+} from '../../../../domain/schemas/challenge/challenge.schemas';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
 import { buildPrismaPageQuery } from '../../../../utils/prisma/prismaHelper';
 import { ChallengeFilterBuilder } from './Challenge.filter.builder';
+
+const CHALLENGE_INCLUDE = {
+    type: true,
+    anime: true
+} as const;
 
 export class ChallengePrismaRepository implements ChallengeRepository {
     constructor(private readonly db = prisma) {}
@@ -29,7 +37,7 @@ export class ChallengePrismaRepository implements ChallengeRepository {
         }
     }
 
-    async findByDate(date: string): Promise<any[]> {
+    async findByDate(date: string): Promise<ChallengeWithRelations[]> {
         try {
             const dayRecord = await this.db.day.findUnique({
                 where: { date }
@@ -39,11 +47,8 @@ export class ChallengePrismaRepository implements ChallengeRepository {
 
             return this.db.challenge.findMany({
                 where: { dayId: dayRecord.dayId },
-                include: {
-                    type: true,
-                    anime: true
-                }
-            });
+                include: CHALLENGE_INCLUDE
+            }) as Promise<ChallengeWithRelations[]>;
         } catch (error) {
             handlePrismaError(error);
         }
@@ -52,7 +57,7 @@ export class ChallengePrismaRepository implements ChallengeRepository {
     async findWithFilters(
         findOptions: FindOptions,
         filters: ChallengeFilters
-    ): Promise<FindRepository<any>> {
+    ): Promise<FindRepository<ChallengeWithRelations>> {
         try {
             const { skip, take, orderBy } = buildPrismaPageQuery(
                 findOptions,
@@ -72,16 +77,13 @@ export class ChallengePrismaRepository implements ChallengeRepository {
                     skip,
                     take,
                     orderBy,
-                    include: {
-                        type: true,
-                        anime: true
-                    }
+                    include: CHALLENGE_INCLUDE
                 }),
                 this.db.challenge.count({ where })
             ]);
 
             return {
-                data: challenges,
+                data: challenges as ChallengeWithRelations[],
                 total
             };
         } catch (error) {
@@ -109,7 +111,7 @@ export class ChallengePrismaRepository implements ChallengeRepository {
 
     async createBatch(
         challenges: Challenge[]
-    ): Promise<Challenge[]> {
+    ): Promise<ChallengeWithRelations[]> {
         try {
             const created = await this.db.$transaction(
                 challenges.map((challenge) =>
@@ -119,14 +121,13 @@ export class ChallengePrismaRepository implements ChallengeRepository {
                             dayId: challenge.getDayId(),
                             animeId: challenge.getAnimeId(),
                             data: challenge.getData()
-                        }
+                        },
+                        include: CHALLENGE_INCLUDE
                     })
                 )
             );
 
-            return created.map((challenge: any) =>
-                Challenge.fromPersistence(challenge)
-            );
+            return created as ChallengeWithRelations[];
         } catch (error) {
             handlePrismaError(error);
         }

@@ -114,6 +114,79 @@ export const getSeasonalAnimes = catchAsync(
     }
 );
 
+export const getTopSeasonalAnimes = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWidgetLimit(req.query.limit);
+        const { services } = req.container!;
+        const animes = await services.anime.getTopSeasonalAnimes(limit);
+
+        ok(res, 'Top seasonal animes found', {
+            animes: AnimeMapper.toDTOs(animes)
+        });
+    }
+);
+
+export const getPopularAnimes = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWidgetLimit(req.query.limit);
+        const { services } = req.container!;
+        const animes = await services.anime.getPopularAnimes(limit);
+
+        ok(res, 'Popular animes found', {
+            animes: AnimeMapper.toDTOs(animes)
+        });
+    }
+);
+
+export const getAiringTodayAnimes = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWidgetLimit(req.query.limit);
+        const { services } = req.container!;
+        const animes = await services.anime.getAiringTodayAnimes(limit);
+
+        ok(res, 'Airing today animes found', {
+            animes: AnimeMapper.toDTOs(animes),
+            timezone: 'Asia/Tokyo'
+        });
+    }
+);
+
+export const getTopUpcomingAnimes = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWidgetLimit(req.query.limit);
+        const { services } = req.container!;
+        const animes = await services.anime.getTopUpcomingAnimes(limit);
+
+        ok(res, 'Top upcoming animes found', {
+            animes: AnimeMapper.toDTOs(animes)
+        });
+    }
+);
+
+export const getPopularUpcomingAnimes = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWidgetLimit(req.query.limit);
+        const { services } = req.container!;
+        const animes = await services.anime.getPopularUpcomingAnimes(limit);
+
+        ok(res, 'Popular upcoming animes found', {
+            animes: AnimeMapper.toDTOs(animes)
+        });
+    }
+);
+
+export const getTopAiringAnimes = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWidgetLimit(req.query.limit);
+        const { services } = req.container!;
+        const animes = await services.anime.getTopAiringAnimes(limit);
+
+        ok(res, 'Top airing animes found', {
+            animes: AnimeMapper.toDTOs(animes)
+        });
+    }
+);
+
 export const likeAnime = catchAsync(
     async (req: Request, res: Response) => {
         const malId = parseInt(req.params.malid as string);
@@ -161,3 +234,11 @@ export const unlikeAnime = catchAsync(
         });
     }
 );
+
+function parseWidgetLimit(value: unknown): number {
+    const limit = Number(value ?? 5);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+        throw new ValidationError('Invalid limit', { received: value });
+    }
+    return limit;
+}

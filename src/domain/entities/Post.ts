@@ -5,6 +5,8 @@ export class Post {
     private description: string | null;
     private photo: string | null;
     private likes: number;
+    private createdAt: Date;
+    private commentCount: number;
     private user?: { username: string; profileImage: string };
     private animes: Array<{
         malId: number;
@@ -20,6 +22,8 @@ export class Post {
         description: string | null,
         photo: string | null,
         likes: number,
+        createdAt: Date,
+        commentCount: number,
         user?: { username: string; profileImage: string },
         animes: Array<{
             malId: number;
@@ -34,6 +38,8 @@ export class Post {
         this.description = description;
         this.photo = photo;
         this.likes = likes;
+        this.createdAt = createdAt;
+        this.commentCount = commentCount;
         this.user = user;
         this.animes = animes;
     }
@@ -45,6 +51,8 @@ export class Post {
         description: string | null;
         photo: string | null;
         likes: number;
+        createdAt?: Date;
+        _count?: { comments?: number };
         user?: { username: string; profileImage: string };
         animes?: Array<{
             anime?: {
@@ -62,15 +70,21 @@ export class Post {
             data.description,
             data.photo,
             data.likes,
+            data.createdAt ?? new Date(),
+            data._count?.comments ?? 0,
             data.user,
             data.animes
                 ?.map((animePost) => animePost.anime)
-                .filter((anime): anime is {
-                    malId: number;
-                    name: string;
-                    imgMedium: string;
-                    imgLarge: string;
-                } => Boolean(anime)) ?? []
+                .filter(
+                    (
+                        anime
+                    ): anime is {
+                        malId: number;
+                        name: string;
+                        imgMedium: string;
+                        imgLarge: string;
+                    } => Boolean(anime)
+                ) ?? []
         );
     }
 
@@ -96,6 +110,14 @@ export class Post {
 
     getLikes(): number {
         return this.likes;
+    }
+
+    getCreatedAt(): Date {
+        return this.createdAt;
+    }
+
+    getCommentCount(): number {
+        return this.commentCount;
     }
 
     getUser():

@@ -1,5 +1,28 @@
 import { z } from 'zod';
 
+export const CHALLENGE_TYPE_IDS: Record<string, number> = {
+    anime: 1,
+    character: 2,
+    opening: 3,
+    emoji: 4
+};
+
+export const dateStringSchema = z
+    .string()
+    .regex(
+        /^\d{4}-\d{2}-\d{2}$/,
+        'Invalid date format. Expected YYYY-MM-DD'
+    )
+    .refine((d) => {
+        const [year, month, day] = d.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day
+        );
+    }, 'Invalid date value');
+
 export enum ChallengeType {
     ANIME = 'anime', // Adivina por 4 fotos del anime
     CHARACTER = 'character', // Adivina por personaje
@@ -84,7 +107,7 @@ export const createChallengeDtoSchema = z.object({
     type: z
         .enum(['anime', 'character', 'opening', 'emoji'])
         .describe('Tipo de desafío'),
-    malId: z
+    malId: z.coerce
         .number()
         .int()
         .positive()
@@ -95,7 +118,7 @@ export const createChallengeDtoSchema = z.object({
             characterDataSchema,
             openingDataSchema,
             emojiDataSchema,
-            z.record(z.string(), z.any())
+            z.record(z.string(), z.unknown())
         ])
         .optional()
         .describe(
@@ -108,13 +131,9 @@ export type CreateChallengeDto = z.infer<
 >;
 
 export const createDailyChallengesBatchSchema = z.object({
-    date: z
-        .string()
-        .regex(
-            /^\d{4}-\d{2}-\d{2}$/,
-            'Invalid date format. Expected YYYY-MM-DD'
-        )
-        .describe('Fecha de los retos en formato YYYY-MM-DD'),
+    date: dateStringSchema.describe(
+        'Fecha de los retos en formato YYYY-MM-DD'
+    ),
     challenges: z
         .array(createChallengeDtoSchema)
         .length(4)
@@ -128,21 +147,17 @@ export type CreateDailyChallengesBatch = z.infer<
 >;
 
 export const challengeFiltersSchema = z.object({
-    fromDate: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format')
+    fromDate: dateStringSchema
         .optional()
         .describe('Fecha inicio (YYYY-MM-DD)'),
-    toDate: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format')
+    toDate: dateStringSchema
         .optional()
         .describe('Fecha fin (YYYY-MM-DD)'),
     type: z
         .enum(['anime', 'character', 'opening', 'emoji'])
         .optional()
         .describe('Filtrar por tipo de desafío'),
-    malId: z
+    malId: z.coerce
         .number()
         .int()
         .positive()

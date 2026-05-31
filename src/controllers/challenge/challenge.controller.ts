@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../../utils/http/catchAsync';
 import { ok } from '../../utils/http/response';
-import { challengeFiltersSchema } from '../../domain/schemas/challenge/challenge.schemas';
-import { ValidationError } from '../../exceptions/ValidationError';
+import {
+    challengeFiltersSchema,
+    dateStringSchema
+} from '../../domain/schemas/challenge/challenge.schemas';
 import { ChallengeResponseMapper } from '../../infraestructure/services/challenge/challengeResponse.mapper';
 
 export const createChallenges = catchAsync(
@@ -23,29 +25,14 @@ export const createChallenges = catchAsync(
                 validated.date
             );
 
-        validateDateFormat(validated.date);
-
-        if (validated.challenges.length !== 4) {
-            throw new ValidationError(
-                'Exactly 4 challenges are required'
-            );
-        }
-
-        const createdChallenges =
+        const created =
             await services.challenge.createDailyChallenges({
                 date: validated.date,
                 challenges: enrichedChallenges
             });
 
-        const created =
-            await services.challenge.getChallengesByDate(
-                validated.date
-            );
-
         ok(res, 'Challenges created successfully', {
-            challenges: ChallengeResponseMapper.toDTOArray(
-                created
-            )
+            challenges: ChallengeResponseMapper.toDTOArray(created)
         });
     }
 );
@@ -98,9 +85,7 @@ export const getDailyChallenges = catchAsync(
 export const getChallengesByDate = catchAsync(
     async (req: Request, res: Response) => {
         const { services } = req.container!;
-        const date = req.params.date as string;
-
-        validateDateFormat(date);
+        const date = dateStringSchema.parse(req.params.date);
 
         const challenges =
             await services.challenge.getChallengesByDate(date);
@@ -117,21 +102,10 @@ export const getChallengesByDate = catchAsync(
 export const deleteChallengesByDate = catchAsync(
     async (req: Request, res: Response) => {
         const { services } = req.container!;
-        const date = req.params.date as string;
-
-        validateDateFormat(date);
+        const date = dateStringSchema.parse(req.params.date);
 
         await services.challenge.deleteChallengesByDate(date);
 
         ok(res, `Challenges for ${date} deleted successfully`);
     }
 );
-
-const validateDateFormat = (date: string) => {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) {
-        throw new ValidationError(
-            'Invalid date format. Expected YYYY-MM-DD'
-        );
-    }
-};

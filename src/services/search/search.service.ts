@@ -4,13 +4,13 @@ import { Post } from '../../domain/entities/Post';
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
 import { UserRepository } from '../../domain/repositories/user/User.repository';
 import { PostRepository } from '../../domain/repositories/publication/Post.repository';
-import { MalAnimeData } from '../../domain/schemas/anime/mal.schemas';
 import { PaginatedResponseWithMalStatus } from '../../domain/schemas/find.schemas';
 import {
     SEARCH_LIMITS,
     SearchOptions
 } from '../../domain/schemas/search/search.schemas';
 import { MalService } from '../anime/mal.service';
+import { MalAnimeData } from '../../domain/schemas/anime/mal.schemas';
 import { rankByRelevance } from '../../utils/search/search';
 import { AnimeDuplicator } from './animeDuplicator.service';
 import { AnimeRanker } from '../../utils/anime/animeRanker';
@@ -92,7 +92,7 @@ export class SearchService {
 
     private async searchAndMerge(
         dbPromise: Promise<Anime[]>,
-        malPromise: Promise<any[]>,
+        malPromise: Promise<MalAnimeData[]>,
         query: string | undefined,
         page: number,
         limit: number
@@ -109,6 +109,7 @@ export class SearchService {
 
         const malApiWorked = malResult.status === 'fulfilled';
         const malAnimes = malApiWorked ? malResult.value : [];
+        const aliasesByMalId = this.getMalAliasesById(malAnimes);
 
         if (!malApiWorked && malResult.reason) {
             console.error(
@@ -123,29 +124,17 @@ export class SearchService {
                 dbAnimes,
                 malAnimes
             );
-
-            const newMalAnimes =
-                this.deduplicator.getNewMalAnimes(
-                    dbAnimes,
-                    malAnimes
-                );
-            if (newMalAnimes.length > 0) {
-                this.insertNewMalAnimes(newMalAnimes).catch(
-                    (error) => {
-                        console.error(
-                            'Error inserting MAL animes:',
-                            error
-                        );
-                    }
-                );
-            }
         } else {
             merged = dbAnimes;
         }
 
         const ranked =
             merged.length > 0 && query
-                ? this.ranker.rankByQuery(merged, query)
+                ? this.ranker.rankByQuery(
+                      merged,
+                      query,
+                      aliasesByMalId
+                  )
                 : this.ranker.rankGeneric(merged);
 
         const paginated = this.paginator.paginate(
@@ -158,18 +147,6 @@ export class SearchService {
             ...paginated,
             withMalData: malApiWorked
         };
-    }
-
-    private async insertNewMalAnimes(
-        malAnimes: Array<MalAnimeData>
-    ): Promise<void> {
-        const animesData = malAnimes.map((malAnime) =>
-            this.malService.mapMalToAnime(malAnime)
-        );
-
-        await this.animeRepository.createTransactionErrorHandling(
-            animesData as any
-        );
     }
 
     async searchUsers(query: string): Promise<User[]> {
@@ -195,5 +172,22 @@ export class SearchService {
         );
 
         return posts;
+    }
+
+    private getMalAliasesById(
+        malAnimes: MalAnimeData[]
+    ): Map<number, string[]> {
+        return new Map(
+            malAnimes.map((anime) => [
+                anime.id,
+                [
+                    anime.alternative_titles?.en,
+                    anime.alternative_titles?.ja,
+                    ...(anime.alternative_titles?.synonyms ?? [])
+                ].filter((title): title is string =>
+                    Boolean(title)
+                )
+            ])
+        );
     }
 }

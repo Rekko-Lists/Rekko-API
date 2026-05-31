@@ -100,21 +100,14 @@ export class CommentService {
             findOptions
         );
 
-        if (
-            !result ||
-            !result.data ||
-            result.data.length === 0
-        ) {
-            throw new NotFoundError(
-                `No comments found for post ${postId}`
-            );
-        }
-
         const maxPages = Math.ceil(
             result.total / findOptions.pagination.limit
         );
 
-        if (findOptions.pagination.page > maxPages) {
+        if (
+            maxPages > 0 &&
+            findOptions.pagination.page > maxPages
+        ) {
             throw new NotFoundError(
                 `Page ${findOptions.pagination.page} does not exist. Max pages: ${maxPages}`
             );
@@ -147,21 +140,14 @@ export class CommentService {
             findOptions
         );
 
-        if (
-            !result ||
-            !result.data ||
-            result.data.length === 0
-        ) {
-            throw new NotFoundError(
-                `No replies found for comment ${parentId}`
-            );
-        }
-
         const maxPages = Math.ceil(
             result.total / findOptions.pagination.limit
         );
 
-        if (findOptions.pagination.page > maxPages) {
+        if (
+            maxPages > 0 &&
+            findOptions.pagination.page > maxPages
+        ) {
             throw new NotFoundError(
                 `Page ${findOptions.pagination.page} does not exist. Max pages: ${maxPages}`
             );

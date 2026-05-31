@@ -10,6 +10,7 @@ import {
 import { buildPrismaPageQueryArray } from '../../../../utils/prisma/prismaHelper';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
+import { getUtcWeekStart } from '../../../../utils/date/week';
 
 export class LikePrismaRepository implements LikeRepository {
     constructor(private readonly db = prisma) {}
@@ -127,8 +128,8 @@ export class LikePrismaRepository implements LikeRepository {
                         where: { postId, userId }
                     });
                 if (count > 0) {
-                    await tx.post.update({
-                        where: { postId },
+                    await tx.post.updateMany({
+                        where: { postId, likes: { gt: 0 } },
                         data: { likes: { decrement: 1 } }
                     });
                 }
@@ -206,8 +207,8 @@ export class LikePrismaRepository implements LikeRepository {
                         where: { commentId, userId }
                     });
                 if (count > 0) {
-                    await tx.comment.update({
-                        where: { commentId },
+                    await tx.comment.updateMany({
+                        where: { commentId, likes: { gt: 0 } },
                         data: { likes: { decrement: 1 } }
                     });
                 }
@@ -252,6 +253,7 @@ export class LikePrismaRepository implements LikeRepository {
         userId: number
     ): Promise<void> {
         try {
+            const weekStart = getUtcWeekStart();
             await this.db.$transaction([
                 this.db.userLikeAnime.create({
                     data: { animeId, userId }
@@ -259,6 +261,22 @@ export class LikePrismaRepository implements LikeRepository {
                 this.db.anime.update({
                     where: { animeId },
                     data: { likes: { increment: 1 } }
+                }),
+                this.db.animeWeeklyActivity.upsert({
+                    where: {
+                        animeId_weekStart: { animeId, weekStart }
+                    },
+                    update: {
+                        animeLikeCount: { increment: 1 },
+                        score: { increment: 1 }
+                    },
+                    create: {
+                        animeId,
+                        weekStart,
+                        postCount: 0,
+                        animeLikeCount: 1,
+                        score: 1
+                    }
                 })
             ]);
         } catch (error) {
@@ -272,15 +290,38 @@ export class LikePrismaRepository implements LikeRepository {
     ): Promise<void> {
         try {
             await this.db.$transaction(async (tx: typeof this.db) => {
+                const like = await tx.userLikeAnime.findUnique({
+                    where: { userId_animeId: { userId, animeId } },
+                    select: { createdAt: true }
+                });
+
                 const { count } =
                     await tx.userLikeAnime.deleteMany({
                         where: { animeId, userId }
                     });
                 if (count > 0) {
-                    await tx.anime.update({
-                        where: { animeId },
+                    await tx.anime.updateMany({
+                        where: { animeId, likes: { gt: 0 } },
                         data: { likes: { decrement: 1 } }
                     });
+
+                    if (
+                        like &&
+                        getUtcWeekStart(like.createdAt).getTime() ===
+                            getUtcWeekStart().getTime()
+                    ) {
+                        await tx.animeWeeklyActivity.updateMany({
+                            where: {
+                                animeId,
+                                weekStart: getUtcWeekStart(),
+                                animeLikeCount: { gt: 0 }
+                            },
+                            data: {
+                                animeLikeCount: { decrement: 1 },
+                                score: { decrement: 1 }
+                            }
+                        });
+                    }
                 }
             });
         } catch (error) {

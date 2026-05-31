@@ -79,6 +79,7 @@ model User {
   userSocialAccount       UserSocialAccount[]
   userWatchAnime          UserWatchAnime[]
 
+  @@index([reputation])
   @@map("user")
 }
 
@@ -97,6 +98,7 @@ model Post {
   description  String?
   photo        String?
   likes        Int
+  createdAt    DateTime       @default(now()) @map("created_at")
   animes       AnimePost[]
   comments     Comment[]
   user         User?          @relation(fields: [userId], references: [userId])
@@ -140,8 +142,23 @@ model Anime {
   userLikeAnime       UserLikeAnime[]
   userRateAnime       UserRateAnime[]
   userWatchAnime      UserWatchAnime[]
+  weeklyActivity      AnimeWeeklyActivity[]
 
   @@map("anime")
+}
+
+model AnimeWeeklyActivity {
+  animeWeeklyActivityId Int      @id @default(autoincrement()) @map("anime_weekly_activity_id")
+  animeId               Int      @map("anime_id")
+  weekStart             DateTime @map("week_start")
+  postCount             Int      @default(0) @map("post_count")
+  animeLikeCount        Int      @default(0) @map("anime_like_count")
+  score                 Int      @default(0)
+  anime                 Anime    @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
+
+  @@unique([animeId, weekStart])
+  @@index([weekStart, score])
+  @@map("anime_weekly_activity")
 }
 
 model AnimeRelation {
@@ -199,12 +216,13 @@ model Challenge {
   day         Day   @relation(fields: [dayId], references: [dayId])
   type        Type  @relation(fields: [typeId], references: [typeId])
 
+  @@unique([dayId, typeId])
   @@map("challenge")
 }
 
 model Type {
-  typeId     Int      @id @default(autoincrement()) @map("type_id")
-  name       TypeName @unique
+  typeId     Int         @id @default(autoincrement()) @map("type_id")
+  name       TypeName    @unique
   challenges Challenge[]
 
   @@map("type")
@@ -219,13 +237,15 @@ model Day {
 }
 
 model UserLikePost {
-  userLikePostId Int  @id @default(autoincrement()) @map("user_like_post_id")
-  userId         Int  @map("user_id")
-  postId         Int  @map("post_id")
-  post           Post @relation(fields: [postId], references: [postId], onDelete: Cascade)
-  user           User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userLikePostId Int      @id @default(autoincrement()) @map("user_like_post_id")
+  userId         Int      @map("user_id")
+  postId         Int      @map("post_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  post           Post     @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@unique([userId, postId])
+  @@index([createdAt, postId])
   @@map("user_like_post")
 }
 
@@ -266,13 +286,15 @@ model AnimePostRecommendation {
 }
 
 model UserLikeAnime {
-  userLikeAnimeId Int   @id @default(autoincrement()) @map("user_like_anime_id")
-  userId          Int   @map("user_id")
-  animeId         Int   @map("anime_id")
-  anime           Anime @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
-  user            User  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userLikeAnimeId Int      @id @default(autoincrement()) @map("user_like_anime_id")
+  userId          Int      @map("user_id")
+  animeId         Int      @map("anime_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  anime           Anime    @relation(fields: [animeId], references: [animeId], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@unique([userId, animeId])
+  @@index([createdAt, animeId])
   @@map("user_like_anime")
 }
 

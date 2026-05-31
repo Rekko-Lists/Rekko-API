@@ -23,10 +23,17 @@ import { MalService } from './mal.service';
 // no martillear MAL en cada request que devuelva este anime como stale.
 const FAILURE_BACKOFF_MS = 30 * 60 * 1000;
 
-// Cap global de refreshes simultáneos. Cada slot puede consumir hasta
-// 1 conexión a MAL + 1 conexión a Postgres, así que con pool_size=15
-// dejamos margen amplio para tráfico real.
-const MAX_CONCURRENT_REFRESH = 3;
+// Un único refresh activo a la vez. La transacción de refresh necesita una
+// conexión dedicada durante toda su ejecución; con connection_limit=3 y
+// requests concurrentes del app, más de 1 refresh simultáneo agota las
+// conexiones disponibles y dispara P2028 (pool timeout).
+const MAX_CONCURRENT_REFRESH = 1;
+
+// Máximo de animes esperando en la cola. Cuando se alcanza, las nuevas
+// peticiones de refresh se descartan (el anime seguirá siendo stale y se
+// reintentará en la siguiente visita). Esto evita colas de cientos de
+// elementos que tardan minutos en drenarse.
+const MAX_PENDING = 15;
 
 // Estado del scheduler — process-local. Si hay múltiples procesos cada uno
 // tiene su propio cap (peor caso: N_procesos * MAX_CONCURRENT_REFRESH).
@@ -127,6 +134,7 @@ export function triggerBackgroundRefresh(
     let enqueued = 0;
     for (const id of malIds) {
         if (inFlight.has(id)) continue;
+        if (pending.length >= MAX_PENDING) break;
         inFlight.add(id);
         pending.push(id);
         enqueued++;

@@ -4,6 +4,12 @@ import {
     getAnimes,
     getGenres,
     getSeasonalAnimes,
+    getTopSeasonalAnimes,
+    getPopularAnimes,
+    getAiringTodayAnimes,
+    getTopUpcomingAnimes,
+    getPopularUpcomingAnimes,
+    getTopAiringAnimes,
     seedAnimes,
     likeAnime,
     unlikeAnime
@@ -39,6 +45,12 @@ router
     .get(optionalAuthMiddleware, parseQueryOptions, getAnimes);
 
 router.route('/genres').get(getGenres);
+router.route('/seasonal/top').get(getTopSeasonalAnimes);
+router.route('/popular').get(getPopularAnimes);
+router.route('/airing-today').get(getAiringTodayAnimes);
+router.route('/top-upcoming').get(getTopUpcomingAnimes);
+router.route('/popular-upcoming').get(getPopularUpcomingAnimes);
+router.route('/top-airing').get(getTopAiringAnimes);
 router
     .route('/seed')
     .get(authMiddleware, roleMiddleware(['ADMIN']), seedAnimes);
@@ -82,7 +94,11 @@ router.route('/:malid/similar').get(getSimilarAnimes);
 
 router
     .route('/:malid/posts')
-    .get(optionalAuthMiddleware, parseQueryOptions, getPostsByAnime);
+    .get(
+        optionalAuthMiddleware,
+        parseQueryOptions,
+        getPostsByAnime
+    );
 
 router.route('/:malid/related').get(getRelatedAnimes);
 
