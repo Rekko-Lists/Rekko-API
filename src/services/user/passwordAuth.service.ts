@@ -13,7 +13,8 @@ import {
 export class PasswordAuthService {
     constructor(
         private readonly userRepository: UserRepository<User>,
-        private readonly passwordAuthRepository: PasswordAuthRepository<User>
+        private readonly passwordAuthRepository: PasswordAuthRepository<User>,
+        private readonly emailHandler: EmailHandler
     ) {}
 
     async forgotPassoword(username: string): Promise<void> {
@@ -27,8 +28,7 @@ export class PasswordAuthService {
             token
         );
 
-        const emailHandler = new EmailHandler();
-        emailHandler.sendChangePasswordConfirmation(
+        await this.emailHandler.sendChangePasswordConfirmation(
             user!.getEmail(),
             user!.getUsername(),
             token
