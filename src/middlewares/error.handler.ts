@@ -68,7 +68,8 @@ export const errorHandler = (
                 type: 'VALIDATION_ERROR',
                 message: 'Validation failed',
                 details: message,
-                ...(isDev && { stack: err.stack })
+                stack: err.stack,
+                issues: err.issues
             }
         });
         return;
@@ -84,11 +85,9 @@ export const errorHandler = (
                 type: err.context?.type || 'APPLICATION_ERROR',
                 message: err.message,
                 statusCode: err.statusCode,
-                ...(isDev && {
-                    context: err.context,
-                    timestamp: err.timestamp,
-                    stack: err.stack
-                })
+                context: err.context,
+                timestamp: err.timestamp,
+                stack: err.stack
             }
         });
         return;
@@ -100,10 +99,9 @@ export const errorHandler = (
             code: 'INTERNAL_UNHANDLED_ERROR',
             type: 'INTERNAL_SERVER_ERROR',
             message: 'Internal server error',
-            ...(isDev && {
-                originalError: err.message,
-                stack: err.stack
-            })
+            originalError: err.message,
+            errorName: err.name,
+            stack: err.stack
         }
     });
 };
