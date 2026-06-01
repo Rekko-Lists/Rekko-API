@@ -53,6 +53,11 @@ export interface LikeRepository {
         userId: number
     ): Promise<boolean>;
 
+    findLikedAnimeIdsByUser(
+        animeIds: number[],
+        userId: number
+    ): Promise<Set<number>>;
+
     createAnimeLike(
         animeId: number,
         userId: number

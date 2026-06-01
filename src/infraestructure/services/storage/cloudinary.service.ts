@@ -41,20 +41,36 @@ export class CloudinaryHandler {
             .toBuffer();
     }
 
-    async uploadImage(
-        processedBuffer: Buffer,
+    /**
+     * Sube un archivo a Cloudinary.
+     * Método genérico que maneja imágenes, audio y otros tipos.
+     * @param buffer Contenido del archivo
+     * @param folder Carpeta destino en Cloudinary
+     * @param publicId ID público del archivo
+     * @param resourceType Tipo de recurso ('image', 'auto', etc.)
+     * @param format Formato destino opcional (ej: 'webp' para imágenes)
+     */
+    async uploadFile(
+        buffer: Buffer,
         folder: string,
-        publicId: string
+        publicId: string,
+        resourceType: string = 'auto',
+        format?: string
     ): Promise<CloudinaryResponse> {
         return new Promise((resolve, reject) => {
+            const uploadOptions: any = {
+                folder,
+                public_id: publicId,
+                resource_type: resourceType
+            };
+
+            if (format) {
+                uploadOptions.format = format;
+            }
+
             const uploadStream =
                 cloudinary.uploader.upload_stream(
-                    {
-                        folder,
-                        public_id: publicId,
-                        resource_type: 'auto',
-                        format: 'webp'
-                    },
+                    uploadOptions,
                     (error, result) => {
                         if (error) {
                             reject(error);
@@ -67,10 +83,23 @@ export class CloudinaryHandler {
                     }
                 );
 
-            const readableStream =
-                Readable.from(processedBuffer);
+            const readableStream = Readable.from(buffer);
             readableStream.pipe(uploadStream);
         });
+    }
+
+    async uploadImage(
+        processedBuffer: Buffer,
+        folder: string,
+        publicId: string
+    ): Promise<CloudinaryResponse> {
+        return this.uploadFile(
+            processedBuffer,
+            folder,
+            publicId,
+            'auto',
+            'webp'
+        );
     }
 
     async deleteImage(publicId: string): Promise<void> {

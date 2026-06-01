@@ -11,6 +11,7 @@ export const createPostSchema = z.object({
         .optional(),
     animeIds: z
         .array(z.number().int().positive('Invalid anime ID'))
+        .max(10, 'A post can be related to at most 10 animes')
         .optional()
         .default([])
 });
@@ -50,5 +51,11 @@ export type EnrichedPost = {
     likes: number;
     userId: number | null;
     user: { username: string; profileImage: string } | undefined;
+    animes: Array<{
+        malId: number;
+        name: string;
+        imgMedium: string;
+        imgLarge: string;
+    }>;
     hasLiked: boolean;
 };

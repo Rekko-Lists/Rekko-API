@@ -10,7 +10,10 @@ import {
 } from '../../../controllers/anime/anime.controller';
 import { parseQueryOptions } from '../../../middlewares/queryOptions.middleware';
 import { validateSeasonParams } from '../../../middlewares/validators/anime.validator';
-import { authMiddleware } from '../../../middlewares/auth.middleware';
+import {
+    authMiddleware,
+    optionalAuthMiddleware
+} from '../../../middlewares/auth.middleware';
 import { roleMiddleware } from '../../../middlewares/role.middleware';
 import {
     deleteRate,
@@ -22,10 +25,18 @@ import {
     getWatch,
     postWatch
 } from '../../../controllers/anime/watch.controller';
+import {
+    getRecommendedViaPosts,
+    getSimilarAnimes,
+    getPostsByAnime
+} from '../../../controllers/anime/recommendations.controller';
+import { getRelatedAnimes } from '../../../controllers/anime/animeRelation.controller';
 
 const router = Router();
 
-router.route('/').get(parseQueryOptions, getAnimes);
+router
+    .route('/')
+    .get(optionalAuthMiddleware, parseQueryOptions, getAnimes);
 
 router.route('/genres').get(getGenres);
 router
@@ -63,6 +74,18 @@ router
     .post(authMiddleware, likeAnime)
     .delete(authMiddleware, unlikeAnime);
 
-router.route('/:malid').get(getAnime);
+router
+    .route('/:malid/recommended-via-posts')
+    .get(parseQueryOptions, getRecommendedViaPosts);
+
+router.route('/:malid/similar').get(getSimilarAnimes);
+
+router
+    .route('/:malid/posts')
+    .get(optionalAuthMiddleware, parseQueryOptions, getPostsByAnime);
+
+router.route('/:malid/related').get(getRelatedAnimes);
+
+router.route('/:malid').get(optionalAuthMiddleware, getAnime);
 
 export default router;

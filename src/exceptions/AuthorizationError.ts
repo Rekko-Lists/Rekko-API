@@ -1,4 +1,5 @@
 import { AppError } from './AppError';
+import { normalizeErrorContext } from './context';
 
 /**
  * AuthorizationError - Thrown when user lacks required permissions
@@ -12,7 +13,7 @@ export class AuthorizationError extends AppError {
     constructor(message: string = 'Forbidden', context?: any) {
         super(message, 403, 'AUTH_FORBIDDEN', true, {
             type: 'AUTHORIZATION',
-            ...context
+            ...normalizeErrorContext(context)
         });
         Object.setPrototypeOf(
             this,

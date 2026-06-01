@@ -22,6 +22,11 @@ export interface UserWatchAnimeRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<UserWatchListItem>>;
 
+    findWatchByUserAndAnimeIds(
+        animeIds: number[],
+        userId: number
+    ): Promise<Map<number, { state: string; numEpisodes: number }>>;
+
     updateProgress(
         userId: number,
         animeId: number,

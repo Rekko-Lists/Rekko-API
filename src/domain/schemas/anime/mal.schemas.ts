@@ -69,7 +69,37 @@ export const malAnimeDataSchema = z.object({
             start_time: z.string().optional()
         })
         .optional(),
-    media_type: z.string().optional()
+    media_type: z.string().optional(),
+    average_episode_duration: z
+        .number()
+        .nullable()
+        .optional(),
+    start_season: z
+        .object({
+            year: z.number().optional(),
+            season: z.string().optional()
+        })
+        .nullable()
+        .optional(),
+    rating: z.string().nullable().optional(),
+    related_anime: z
+        .array(
+            z.object({
+                node: z.object({
+                    id: z.number(),
+                    title: z.string(),
+                    main_picture: z
+                        .object({
+                            medium: z.url().nullable().optional(),
+                            large: z.url().nullable().optional()
+                        })
+                        .optional()
+                }),
+                relation_type: z.string(),
+                relation_type_formatted: z.string()
+            })
+        )
+        .optional()
 });
 export type MalAnimeData = z.infer<typeof malAnimeDataSchema>;
 

@@ -218,52 +218,41 @@ export class UserPrismaRepository implements UserRepository<User> {
         socialAccounts: UserUpdateSocialAccounts
     ): Promise<User | null> {
         try {
-            const socialAccountsData = await Promise.all(
-                socialAccounts.accounts.map(async (account) => {
-                    const sa =
-                        await this.db.socialAccount.upsert({
-                            where: { name: account.name },
-                            create: { name: account.name },
-                            update: {}
-                        });
-                    return {
-                        socialAccountId: sa.socialAccountId,
-                        url: account.url
-                    };
-                })
-            );
-
-            for (const {
-                socialAccountId,
-                url
-            } of socialAccountsData) {
-                const existing =
-                    await this.db.userSocialAccount.findFirst({
-                        where: { userId, socialAccountId }
+            const user = await this.db.$transaction(async (tx: any) => {
+                for (const account of socialAccounts.accounts) {
+                    const sa = await tx.socialAccount.upsert({
+                        where: { name: account.name },
+                        create: { name: account.name },
+                        update: {}
                     });
 
-                if (existing) {
-                    await this.db.userSocialAccount.update({
+                    await tx.userSocialAccount.upsert({
                         where: {
-                            userSocialAccountId:
-                                existing.userSocialAccountId
+                            userId_socialAccountId: {
+                                userId,
+                                socialAccountId: sa.socialAccountId
+                            }
                         },
-                        data: { socialUrl: url }
-                    });
-                } else {
-                    await this.db.userSocialAccount.create({
-                        data: {
+                        update: { socialUrl: account.url },
+                        create: {
                             userId,
-                            socialAccountId,
-                            socialUrl: url
+                            socialAccountId: sa.socialAccountId,
+                            socialUrl: account.url
                         }
                     });
                 }
-            }
 
-            return await this.db.user.findUnique({
-                where: { userId }
+                return tx.user.findUnique({
+                    where: { userId },
+                    include: {
+                        userSocialAccount: {
+                            include: { socialAccount: true }
+                        }
+                    }
+                });
             });
+
+            return user ? User.fromPersistence(user) : null;
         } catch (error) {
             handlePrismaError(error);
         }

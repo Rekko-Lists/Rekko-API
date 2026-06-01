@@ -1,7 +1,10 @@
-import jwt from 'jsonwebtoken';
+import jwt, {
+    TokenExpiredError as JwtTokenExpiredError
+} from 'jsonwebtoken';
 import {
     NotFoundError,
-    InvalidTokenError
+    InvalidTokenError,
+    TokenExpiredError
 } from '../../exceptions/exceptions';
 import { UserRole } from '../../domain/schemas/user/user.schemas';
 
@@ -29,10 +32,11 @@ export function verifyToken(
 
 export function signAccessToken(
     userId: number,
-    role: UserRole
+    role: UserRole,
+    emailVerified: boolean
 ): string {
     return jwt.sign(
-        { userId, role, type: 'access' },
+        { userId, role, emailVerified, type: 'access' },
         process.env.JWT_SECRET as string,
         { expiresIn: '15m' }
     );
@@ -41,6 +45,7 @@ export function signAccessToken(
 export function verifyAccessToken(token: string): {
     userId: number;
     role: UserRole;
+    emailVerified: boolean;
     type: string;
 } {
     try {
@@ -56,11 +61,15 @@ export function verifyAccessToken(token: string): {
         return {
             userId: decoded.userId,
             role: decoded.role,
+            emailVerified: decoded.emailVerified,
             type: 'access'
         };
     } catch (error) {
         if (error instanceof InvalidTokenError) {
             throw error;
+        }
+        if (error instanceof JwtTokenExpiredError) {
+            throw new TokenExpiredError();
         }
         throw new InvalidTokenError(
             'Invalid or expired access token'

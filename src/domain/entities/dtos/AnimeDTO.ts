@@ -1,3 +1,10 @@
+export type AnimeUserState = {
+    hasLiked?: boolean;
+    rate?: number;
+    watchState?: string;
+    watchedEpisodes?: number;
+};
+
 export class AnimeDTO {
     animeId?: number;
     malId: number;
@@ -13,12 +20,19 @@ export class AnimeDTO {
     numEpisodes: number;
     status: string;
     likes: number;
+    members: number;
     genres: string[];
     studios: string[];
+    duration: number | null;
+    premieredSeason: string | null;
+    premieredYear: number | null;
+    rating: string | null;
+    demographic: string | null;
     broadcast?: {
         dayOfWeek: string;
         startTime: string;
     };
+    userState?: AnimeUserState;
 
     constructor(data: {
         animeId?: number;
@@ -35,12 +49,19 @@ export class AnimeDTO {
         numEpisodes: number;
         status: string;
         likes: number;
+        members: number;
         genres: string[];
         studios: string[];
+        duration: number | null;
+        premieredSeason: string | null;
+        premieredYear: number | null;
+        rating: string | null;
+        demographic: string | null;
         broadcast?: {
             dayOfWeek: string;
             startTime: string;
         };
+        userState?: AnimeUserState;
     }) {
         this.animeId = data.animeId;
         this.malId = data.malId;
@@ -56,8 +77,20 @@ export class AnimeDTO {
         this.numEpisodes = data.numEpisodes;
         this.status = data.status;
         this.likes = data.likes;
+        this.members = data.members;
         this.genres = data.genres;
         this.studios = data.studios;
+        this.duration = data.duration;
+        this.premieredSeason = data.premieredSeason;
+        this.premieredYear = data.premieredYear;
+        this.rating = data.rating;
+        this.demographic = data.demographic;
         this.broadcast = data.broadcast;
+        if (
+            data.userState &&
+            Object.keys(data.userState).length > 0
+        ) {
+            this.userState = data.userState;
+        }
     }
 }

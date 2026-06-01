@@ -12,7 +12,22 @@ import {
 
 export class MalService {
     private readonly animeFields =
-        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type';
+        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type,average_episode_duration,start_season,rating,related_anime';
+
+    /**
+     * In-memory TTL cache for MAL trending results.
+     *
+     * `getTrendingAnimes` is called on every catalogue request (e.g. by
+     * `AnimeService.getCatalogue`) just to discover new animes for background
+     * sync. The MAL round-trip dominates the catalogue latency, so we cache
+     * the result per (limit, offset) for 15 minutes — MAL's ranking moves
+     * slowly and consistency here is not critical.
+     */
+    private trendingCache = new Map<
+        string,
+        { data: MalAnimeData[]; expiresAt: number }
+    >();
+    private readonly TRENDING_CACHE_TTL_MS = 15 * 60 * 1000;
 
     constructor(private readonly malApiService: MalApiService) {}
 
@@ -49,6 +64,13 @@ export class MalService {
         limit: number = SEARCH_LIMITS.MAL_TRENDING_LIMIT,
         offset: number = 0
     ): Promise<Array<MalAnimeData>> {
+        const cacheKey = `${limit}:${offset}`;
+        const cached = this.trendingCache.get(cacheKey);
+
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.data;
+        }
+
         const response = await this.malApiService.fetchFromMal(
             '/anime/ranking',
             {
@@ -65,7 +87,14 @@ export class MalService {
         const data = await response.json();
         const validated = malSearchSchema.parse(data);
 
-        return validated.data.map((item) => item.node);
+        const result = validated.data.map((item) => item.node);
+
+        this.trendingCache.set(cacheKey, {
+            data: result,
+            expiresAt: Date.now() + this.TRENDING_CACHE_TTL_MS
+        });
+
+        return result;
     }
 
     async getAnimeById(malId: number): Promise<MalAnime> {
@@ -122,6 +151,37 @@ export class MalService {
         return validated.data.map((item) => item.node);
     }
 
+    /**
+     * MAL returns episode duration in seconds. We persist minutes,
+     * rounded to the nearest integer. Null/undefined/zero stays null.
+     */
+    private mapDuration(
+        averageEpisodeDuration: number | null | undefined
+    ): number | null {
+        if (
+            averageEpisodeDuration === null ||
+            averageEpisodeDuration === undefined ||
+            averageEpisodeDuration <= 0
+        ) {
+            return null;
+        }
+        return Math.round(averageEpisodeDuration / 60);
+    }
+
+    /**
+     * MAL `start_season.season` arrives lowercased
+     * (winter|spring|summer|fall). Normalize to canonical
+     * capitalized form so the frontend can render it directly.
+     */
+    private mapPremieredSeason(
+        season: string | null | undefined
+    ): string | null {
+        if (!season) return null;
+        const lower = season.trim().toLowerCase();
+        if (lower.length === 0) return null;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }
+
     mapMalToAnime(malData: MalAnimeData) {
         return {
             malId: malData.id,
@@ -143,6 +203,14 @@ export class MalService {
             genres: malData.genres?.map((g) => g.name) || [],
             studios: malData.studios?.map((s) => s.name) || [],
             mediaType: malData.media_type || 'tv',
+            duration: this.mapDuration(
+                malData.average_episode_duration
+            ),
+            premieredSeason: this.mapPremieredSeason(
+                malData.start_season?.season
+            ),
+            premieredYear: malData.start_season?.year ?? null,
+            rating: malData.rating ?? null,
             likes: 0,
             nextUpdate: new Date(
                 Date.now() + 7 * 24 * 60 * 60 * 1000
@@ -153,7 +221,34 @@ export class MalService {
                     'Unknown',
                 startTime:
                     malData.broadcast?.start_time || '00:00'
-            }
+            },
+            relatedAnime: this.mapMalRelatedAnime(malData)
         };
+    }
+
+    mapMalRelatedAnime(malData: MalAnimeData): Array<{
+        relatedMalId: number;
+        relationType: string;
+        relationLabel: string;
+        relatedTitle: string;
+        relatedImage: string | null;
+    }> {
+        if (
+            !malData.related_anime ||
+            malData.related_anime.length === 0
+        ) {
+            return [];
+        }
+
+        return malData.related_anime.map((entry) => ({
+            relatedMalId: entry.node.id,
+            relationType: entry.relation_type,
+            relationLabel: entry.relation_type_formatted,
+            relatedTitle: entry.node.title,
+            relatedImage:
+                entry.node.main_picture?.large ||
+                entry.node.main_picture?.medium ||
+                null
+        }));
     }
 }

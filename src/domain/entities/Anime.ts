@@ -12,11 +12,18 @@ export class Anime {
     private readonly malRank: number;
     private mean: number;
     private numEpisodes: number;
-    private status: AnimeStatus;
+    // MAL devuelve `finished_airing`, `currently_airing`, `not_yet_aired`, etc.
+    // No es un set cerrado en código — guardamos el string tal cual.
+    private status: string;
     private nextUpdate: Date;
     private likes: number;
+    private members: number;
     private genres: string[];
     private studios: string[];
+    private duration: number | null;
+    private premieredSeason: string | null;
+    private premieredYear: number | null;
+    private rating: string | null;
     private broadcast?: { dayOfWeek: string; startTime: string };
 
     private constructor(
@@ -33,11 +40,16 @@ export class Anime {
         malRank: number,
         mean: number,
         numEpisodes: number,
-        status: AnimeStatus,
+        status: string,
         nextUpdate: Date,
         likes: number,
+        members: number,
         genres: string[],
         studios: string[],
+        duration: number | null,
+        premieredSeason: string | null,
+        premieredYear: number | null,
+        rating: string | null,
         broadcast?: { dayOfWeek: string; startTime: string }
     ) {
         this.animeId = animeId;
@@ -56,8 +68,13 @@ export class Anime {
         this.status = status;
         this.nextUpdate = nextUpdate;
         this.likes = likes;
+        this.members = members;
         this.genres = genres;
         this.studios = studios;
+        this.duration = duration;
+        this.premieredSeason = premieredSeason;
+        this.premieredYear = premieredYear;
+        this.rating = rating;
         this.broadcast = broadcast;
     }
 
@@ -75,11 +92,16 @@ export class Anime {
         malRank: number;
         mean: number;
         numEpisodes: number;
-        status: AnimeStatus;
+        status: string;
         nextUpdate: Date;
         likes: number;
+        members: number;
         genres: string[];
         studios: string[];
+        duration?: number | null;
+        premieredSeason?: string | null;
+        premieredYear?: number | null;
+        rating?: string | null;
         broadcast?: { dayOfWeek: string; startTime: string };
     }): Anime {
         return new Anime(
@@ -99,8 +121,13 @@ export class Anime {
             data.status,
             data.nextUpdate,
             data.likes,
+            data.members,
             data.genres,
             data.studios,
+            data.duration ?? null,
+            data.premieredSeason ?? null,
+            data.premieredYear ?? null,
+            data.rating ?? null,
             data.broadcast
         );
     }
@@ -157,7 +184,7 @@ export class Anime {
         return this.numEpisodes;
     }
 
-    getStatus(): AnimeStatus {
+    getStatus(): string {
         return this.status;
     }
 
@@ -169,12 +196,32 @@ export class Anime {
         return this.likes;
     }
 
+    getMembers(): number {
+        return this.members;
+    }
+
     getGenres(): string[] {
         return this.genres;
     }
 
     getStudios(): string[] {
         return this.studios;
+    }
+
+    getDuration(): number | null {
+        return this.duration;
+    }
+
+    getPremieredSeason(): string | null {
+        return this.premieredSeason;
+    }
+
+    getPremieredYear(): number | null {
+        return this.premieredYear;
+    }
+
+    getRating(): string | null {
+        return this.rating;
     }
 
     getBroadcast():
@@ -203,8 +250,13 @@ export class Anime {
             status: this.status,
             nextUpdate: this.nextUpdate,
             likes: this.likes,
+            members: this.members,
             genres: this.genres,
             studios: this.studios,
+            duration: this.duration,
+            premieredSeason: this.premieredSeason,
+            premieredYear: this.premieredYear,
+            rating: this.rating,
             broadcast: this.broadcast
                 ? {
                       dayOfWeek: this.broadcast.dayOfWeek,
@@ -232,16 +284,13 @@ export class Anime {
             status=${this.status},
             nextUpdate=${this.nextUpdate},
             likes=${this.likes},
+            members=${this.members},
             genres=${this.genres},
-            studios=${this.studios}
+            studios=${this.studios},
+            duration=${this.duration},
+            premieredSeason=${this.premieredSeason},
+            premieredYear=${this.premieredYear},
+            rating=${this.rating}
         `;
     }
-}
-
-export enum AnimeStatus {
-    WATCHING = 'watching',
-    COMPLETED = 'completed',
-    ONHOLD = 'on_hold',
-    DROPPED = 'dropped',
-    PLANTOWATCH = 'plan_to_watch'
 }

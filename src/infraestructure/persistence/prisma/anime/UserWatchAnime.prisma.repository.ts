@@ -59,10 +59,24 @@ export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository 
 
     async delete(id: number): Promise<boolean> {
         try {
-            await this.db.userWatchAnime.delete({
-                where: { userWatchAnimeId: id }
-            });
-            return true;
+            return await this.db.$transaction(
+                async (tx: typeof this.db) => {
+                    const existing =
+                        await tx.userWatchAnime.findUnique({
+                            where: { userWatchAnimeId: id },
+                            select: { animeId: true }
+                        });
+                    if (!existing) return false;
+                    await tx.userWatchAnime.delete({
+                        where: { userWatchAnimeId: id }
+                    });
+                    await tx.anime.update({
+                        where: { animeId: existing.animeId },
+                        data: { members: { decrement: 1 } }
+                    });
+                    return true;
+                }
+            );
         } catch (error) {
             handlePrismaError(error);
         }
@@ -129,6 +143,34 @@ export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository 
         }
     }
 
+    async findWatchByUserAndAnimeIds(
+        animeIds: number[],
+        userId: number
+    ): Promise<Map<number, { state: string; numEpisodes: number }>> {
+        if (animeIds.length === 0) return new Map();
+        try {
+            const records = await this.db.userWatchAnime.findMany({
+                where: { userId, animeId: { in: animeIds } },
+                select: {
+                    animeId: true,
+                    state: true,
+                    numEpisodes: true
+                }
+            });
+            return new Map(
+                records.map((r: any) => [
+                    r.animeId,
+                    {
+                        state: String(r.state).toLowerCase(),
+                        numEpisodes: r.numEpisodes
+                    }
+                ])
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async updateProgress(
         userId: number,
         animeId: number,
@@ -141,15 +183,20 @@ export class UserWatchAnimePrismaRepository implements UserWatchAnimeRepository 
                 animeId
             );
             if (!existing) {
-                const record =
-                    await this.db.userWatchAnime.create({
+                const [record] = await this.db.$transaction([
+                    this.db.userWatchAnime.create({
                         data: {
                             userId,
                             animeId,
                             numEpisodes,
                             state
                         }
-                    });
+                    }),
+                    this.db.anime.update({
+                        where: { animeId },
+                        data: { members: { increment: 1 } }
+                    })
+                ]);
                 return UserWatchAnime.fromPersistence(record);
             }
 

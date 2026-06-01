@@ -20,12 +20,14 @@ const watchStateSchema = z
         return prismaState[state];
     });
 
-export const userWatchSchema = z.object({
-    userId: z.coerce.number().int().positive(),
-    malId: z.coerce.number().int().positive(),
-    numEpisodes: z.coerce.number().int().min(0),
-    state: watchStateSchema
-});
+export const userWatchSchema = z
+    .object({
+        userId: z.number().int().positive(),
+        malId: z.number().int().positive(),
+        numEpisodes: z.number().int().min(0),
+        state: watchStateSchema
+    })
+    .strict();
 
 export const userWatchListItemSchema = z.object({
     userWatchAnimeId: z.number(),

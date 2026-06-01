@@ -1,34 +1,35 @@
 export class Day {
     private readonly dayId: number;
-    private name: string;
+    private readonly date: string;
 
-    private constructor(dayId: number, name: string) {
+    private constructor(dayId: number, date: string) {
         this.dayId = dayId;
-        this.name = name;
+        this.date = date;
     }
 
     public static fromPersistence(data: {
         dayId: number;
-        name: string;
+        date: string;
     }): Day {
-        return new Day(
-            data.dayId,
-            data.name
-        );
+        return new Day(data.dayId, data.date);
+    }
+
+    public static create(date: string): Day {
+        return new Day(0, date);
     }
 
     getDayId(): number {
         return this.dayId;
     }
 
-    getName(): string {
-        return this.name;
+    getDate(): string {
+        return this.date;
     }
 
     toString(): string {
         return `
             dayId=${this.dayId},
-            name=${this.name}
+            date=${this.date}
         `;
     }
 }

@@ -1,4 +1,5 @@
 import { AnimeRepository } from '../../domain/repositories/anime/Anime.repository';
+import { AnimeRelationRepository } from '../../domain/repositories/anime/AnimeRelation.repository';
 import { MalAnimeData } from '../../domain/schemas/anime/mal.schemas';
 import { MalService } from './mal.service';
 import {
@@ -11,13 +12,75 @@ import {
     NotFoundError
 } from '../../exceptions/exceptions';
 import { Anime } from '../../domain/entities/Anime';
+import { AnimeRelation } from '../../domain/entities/AnimeRelation';
 import { Paginator } from '../../utils/pagination/paginator';
+import { LikeRepository } from '../../domain/repositories/publication/Like.repository';
+import { UserRateAnimeRepository } from '../../domain/repositories/anime/UserRateAnime.repository';
+import { UserWatchAnimeRepository } from '../../domain/repositories/anime/UserWatchAnime.repository';
+import { AnimeUserState } from '../../domain/entities/dtos/AnimeDTO';
+import {
+    findStaleAnimeMalIds,
+    triggerBackgroundRefresh
+} from './refreshStaleAnimes.service';
+import { prisma } from '../../infraestructure/database/prisma.client';
 
 export class AnimeService {
     constructor(
         private readonly animeRepository: AnimeRepository,
-        private readonly malService: MalService
+        private readonly malService: MalService,
+        private readonly animeRelationRepository: AnimeRelationRepository,
+        private readonly likeRepository: LikeRepository,
+        private readonly userRateAnimeRepository: UserRateAnimeRepository,
+        private readonly userWatchAnimeRepository: UserWatchAnimeRepository
     ) {}
+
+    /**
+     * Builds a map of animeId -> AnimeUserState for the given user.
+     * Performs at most 3 batched queries (likes, rates, watches).
+     * Animes with no relation are omitted from the map.
+     */
+    async buildUserStateMap(
+        animes: Anime[],
+        userId: number
+    ): Promise<Map<number, AnimeUserState>> {
+        const map = new Map<number, AnimeUserState>();
+        if (animes.length === 0) return map;
+
+        const animeIds = animes.map((a) => a.getAnimeId());
+
+        const [likedIds, ratesById, watchById] =
+            await Promise.all([
+                this.likeRepository.findLikedAnimeIdsByUser(
+                    animeIds,
+                    userId
+                ),
+                this.userRateAnimeRepository.findRatesByUserAndAnimeIds(
+                    animeIds,
+                    userId
+                ),
+                this.userWatchAnimeRepository.findWatchByUserAndAnimeIds(
+                    animeIds,
+                    userId
+                )
+            ]);
+
+        for (const animeId of animeIds) {
+            const state: AnimeUserState = {};
+            if (likedIds.has(animeId)) state.hasLiked = true;
+            const rate = ratesById.get(animeId);
+            if (rate !== undefined) state.rate = rate;
+            const watch = watchById.get(animeId);
+            if (watch) {
+                state.watchState = watch.state;
+                state.watchedEpisodes = watch.numEpisodes;
+            }
+            if (Object.keys(state).length > 0) {
+                map.set(animeId, state);
+            }
+        }
+
+        return map;
+    }
 
     async getAnimes(
         findOptions: FindOptions
@@ -59,16 +122,13 @@ export class AnimeService {
             await this.animeRepository.findByMalId(malId);
 
         if (dbAnime) {
-            const nextUpdate = dbAnime.getNextUpdate();
-            const now = new Date();
-
-            if (nextUpdate && nextUpdate < now) {
-                this.updateAnimeFromMal(malId).catch((error) => {
-                    console.warn(
-                        '[getAnimeByMalId] Background update failed:',
-                        error
-                    );
-                });
+            if (dbAnime.isStale()) {
+                triggerBackgroundRefresh(
+                    [malId],
+                    this.malService,
+                    this.animeRepository,
+                    this.animeRelationRepository
+                );
             }
 
             return dbAnime;
@@ -79,8 +139,29 @@ export class AnimeService {
         const mappedAnime =
             this.malService.mapMalToAnime(malAnime);
 
-        const createdAnime = await this.animeRepository.create(
-            mappedAnime as any
+        const createdAnime = await prisma.$transaction(
+            async (tx: any) => {
+                const created =
+                    await this.animeRepository.create(
+                        mappedAnime as any,
+                        tx
+                    );
+
+                if (!created) return null;
+
+                if (
+                    mappedAnime.relatedAnime &&
+                    mappedAnime.relatedAnime.length > 0
+                ) {
+                    await this.animeRelationRepository.upsertMany(
+                        created.getAnimeId(),
+                        mappedAnime.relatedAnime,
+                        tx
+                    );
+                }
+
+                return created;
+            }
         );
 
         if (createdAnime) return createdAnime;
@@ -90,20 +171,25 @@ export class AnimeService {
 
         if (existingAnime) return existingAnime;
 
-        throw new ConflictError('Anime already exists but could not be loaded.');
+        throw new ConflictError(
+            'Anime already exists but could not be loaded.'
+        );
     }
 
-    private async updateAnimeFromMal(
+    async getRelatedAnimes(
         malId: number
-    ): Promise<void> {
-        const malAnime =
-            await this.malService.getAnimeById(malId);
-        const mappedAnime =
-            this.malService.mapMalToAnime(malAnime);
+    ): Promise<AnimeRelation[]> {
+        const anime =
+            await this.animeRepository.findByMalId(malId);
 
-        await this.animeRepository.updateAnime(
-            malId,
-            mappedAnime as any
+        if (!anime) {
+            throw new NotFoundError(
+                `Anime with MAL ID ${malId} was not found`
+            );
+        }
+
+        return this.animeRelationRepository.findByAnimeId(
+            anime.getAnimeId()
         );
     }
 
@@ -114,11 +200,22 @@ export class AnimeService {
     ): Promise<
         PaginatedResponse<Anime> & { withMalData: boolean }
     > {
-        const allAnimes =
-            await this.animeRepository.findBySeason(
+        // Esperamos a ambas para que `withMalData` refleje si MAL respondió.
+        // Si MAL falla, devolvemos solo lo de DB.
+        const [dbResult, malResult] = await Promise.allSettled([
+            this.animeRepository.findBySeason(year, season),
+            this.updateSeasonalAnimesFromMal(
                 year,
-                season
-            );
+                season,
+                findOptions.pagination.limit
+            )
+        ]);
+
+        if (dbResult.status === 'rejected') {
+            throw dbResult.reason;
+        }
+
+        const allAnimes = dbResult.value;
 
         if (!allAnimes || allAnimes.length === 0) {
             throw new NotFoundError(
@@ -126,21 +223,12 @@ export class AnimeService {
             );
         }
 
-        let withMalData = false;
-        this.updateSeasonalAnimesFromMal(
-            year,
-            season,
-            findOptions.pagination.limit
-        )
-            .then(() => {
-                withMalData = true;
-            })
-            .catch((error) => {
-                console.warn(
-                    'Failed to fetch seasonal animes from MAL:',
-                    error
-                );
-            });
+        if (malResult.status === 'rejected') {
+            console.warn(
+                '[getSeasonalAnimes] MAL fetch failed, using DB only:',
+                malResult.reason
+            );
+        }
 
         const paginator = new Paginator();
         const paginatedResult = paginator.paginate(
@@ -151,7 +239,7 @@ export class AnimeService {
 
         return {
             ...paginatedResult,
-            withMalData
+            withMalData: malResult.status === 'fulfilled'
         };
     }
 
@@ -180,7 +268,7 @@ export class AnimeService {
         findOptions: FindOptions
     ): Promise<PaginatedResponseWithMalStatus<Anime>> {
         const { pagination } = findOptions;
-        const page  = pagination?.page  ?? 1;
+        const page = pagination?.page ?? 1;
         const limit = pagination?.limit ?? 10;
 
         // DB maneja paginación, sort y filtros directamente.
@@ -191,7 +279,10 @@ export class AnimeService {
         ]);
 
         if (dbResult.status === 'rejected') {
-            console.error('[getCatalogue] DB query failed:', dbResult.reason);
+            console.error(
+                '[getCatalogue] DB query failed:',
+                dbResult.reason
+            );
             throw dbResult.reason;
         }
         const dbData = dbResult.value;
@@ -208,18 +299,24 @@ export class AnimeService {
         // Background: detectar y guardar animes de MAL que no estén en DB
         if (malApiWorked) {
             const malAnimes = malResult.value;
-            const malIds    = malAnimes.map((m) => m.id);
+            const malIds = malAnimes.map((m) => m.id);
 
-            this.animeRepository.findExistingMalIds(malIds)
+            this.animeRepository
+                .findExistingMalIds(malIds)
                 .then((existingIds) => {
                     const existing = new Set(existingIds);
-                    const newOnes  = malAnimes.filter((m) => !existing.has(m.id));
+                    const newOnes = malAnimes.filter(
+                        (m) => !existing.has(m.id)
+                    );
                     if (newOnes.length > 0) {
                         return this.saveMalAnimes(newOnes);
                     }
                 })
                 .catch((err) =>
-                    console.error('[getCatalogue] Background save error:', err)
+                    console.error(
+                        '[getCatalogue] Background save error:',
+                        err
+                    )
                 );
         }
 
@@ -235,9 +332,25 @@ export class AnimeService {
             );
         }
 
+        // Respect TTL: trigger background refresh for stale rows.
+        // Fire-and-forget — user gets the current (possibly stale) snapshot,
+        // next request sees fresh data.
+        const staleMalIds = findStaleAnimeMalIds(dbData.data);
+        triggerBackgroundRefresh(
+            staleMalIds,
+            this.malService,
+            this.animeRepository,
+            this.animeRelationRepository
+        );
+
         return {
             data: dbData.data,
-            pagination: { page, limit, total: dbData.total, pages: maxPages },
+            pagination: {
+                page,
+                limit,
+                total: dbData.total,
+                pages: maxPages
+            },
             withMalData: malApiWorked
         };
     }
@@ -248,7 +361,11 @@ export class AnimeService {
 
     async seedFromMal(
         pages: number = 10
-    ): Promise<{ saved: number; skipped: number; pages: number }> {
+    ): Promise<{
+        saved: number;
+        skipped: number;
+        pages: number;
+    }> {
         const pageSize = 500; // MAL ranking max per request
         let totalSaved = 0;
         let totalSkipped = 0;
@@ -257,20 +374,26 @@ export class AnimeService {
             const offset = page * pageSize;
 
             try {
-                const malAnimes = await this.malService.getTrendingAnimes(
-                    pageSize,
-                    offset
-                );
+                const malAnimes =
+                    await this.malService.getTrendingAnimes(
+                        pageSize,
+                        offset
+                    );
 
                 if (malAnimes.length === 0) break;
 
                 const malIds = malAnimes.map((m) => m.id);
                 const existingIds =
-                    await this.animeRepository.findExistingMalIds(malIds);
+                    await this.animeRepository.findExistingMalIds(
+                        malIds
+                    );
                 const existing = new Set(existingIds);
-                const newOnes = malAnimes.filter((m) => !existing.has(m.id));
+                const newOnes = malAnimes.filter(
+                    (m) => !existing.has(m.id)
+                );
 
-                totalSkipped += malAnimes.length - newOnes.length;
+                totalSkipped +=
+                    malAnimes.length - newOnes.length;
 
                 if (newOnes.length > 0) {
                     await this.saveMalAnimes(newOnes);
@@ -281,7 +404,9 @@ export class AnimeService {
 
                 // Respect MAL rate limits between pages
                 if (page < pages - 1) {
-                    await new Promise((resolve) => setTimeout(resolve, 1200));
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, 1200)
+                    );
                 }
             } catch (error) {
                 console.error(
@@ -292,7 +417,11 @@ export class AnimeService {
             }
         }
 
-        return { saved: totalSaved, skipped: totalSkipped, pages };
+        return {
+            saved: totalSaved,
+            skipped: totalSkipped,
+            pages
+        };
     }
 
     private async saveMalAnimes(

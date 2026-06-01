@@ -6,12 +6,15 @@ import {
 } from '../../schemas/find.schemas';
 
 export interface AnimeRepository {
-    create(entity: Anime): Promise<Anime | null>;
+    create(entity: Anime, tx?: any): Promise<Anime | null>;
 
-    createBroadcast(broadcast: {
-        dayOfWeek: string;
-        startTime: string;
-    }): Promise<Broadcast>;
+    createBroadcast(
+        broadcast: {
+            dayOfWeek: string;
+            startTime: string;
+        },
+        tx?: any
+    ): Promise<Broadcast>;
 
     createTransactionErrorHandling(
         animesData: Array<any>
@@ -19,8 +22,11 @@ export interface AnimeRepository {
 
     updateAnime(
         malId: number,
-        animeData: any
+        animeData: any,
+        tx?: any
     ): Promise<Anime | null>;
+
+    bumpNextUpdate(malId: number, deltaMs: number): Promise<void>;
 
     searchByName(query: string, limit: number): Promise<Anime[]>;
 
