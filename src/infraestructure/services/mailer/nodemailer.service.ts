@@ -1,19 +1,29 @@
 import nodemailer, { Transporter } from 'nodemailer';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { buildUrl } from '../../../utils/http/redirect';
 
 export class EmailHandler {
     private transporter: Transporter;
 
     constructor() {
-        this.transporter = nodemailer.createTransport({
+        const transportOptions: SMTPTransport.Options & {
+            family: 4;
+        } = {
             host: process.env.MAIL_HOST,
             port: Number(process.env.MAIL_PORT) || 587,
             secure: false,
+            family: 4,
+            connectionTimeout: 15_000,
+            greetingTimeout: 15_000,
+            socketTimeout: 30_000,
             auth: {
                 user: process.env.MAIL_USER,
                 pass: process.env.MAIL_PASS
             }
-        });
+        };
+
+        this.transporter =
+            nodemailer.createTransport(transportOptions);
     }
 
     async sendVerifyEmail(

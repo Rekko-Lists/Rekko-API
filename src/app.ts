@@ -9,12 +9,17 @@ import {
 
 const app = express();
 
+const configuredOrigins = [
+    process.env.CLIENT_URL_DEV?.trim(),
+    process.env.CLIENT_URL_PROD?.trim()
+];
+
+if (process.env.NODE_ENV !== 'production') {
+    configuredOrigins.push('http://localhost:5173');
+}
+
 const allowedOrigins = new Set(
-    [
-        'http://localhost:5173',
-        process.env.CLIENT_URL_DEV?.trim(),
-        process.env.CLIENT_URL_PROD?.trim(),
-    ]
+    configuredOrigins
         .filter(Boolean)
         .map((o) => o!.replace(/\/$/, ''))
 );
@@ -23,17 +28,28 @@ app.use(
     cors({
         origin: (origin, callback) => {
             if (!origin) return callback(null, true);
-            if (allowedOrigins.has(origin)) return callback(null, true);
-            callback(new Error(`Origin ${origin} not allowed by CORS`));
+            if (allowedOrigins.has(origin))
+                return callback(null, true);
+            callback(
+                new Error(`Origin ${origin} not allowed by CORS`)
+            );
         },
-        credentials: true,
+        credentials: true
     })
 );
 
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(
+    morgan(
+        process.env.NODE_ENV === 'production'
+            ? 'combined'
+            : 'dev'
+    )
+);
 app.use(express.json());
 
-app.get('/health', (_req, res) => { res.status(200).json({ status: 'ok' }); });
+app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
 
 app.use('/', router);
 

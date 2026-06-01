@@ -103,15 +103,27 @@ export class LikePrismaRepository implements LikeRepository {
         userId: number
     ): Promise<void> {
         try {
-            await this.db.$transaction([
-                this.db.userLikePost.create({
-                    data: { postId, userId }
-                }),
-                this.db.post.update({
-                    where: { postId },
-                    data: { likes: { increment: 1 } }
-                })
-            ]);
+            await this.db.$transaction(
+                async (tx: typeof this.db) => {
+                    await tx.userLikePost.create({
+                        data: { postId, userId }
+                    });
+
+                    const post = await tx.post.update({
+                        where: { postId },
+                        data: { likes: { increment: 1 } }
+                    });
+
+                    if (post.userId && post.userId !== userId) {
+                        await tx.user.update({
+                            where: { userId: post.userId },
+                            data: {
+                                reputation: { increment: 1 }
+                            }
+                        });
+                    }
+                }
+            );
         } catch (error) {
             handlePrismaError(error);
         }
@@ -122,18 +134,34 @@ export class LikePrismaRepository implements LikeRepository {
         userId: number
     ): Promise<void> {
         try {
-            await this.db.$transaction(async (tx: typeof this.db) => {
-                const { count } =
-                    await tx.userLikePost.deleteMany({
-                        where: { postId, userId }
-                    });
-                if (count > 0) {
-                    await tx.post.updateMany({
-                        where: { postId, likes: { gt: 0 } },
-                        data: { likes: { decrement: 1 } }
-                    });
+            await this.db.$transaction(
+                async (tx: typeof this.db) => {
+                    const { count } =
+                        await tx.userLikePost.deleteMany({
+                            where: { postId, userId }
+                        });
+                    if (count > 0) {
+                        const post = await tx.post.findUnique({
+                            where: { postId },
+                            select: { userId: true }
+                        });
+
+                        await tx.post.updateMany({
+                            where: { postId, likes: { gt: 0 } },
+                            data: { likes: { decrement: 1 } }
+                        });
+
+                        if (post?.userId && post.userId !== userId) {
+                            await tx.user.update({
+                                where: { userId: post.userId },
+                                data: {
+                                    reputation: { decrement: 1 }
+                                }
+                            });
+                        }
+                    }
                 }
-            });
+            );
         } catch (error) {
             handlePrismaError(error);
         }
@@ -169,9 +197,7 @@ export class LikePrismaRepository implements LikeRepository {
                     },
                     select: { commentId: true }
                 });
-            return new Set(
-                records.map((r: any) => r.commentId)
-            );
+            return new Set(records.map((r: any) => r.commentId));
         } catch (error) {
             handlePrismaError(error);
         }
@@ -182,15 +208,30 @@ export class LikePrismaRepository implements LikeRepository {
         userId: number
     ): Promise<void> {
         try {
-            await this.db.$transaction([
-                this.db.userLikeComment.create({
-                    data: { commentId, userId }
-                }),
-                this.db.comment.update({
-                    where: { commentId },
-                    data: { likes: { increment: 1 } }
-                })
-            ]);
+            await this.db.$transaction(
+                async (tx: typeof this.db) => {
+                    await tx.userLikeComment.create({
+                        data: { commentId, userId }
+                    });
+
+                    const comment = await tx.comment.update({
+                        where: { commentId },
+                        data: { likes: { increment: 1 } }
+                    });
+
+                    if (
+                        comment.userId &&
+                        comment.userId !== userId
+                    ) {
+                        await tx.user.update({
+                            where: { userId: comment.userId },
+                            data: {
+                                reputation: { increment: 1 }
+                            }
+                        });
+                    }
+                }
+            );
         } catch (error) {
             handlePrismaError(error);
         }
@@ -201,18 +242,37 @@ export class LikePrismaRepository implements LikeRepository {
         userId: number
     ): Promise<void> {
         try {
-            await this.db.$transaction(async (tx: typeof this.db) => {
-                const { count } =
-                    await tx.userLikeComment.deleteMany({
-                        where: { commentId, userId }
-                    });
-                if (count > 0) {
-                    await tx.comment.updateMany({
-                        where: { commentId, likes: { gt: 0 } },
-                        data: { likes: { decrement: 1 } }
-                    });
+            await this.db.$transaction(
+                async (tx: typeof this.db) => {
+                    const { count } =
+                        await tx.userLikeComment.deleteMany({
+                            where: { commentId, userId }
+                        });
+                    if (count > 0) {
+                        const comment = await tx.comment.findUnique({
+                            where: { commentId },
+                            select: { userId: true }
+                        });
+
+                        await tx.comment.updateMany({
+                            where: { commentId, likes: { gt: 0 } },
+                            data: { likes: { decrement: 1 } }
+                        });
+
+                        if (
+                            comment?.userId &&
+                            comment.userId !== userId
+                        ) {
+                            await tx.user.update({
+                                where: { userId: comment.userId },
+                                data: {
+                                    reputation: { decrement: 1 }
+                                }
+                            });
+                        }
+                    }
                 }
-            });
+            );
         } catch (error) {
             handlePrismaError(error);
         }
@@ -238,10 +298,12 @@ export class LikePrismaRepository implements LikeRepository {
     ): Promise<Set<number>> {
         if (animeIds.length === 0) return new Set();
         try {
-            const records = await this.db.userLikeAnime.findMany({
-                where: { userId, animeId: { in: animeIds } },
-                select: { animeId: true }
-            });
+            const records = await this.db.userLikeAnime.findMany(
+                {
+                    where: { userId, animeId: { in: animeIds } },
+                    select: { animeId: true }
+                }
+            );
             return new Set(records.map((r: any) => r.animeId));
         } catch (error) {
             handlePrismaError(error);
@@ -289,41 +351,56 @@ export class LikePrismaRepository implements LikeRepository {
         userId: number
     ): Promise<void> {
         try {
-            await this.db.$transaction(async (tx: typeof this.db) => {
-                const like = await tx.userLikeAnime.findUnique({
-                    where: { userId_animeId: { userId, animeId } },
-                    select: { createdAt: true }
-                });
-
-                const { count } =
-                    await tx.userLikeAnime.deleteMany({
-                        where: { animeId, userId }
-                    });
-                if (count > 0) {
-                    await tx.anime.updateMany({
-                        where: { animeId, likes: { gt: 0 } },
-                        data: { likes: { decrement: 1 } }
-                    });
-
-                    if (
-                        like &&
-                        getUtcWeekStart(like.createdAt).getTime() ===
-                            getUtcWeekStart().getTime()
-                    ) {
-                        await tx.animeWeeklyActivity.updateMany({
+            await this.db.$transaction(
+                async (tx: typeof this.db) => {
+                    const like =
+                        await tx.userLikeAnime.findUnique({
                             where: {
-                                animeId,
-                                weekStart: getUtcWeekStart(),
-                                animeLikeCount: { gt: 0 }
+                                userId_animeId: {
+                                    userId,
+                                    animeId
+                                }
                             },
-                            data: {
-                                animeLikeCount: { decrement: 1 },
-                                score: { decrement: 1 }
-                            }
+                            select: { createdAt: true }
                         });
+
+                    const { count } =
+                        await tx.userLikeAnime.deleteMany({
+                            where: { animeId, userId }
+                        });
+                    if (count > 0) {
+                        await tx.anime.updateMany({
+                            where: { animeId, likes: { gt: 0 } },
+                            data: { likes: { decrement: 1 } }
+                        });
+
+                        if (
+                            like &&
+                            getUtcWeekStart(
+                                like.createdAt
+                            ).getTime() ===
+                                getUtcWeekStart().getTime()
+                        ) {
+                            await tx.animeWeeklyActivity.updateMany(
+                                {
+                                    where: {
+                                        animeId,
+                                        weekStart:
+                                            getUtcWeekStart(),
+                                        animeLikeCount: { gt: 0 }
+                                    },
+                                    data: {
+                                        animeLikeCount: {
+                                            decrement: 1
+                                        },
+                                        score: { decrement: 1 }
+                                    }
+                                }
+                            );
+                        }
                     }
                 }
-            });
+            );
         } catch (error) {
             handlePrismaError(error);
         }

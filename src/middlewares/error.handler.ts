@@ -12,20 +12,22 @@ const logError = (
     req: Request,
     statusCode: number
 ): void => {
-    console.error({
-        timestamp: new Date().toISOString(),
-        error: {
-            name: error.constructor.name,
-            message: error.message,
-            stack: error.stack
-        },
-        request: {
-            method: req.method,
-            path: req.path,
-            ip: req.ip
-        },
-        statusCode
-    });
+    console.error(
+        JSON.stringify({
+            timestamp: new Date().toISOString(),
+            error: {
+                name: error.constructor.name,
+                message: error.message,
+                stack: error.stack
+            },
+            request: {
+                method: req.method,
+                path: req.path,
+                ip: req.ip
+            },
+            statusCode
+        })
+    );
 };
 
 export const notFoundHandler = (

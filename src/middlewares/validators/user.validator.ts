@@ -1,7 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
 import { ValidationError } from '../../exceptions/exceptions';
 import { FindOptions } from '../../domain/schemas/find.schemas';
-import { userSelectableField } from '../../domain/schemas/user/user.schemas';
+import {
+    userDefaultSelect,
+    userSelectableField
+} from '../../domain/schemas/user/user.schemas';
+
+const userSortableFields = new Set([
+    ...userDefaultSelect,
+    'userId',
+    'username',
+    'email',
+    'reputation',
+    'role',
+    'emailVerified',
+    'createdAt'
+]);
 
 export const validateUsername = (
     req: Request,
@@ -35,5 +49,19 @@ export const validateUserQuery = (
             userSelectableField.parse(field);
         });
     }
+
+    if (findOptions.sort) {
+        findOptions.sort.forEach(({ field }) => {
+            if (!userSortableFields.has(field)) {
+                throw new ValidationError(
+                    'Invalid sort field.',
+                    {
+                        received: field
+                    }
+                );
+            }
+        });
+    }
+
     next();
 };

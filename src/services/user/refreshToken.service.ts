@@ -36,6 +36,7 @@ export class RefreshTokenService {
     }
 
     async revokeSessionByToken(
+        userId: number,
         tokenString: string
     ): Promise<void> {
         const now = new Date();
@@ -49,6 +50,12 @@ export class RefreshTokenService {
         if (!token) {
             throw new InvalidTokenError(
                 'Refresh token not found or already expired'
+            );
+        }
+
+        if (token.getUserId() !== userId) {
+            throw new InvalidTokenError(
+                'Refresh token does not belong to the authenticated user'
             );
         }
 

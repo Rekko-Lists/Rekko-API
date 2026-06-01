@@ -210,6 +210,23 @@ export class User {
         return this.socialAccounts;
     }
 
+    toJSON() {
+        return {
+            userId: this.userId,
+            email: this.email,
+            username: this.username,
+            reputation: this.reputation,
+            profileImage: this.profileImage,
+            bannerImage: this.bannerImage,
+            backgroundImage: this.backgroundImage,
+            role: this.role,
+            emailVerified: this.emailVerified,
+            createdAt: this.createdAt,
+            biography: this.biography,
+            socialAccounts: this.socialAccounts
+        };
+    }
+
     toString(): string {
         return `
             user_id=${this.userId},

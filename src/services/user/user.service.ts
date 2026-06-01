@@ -107,7 +107,9 @@ export class UserService {
         const user =
             await this.userRepository.findByUsername(username);
 
-        const id = user!.getUserId();
+        if (!user) throw new NotFoundError('User not found.');
+
+        const id = user.getUserId();
 
         const userData = await this.userRepository.findById(
             id,
@@ -176,6 +178,8 @@ export class UserService {
         const user = await this.userRepository.findByUsername(
             updateReputation.username
         );
+
+        if (!user) throw new NotFoundError('User not found.');
 
         const reason: number =
             reputationReasons[updateReputation.reason];

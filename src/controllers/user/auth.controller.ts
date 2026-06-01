@@ -48,6 +48,7 @@ export const logout = catchAsync(
         );
 
         await services.refreshToken.revokeSessionByToken(
+            req.user!.userId,
             validatedInput.refreshToken
         );
 

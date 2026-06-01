@@ -170,7 +170,13 @@ export type UserSocialAccounts = z.infer<
 export const updateReputation = z
     .object({
         username: z.string().min(1, 'Username is required'),
-        reason: z.string().min(1, 'Reason is required')
+        reason: z.enum([
+            'good_post',
+            'helpful_comment',
+            'spam',
+            'bad_behavior',
+            'misinformation'
+        ])
     })
     .strict();
 export type UpdateReputation = z.infer<typeof updateReputation>;
@@ -181,7 +187,7 @@ export const reputationReasons = {
     spam: -15,
     bad_behavior: -20,
     misinformation: -10
-} as Record<string, number>;
+} as const satisfies Record<UpdateReputation['reason'], number>;
 
 export const userSelectableField = z.enum([
     'userId',
