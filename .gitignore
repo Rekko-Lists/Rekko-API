@@ -7,6 +7,9 @@ generated/
 # Javascript files
 dist/
 
+# Coverage de tests
+coverage/
+
 # Environment variables
 .env
 .mal-token.json
