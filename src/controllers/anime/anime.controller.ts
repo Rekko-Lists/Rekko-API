@@ -151,6 +151,21 @@ export const getAiringTodayAnimes = catchAsync(
     }
 );
 
+export const getWeeklyAiringAnimes = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWeeklyAiringLimit(req.query.limit);
+        const { services } = req.container!;
+        const animes = await services.anime.getWeeklyAiringAnimes(
+            limit
+        );
+
+        ok(res, 'Weekly airing animes found', {
+            animes: AnimeMapper.toDTOs(animes),
+            timezone: 'Asia/Tokyo'
+        });
+    }
+);
+
 export const getTopUpcomingAnimes = catchAsync(
     async (req: Request, res: Response) => {
         const limit = parseWidgetLimit(req.query.limit);
@@ -238,6 +253,14 @@ export const unlikeAnime = catchAsync(
 function parseWidgetLimit(value: unknown): number {
     const limit = Number(value ?? 5);
     if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+        throw new ValidationError('Invalid limit', { received: value });
+    }
+    return limit;
+}
+
+function parseWeeklyAiringLimit(value: unknown): number {
+    const limit = Number(value ?? 110);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 110) {
         throw new ValidationError('Invalid limit', { received: value });
     }
     return limit;

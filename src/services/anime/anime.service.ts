@@ -431,6 +431,10 @@ export class AnimeService {
         );
     }
 
+    async getWeeklyAiringAnimes(limit: number): Promise<Anime[]> {
+        return this.animeRepository.findWeeklyAiring(limit);
+    }
+
     async getTopUpcomingAnimes(limit: number): Promise<Anime[]> {
         return this.animeRepository.findTopByStatus(
             'not_yet_aired',

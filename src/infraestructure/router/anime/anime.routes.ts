@@ -7,6 +7,7 @@ import {
     getTopSeasonalAnimes,
     getPopularAnimes,
     getAiringTodayAnimes,
+    getWeeklyAiringAnimes,
     getTopUpcomingAnimes,
     getPopularUpcomingAnimes,
     getTopAiringAnimes,
@@ -48,6 +49,7 @@ router.route('/genres').get(getGenres);
 router.route('/seasonal/top').get(getTopSeasonalAnimes);
 router.route('/popular').get(getPopularAnimes);
 router.route('/airing-today').get(getAiringTodayAnimes);
+router.route('/weekly-airing').get(getWeeklyAiringAnimes);
 router.route('/top-upcoming').get(getTopUpcomingAnimes);
 router.route('/popular-upcoming').get(getPopularUpcomingAnimes);
 router.route('/top-airing').get(getTopAiringAnimes);

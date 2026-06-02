@@ -48,6 +48,8 @@ export interface AnimeRepository {
 
     findAiringTodayJst(dayOfWeek: string, limit: number): Promise<Anime[]>;
 
+    findWeeklyAiring(limit: number): Promise<Anime[]>;
+
     findTopByStatus(status: string, limit: number): Promise<Anime[]>;
 
     findExistingMalIds(malIds: number[]): Promise<number[]>;

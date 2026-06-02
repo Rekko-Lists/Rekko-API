@@ -485,6 +485,38 @@ export class AnimePrismaRepository implements AnimeRepository {
         }
     }
 
+    async findWeeklyAiring(limit: number): Promise<Anime[]> {
+        try {
+            const animes = await this.db.anime.findMany({
+                where: {
+                    status: 'currently_airing',
+                    broadcast: {
+                        is: {
+                            dayOfWeek: { not: '' },
+                            startTime: { not: '' }
+                        }
+                    }
+                },
+                orderBy: [
+                    { broadcast: { dayOfWeek: 'asc' } },
+                    { broadcast: { startTime: 'asc' } },
+                    { malRank: 'asc' }
+                ],
+                take: limit,
+                include: {
+                    broadcast: true,
+                    ...GENRE_INCLUDE
+                }
+            });
+
+            return animes.map((anime: any) =>
+                Anime.fromPersistence(this.withGenres(anime))
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     async findTopByStatus(
         status: string,
         limit: number
