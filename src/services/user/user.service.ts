@@ -17,6 +17,13 @@ import {
     PaginatedResponse
 } from '../../domain/schemas/find.schemas';
 
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+function isStreakStale(streakUpdatedAt: Date | null): boolean {
+    if (!streakUpdatedAt) return false;
+    return Date.now() - streakUpdatedAt.getTime() > TWENTY_FOUR_HOURS_MS;
+}
+
 export class UserService {
     constructor(
         private readonly userRepository: UserRepository<User>
@@ -89,6 +96,13 @@ export class UserService {
 
         if (!user) throw new NotFoundError('User not found.');
 
+        if (isStreakStale(user.getStreakUpdatedAt())) {
+            const resetUser = await this.userRepository.resetStreak(
+                user.getUserId()
+            );
+            if (resetUser) return resetUser;
+        }
+
         return user;
     }
 
@@ -96,6 +110,11 @@ export class UserService {
         const user = await this.userRepository.findById(id);
 
         if (!user) throw new NotFoundError('User not found');
+
+        if (isStreakStale(user.getStreakUpdatedAt())) {
+            const resetUser = await this.userRepository.resetStreak(id);
+            if (resetUser) return resetUser;
+        }
 
         return user;
     }

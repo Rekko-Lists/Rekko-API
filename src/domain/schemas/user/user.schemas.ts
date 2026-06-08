@@ -203,7 +203,9 @@ export const userSelectableField = z.enum([
     'biography',
     'socialAccounts',
     'posts',
-    'oauthAccounts'
+    'oauthAccounts',
+    'streak',
+    'streakUpdatedAt'
 ]);
 
 export const userRole = z.enum(['USER', 'MODERATOR', 'ADMIN']);
@@ -219,7 +221,9 @@ export const userDefaultSelect = [
     'biography',
     'reputation',
     'role',
-    'emailVerified'
+    'emailVerified',
+    'streak',
+    'streakUpdatedAt'
 ];
 
 export const userFieldMappings = {

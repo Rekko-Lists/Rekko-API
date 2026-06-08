@@ -33,4 +33,6 @@ export interface UserRepository<User> extends Repository<
     ): Promise<User | null>;
 
     searchByName(query: string, limit: number): Promise<User[]>;
+
+    resetStreak(userId: number): Promise<User | null>;
 }
