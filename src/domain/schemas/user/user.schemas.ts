@@ -210,6 +210,7 @@ export const userRole = z.enum(['USER', 'MODERATOR', 'ADMIN']);
 export type UserRole = z.infer<typeof userRole>;
 
 export const userDefaultSelect = [
+    'userId',
     'username',
     'email',
     'profileImage',
