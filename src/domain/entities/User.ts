@@ -21,6 +21,8 @@ export class User {
     private readonly createdAt: Date;
     private biography?: string;
     private socialAccounts: SocialAccount[] = [];
+    private streak: number = 0;
+    private streakUpdatedAt: Date | null = null;
 
     private constructor(
         userId: number,
@@ -73,6 +75,8 @@ export class User {
         createdAt: Date;
         biography?: string;
         userSocialAccount?: any[];
+        streak?: number;
+        streakUpdatedAt?: Date | null;
     }): User {
         const user = new User(
             data.userId,
@@ -91,6 +95,9 @@ export class User {
             data.bannerImagePublicId,
             data.backgroundImagePublicId
         );
+
+        user.streak = data.streak ?? 0;
+        user.streakUpdatedAt = data.streakUpdatedAt ?? null;
 
         if (
             data.userSocialAccount &&
@@ -210,6 +217,14 @@ export class User {
         return this.socialAccounts;
     }
 
+    getStreak(): number {
+        return this.streak;
+    }
+
+    getStreakUpdatedAt(): Date | null {
+        return this.streakUpdatedAt;
+    }
+
     toJSON() {
         return {
             userId: this.userId,
@@ -223,7 +238,9 @@ export class User {
             emailVerified: this.emailVerified,
             createdAt: this.createdAt,
             biography: this.biography,
-            socialAccounts: this.socialAccounts
+            socialAccounts: this.socialAccounts,
+            streak: this.streak,
+            streakUpdatedAt: this.streakUpdatedAt
         };
     }
 

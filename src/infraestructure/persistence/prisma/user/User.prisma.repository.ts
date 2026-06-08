@@ -280,4 +280,20 @@ export class UserPrismaRepository implements UserRepository<User> {
             handlePrismaError(error);
         }
     }
+
+    async resetStreak(userId: number): Promise<User | null> {
+        try {
+            const user = await this.db.user.update({
+                data: {
+                    streak: 0,
+                    streakUpdatedAt: new Date()
+                },
+                where: { userId }
+            });
+
+            return User.fromPersistence(user);
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
 }
