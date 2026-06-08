@@ -4,11 +4,20 @@ import {
     FindOptions,
     FindRepository
 } from '../../../../domain/schemas/find.schemas';
-import { ChallengeFilters } from '../../../../domain/schemas/challenge/challenge.schemas';
+import {
+    ChallengeFilters,
+    ChallengeWithRelations
+} from '../../../../domain/schemas/challenge/challenge.schemas';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
+import { NotFoundError } from '../../../../exceptions/exceptions';
 import { buildPrismaPageQuery } from '../../../../utils/prisma/prismaHelper';
 import { ChallengeFilterBuilder } from './Challenge.filter.builder';
+
+const CHALLENGE_INCLUDE = {
+    type: true,
+    anime: true
+} as const;
 
 export class ChallengePrismaRepository implements ChallengeRepository {
     constructor(private readonly db = prisma) {}
@@ -128,6 +137,27 @@ export class ChallengePrismaRepository implements ChallengeRepository {
                 Challenge.fromPersistence(challenge)
             );
         } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async update(
+        challengeId: number,
+        data: Record<string, any>
+    ): Promise<ChallengeWithRelations | null> {
+        try {
+            const challenge = await this.db.challenge.update({
+                where: { challengeId },
+                data: { data },
+                include: CHALLENGE_INCLUDE
+            });
+            return challenge as ChallengeWithRelations;
+        } catch (error: any) {
+            if (error?.code === 'P2025') {
+                throw new NotFoundError(
+                    `Challenge with id ${challengeId} not found`
+                );
+            }
             handlePrismaError(error);
         }
     }

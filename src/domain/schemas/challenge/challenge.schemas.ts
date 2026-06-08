@@ -117,9 +117,10 @@ export const createDailyChallengesBatchSchema = z.object({
         .describe('Fecha de los retos en formato YYYY-MM-DD'),
     challenges: z
         .array(createChallengeDtoSchema)
-        .length(4)
+        .min(1)
+        .max(4)
         .describe(
-            'Array de exactamente 4 desafíos para esa fecha'
+            'Array de entre 1 y 4 desafíos para esa fecha'
         )
 });
 

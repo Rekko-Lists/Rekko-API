@@ -4,7 +4,10 @@ import {
     FindOptions,
     FindRepository
 } from '../../schemas/find.schemas';
-import { ChallengeFilters } from '../../schemas/challenge/challenge.schemas';
+import {
+    ChallengeFilters,
+    ChallengeWithRelations
+} from '../../schemas/challenge/challenge.schemas';
 
 export interface ChallengeRepository {
     create(entity: Challenge): Promise<Challenge | null>;
@@ -19,4 +22,9 @@ export interface ChallengeRepository {
     deleteByDate(date: string): Promise<boolean>;
 
     createBatch(challenges: Challenge[]): Promise<Challenge[]>;
+
+    update(
+        challengeId: number,
+        data: Record<string, any>
+    ): Promise<ChallengeWithRelations | null>;
 }
