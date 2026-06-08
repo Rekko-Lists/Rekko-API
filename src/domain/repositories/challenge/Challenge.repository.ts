@@ -24,4 +24,9 @@ export interface ChallengeRepository {
     createBatch(
         challenges: Challenge[]
     ): Promise<ChallengeWithRelations[]>;
+
+    update(
+        challengeId: number,
+        data: Record<string, any>
+    ): Promise<ChallengeWithRelations | null>;
 }

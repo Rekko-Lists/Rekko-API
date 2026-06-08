@@ -10,6 +10,7 @@ import {
 } from '../../../../domain/schemas/challenge/challenge.schemas';
 import { prisma } from '../../../database/prisma.client';
 import { handlePrismaError } from '../../../errors/prisma.errors';
+import { NotFoundError } from '../../../../exceptions/exceptions';
 import { buildPrismaPageQuery } from '../../../../utils/prisma/prismaHelper';
 import { ChallengeFilterBuilder } from './Challenge.filter.builder';
 
@@ -129,6 +130,27 @@ export class ChallengePrismaRepository implements ChallengeRepository {
 
             return created as ChallengeWithRelations[];
         } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async update(
+        challengeId: number,
+        data: Record<string, any>
+    ): Promise<ChallengeWithRelations | null> {
+        try {
+            const challenge = await this.db.challenge.update({
+                where: { challengeId },
+                data: { data },
+                include: CHALLENGE_INCLUDE
+            });
+            return challenge as ChallengeWithRelations;
+        } catch (error: any) {
+            if (error?.code === 'P2025') {
+                throw new NotFoundError(
+                    `Challenge with id ${challengeId} not found`
+                );
+            }
             handlePrismaError(error);
         }
     }
