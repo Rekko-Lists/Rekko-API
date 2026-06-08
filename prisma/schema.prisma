@@ -65,6 +65,8 @@ model User {
   bannerImagePublicId     String?                   @map("banner_image_public_id")
   profileImagePublicId    String?                   @map("profile_image_public_id")
   updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
+  streak                  Int                       @default(0) @map("streak")
+  streakUpdatedAt         DateTime?                 @map("streak_updated_at")
   comments                Comment[]
   emailRequest            EmailChangeRequest?       @relation("UserEmailChangeRequest")
   verificationRequest     EmailVerificationRequest? @relation("UserEmailVerification")

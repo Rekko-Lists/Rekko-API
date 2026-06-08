@@ -1,0 +1,2 @@
+ALTER TABLE "user" ADD COLUMN "streak" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "user" ADD COLUMN "streak_updated_at" TIMESTAMP(3);
