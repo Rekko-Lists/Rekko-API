@@ -4,7 +4,8 @@ import {
     deleteChallengesByDate,
     getChallenges,
     getChallengesByDate,
-    getDailyChallenges
+    getDailyChallenges,
+    updateChallenge
 } from '../../../controllers/challenge/challenge.controller';
 import { authMiddleware } from '../../../middlewares/auth.middleware';
 import { roleMiddleware } from '../../../middlewares/role.middleware';
@@ -32,6 +33,15 @@ router
         authMiddleware,
         roleMiddleware(['ADMIN']),
         deleteChallengesByDate
+    );
+
+router
+    .route('/:challengeId')
+    .patch(
+        authMiddleware,
+        roleMiddleware(['ADMIN']),
+        uploadChallengesMiddleware.any(),
+        updateChallenge
     );
 
 export default router;

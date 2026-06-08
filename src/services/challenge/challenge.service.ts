@@ -30,10 +30,18 @@ export class ChallengeService {
         const existingChallenges =
             await this.challengeRepository.findByDate(batch.date);
 
-        if (existingChallenges.length > 0) {
-            throw new ValidationError(
-                `Challenges already exist for date ${batch.date}`
-            );
+        const existingTypes = new Set(
+            existingChallenges.map((c: any) =>
+                (c.type?.name ?? '').toUpperCase()
+            )
+        );
+
+        for (const challengeDto of batch.challenges) {
+            if (existingTypes.has(challengeDto.type.toUpperCase())) {
+                throw new ValidationError(
+                    `Challenge of type '${challengeDto.type}' already exists for date ${batch.date}`
+                );
+            }
         }
 
         const day = await this.dayRepository.findOrCreate(batch.date);
@@ -70,6 +78,23 @@ export class ChallengeService {
         }
 
         return this.challengeRepository.createBatch(challengesToCreate);
+    }
+
+    async updateChallenge(
+        challengeId: number,
+        data: Record<string, any>
+    ): Promise<ChallengeWithRelations> {
+        const updated =
+            await this.challengeRepository.update(
+                challengeId,
+                data
+            );
+        if (!updated) {
+            throw new NotFoundError(
+                `Challenge with id ${challengeId} not found`
+            );
+        }
+        return updated;
     }
 
     async getChallenges(
