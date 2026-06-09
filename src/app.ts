@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import router from './infraestructure/router/routes';
 import {
     errorHandler,
@@ -8,6 +10,36 @@ import {
 } from './middlewares/error.handler';
 
 const app = express();
+
+// Security headers
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' } // allow Cloudinary images
+}));
+
+// Global rate limit — generous ceiling to catch abuse, not normal use
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later.' } }
+});
+app.use(globalLimiter);
+
+// Strict limit on auth endpoints (login, register, password reset)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many auth attempts, please try again in 15 minutes.' } }
+});
+app.use('/auth/login', authLimiter);
+app.use('/user', (req, res, next) => {
+    if (req.method === 'POST' && req.path === '/') return authLimiter(req, res, next);
+    if (/^\/[^/]+\/forgot-password$/.test(req.path) || /^\/[^/]+\/reset-password$/.test(req.path)) return authLimiter(req, res, next);
+    next();
+});
 
 const configuredOrigins = [
     process.env.CLIENT_URL_DEV?.trim(),

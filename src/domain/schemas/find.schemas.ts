@@ -1,12 +1,16 @@
 import { z } from 'zod';
 
+// Fields that must never appear as sort/filter targets
+const DENIED_QUERY_FIELDS = ['password', 'token', 'secret', 'passwordHash'];
+
 export const filterOperatorSchema = z.object({
     lt: z.any().optional().describe('Less than'),
     lte: z.any().optional().describe('Less than or equal'),
     gt: z.any().optional().describe('Greater than'),
     gte: z.any().optional().describe('Greater than or equal'),
     eq: z.any().optional().describe('Equal'),
-    ne: z.any().optional().describe('Not equal')
+    ne: z.any().optional().describe('Not equal'),
+    in: z.string().optional().describe('In (comma-separated list)')
 });
 
 export const findOptionsSchema = z.object({
@@ -32,13 +36,22 @@ export const findOptionsSchema = z.object({
     sort: z
         .array(
             z.object({
-                field: z.string(),
+                field: z.string().refine(
+                    (f) => !DENIED_QUERY_FIELDS.includes(f),
+                    { message: 'Invalid sort field' }
+                ),
                 order: z.enum(['asc', 'desc']).default('asc')
             })
         )
         .optional(),
     filters: z
-        .record(z.string(), filterOperatorSchema)
+        .record(
+            z.string().refine(
+                (f) => !DENIED_QUERY_FIELDS.includes(f),
+                { message: 'Invalid filter field' }
+            ),
+            filterOperatorSchema
+        )
         .optional()
 });
 

@@ -46,13 +46,21 @@ export function buildPrismaPageQueryArray(
     return { skip, take, orderBy };
 }
 
+// Fields that must never appear in API responses regardless of ?fields= query param
+const DENIED_SELECT_FIELDS = new Set([
+    'password', 'profileImagePublicId', 'bannerImagePublicId',
+    'backgroundImagePublicId', 'token', 'secret'
+]);
+
 export function buildPrismaSelect(
     defaultFields: string[],
     fieldMappings: Record<string, any> = {},
     fields?: string[]
 ): Record<string, any> {
     const additionalFields =
-        fields && fields.length > 0 ? fields : [];
+        fields && fields.length > 0
+            ? fields.filter((f) => !DENIED_SELECT_FIELDS.has(f))
+            : [];
     const allFields = [
         ...new Set([...defaultFields, ...additionalFields])
     ];
