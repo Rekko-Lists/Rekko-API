@@ -119,7 +119,8 @@ const emailAuthService = new EmailAuthService(
 );
 const passwordAuthService = new PasswordAuthService(
     userRepository,
-    passwordAuthRepository
+    passwordAuthRepository,
+    emailHandler
 );
 const refreshTokenService = new RefreshTokenService(
     userRepository,
