@@ -4,7 +4,10 @@ import {
     FindOptions,
     FindRepository
 } from '../../schemas/find.schemas';
-import { ChallengeFilters } from '../../schemas/challenge/challenge.schemas';
+import {
+    ChallengeFilters,
+    ChallengeWithRelations
+} from '../../schemas/challenge/challenge.schemas';
 
 export interface ChallengeRepository {
     create(entity: Challenge): Promise<Challenge | null>;
@@ -12,11 +15,18 @@ export interface ChallengeRepository {
     findWithFilters(
         findOptions: FindOptions,
         filters?: ChallengeFilters
-    ): Promise<FindRepository<Challenge>>;
+    ): Promise<FindRepository<ChallengeWithRelations>>;
 
-    findByDate(date: string): Promise<Challenge[]>;
+    findByDate(date: string): Promise<ChallengeWithRelations[]>;
 
     deleteByDate(date: string): Promise<boolean>;
 
-    createBatch(challenges: Challenge[]): Promise<Challenge[]>;
+    createBatch(
+        challenges: Challenge[]
+    ): Promise<ChallengeWithRelations[]>;
+
+    update(
+        challengeId: number,
+        data: Record<string, any>
+    ): Promise<ChallengeWithRelations | null>;
 }

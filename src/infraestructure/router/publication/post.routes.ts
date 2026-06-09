@@ -6,6 +6,7 @@ import {
     deletePost,
     getPostsByUsername,
     getPostsByMalId,
+    getPopularPosts,
     likePost,
     unlikePost
 } from '../../../controllers/publication/post.controller';
@@ -48,6 +49,10 @@ router
         parseQueryOptions,
         getPostsByMalId
     );
+
+router
+    .route('/popular')
+    .get(optionalAuthMiddleware, getPopularPosts);
 
 router
     .route('/:postid')

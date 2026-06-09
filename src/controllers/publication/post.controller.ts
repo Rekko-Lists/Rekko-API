@@ -30,6 +30,25 @@ export const getPosts = catchAsync(
     }
 );
 
+export const getPopularPosts = catchAsync(
+    async (req: Request, res: Response) => {
+        const limit = parseWidgetLimit(req.query.limit);
+        const { services } = req.container!;
+        const userId = req.user?.userId;
+
+        const posts = await services.post.getPopularPosts(limit);
+        const formattedPosts =
+            await services.post.enrichPostsWithLikesStatus(
+                posts,
+                userId
+            );
+
+        ok(res, 'Popular posts found', {
+            posts: formattedPosts
+        });
+    }
+);
+
 export const getPost = catchAsync(
     async (req: Request, res: Response) => {
         const findOptions = (req as any).findOptions;
@@ -258,4 +277,12 @@ const parseAnimeIds = (animeIds: unknown): number[] => {
     }
 
     return [];
+};
+
+const parseWidgetLimit = (value: unknown): number => {
+    const limit = Number(value ?? 5);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+        throw new ValidationError('Invalid limit', { received: value });
+    }
+    return limit;
 };

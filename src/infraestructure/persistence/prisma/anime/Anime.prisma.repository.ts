@@ -112,7 +112,8 @@ export class AnimePrismaRepository implements AnimeRepository {
 
     async createTransactionErrorHandling(
         animesData: Array<any>
-    ): Promise<void> {
+    ): Promise<number[]> {
+        const createdMalIds: number[] = [];
         try {
             for (const animeData of animesData) {
                 try {
@@ -139,20 +140,21 @@ export class AnimePrismaRepository implements AnimeRepository {
                                 this.genreConnectOrCreate(genres)
                         }
                     });
+
+                    createdMalIds.push(animeDataWithoutRelations.malId);
                 } catch (error: any) {
-                    if (
-                        error?.code === 'P2002' &&
-                        error?.meta?.target?.includes('mal_id')
-                    ) {
+                    // Skip any unique-constraint violation — the anime
+                    // already exists (by malId, name, or another unique field).
+                    if (error?.code === 'P2002') {
                         continue;
-                    } else {
-                        throw error;
                     }
+                    throw error;
                 }
             }
         } catch (error) {
             handlePrismaError(error);
         }
+        return createdMalIds;
     }
 
     async updateAnime(
@@ -362,6 +364,172 @@ export class AnimePrismaRepository implements AnimeRepository {
             const animes = await this.db.anime.findMany({
                 where,
                 orderBy: { malRank: 'asc' },
+                include: {
+                    broadcast: true,
+                    ...GENRE_INCLUDE
+                }
+            });
+
+            return animes.map((anime: any) =>
+                Anime.fromPersistence(this.withGenres(anime))
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findTopSeasonal(
+        year: number,
+        season: string,
+        limit: number
+    ): Promise<Anime[]> {
+        try {
+            const monthRanges: Record<string, number[]> = {
+                winter: [1, 2, 3],
+                spring: [4, 5, 6],
+                summer: [7, 8, 9],
+                fall: [10, 11, 12]
+            };
+            const months = monthRanges[season.toLowerCase()];
+
+            const animes = await this.db.anime.findMany({
+                where: {
+                    startDate: {
+                        gte: new Date(Date.UTC(year, months[0] - 1, 1)),
+                        lt: new Date(Date.UTC(year, months[2], 1))
+                    }
+                },
+                orderBy: [{ malMean: 'desc' }, { malRank: 'asc' }],
+                take: limit,
+                include: {
+                    broadcast: true,
+                    ...GENRE_INCLUDE
+                }
+            });
+
+            return animes.map((anime: any) =>
+                Anime.fromPersistence(this.withGenres(anime))
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findPopularWeekly(
+        limit: number,
+        status?: string
+    ): Promise<Anime[]> {
+        try {
+            const weekStart = new Date();
+            weekStart.setUTCHours(0, 0, 0, 0);
+            const day = weekStart.getUTCDay();
+            weekStart.setUTCDate(
+                weekStart.getUTCDate() + (day === 0 ? -6 : 1 - day)
+            );
+
+            const records = await this.db.animeWeeklyActivity.findMany({
+                where: {
+                    weekStart,
+                    ...(status && { anime: { status } })
+                },
+                orderBy: [{ score: 'desc' }, { animeId: 'asc' }],
+                take: limit,
+                include: {
+                    anime: {
+                        include: {
+                            broadcast: true,
+                            ...GENRE_INCLUDE
+                        }
+                    }
+                }
+            });
+
+            return records.map((record: any) =>
+                Anime.fromPersistence(
+                    this.withGenres(record.anime)
+                )
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findAiringTodayJst(
+        dayOfWeek: string,
+        limit: number
+    ): Promise<Anime[]> {
+        try {
+            const animes = await this.db.anime.findMany({
+                where: {
+                    status: 'currently_airing',
+                    broadcast: {
+                        dayOfWeek: {
+                            equals: dayOfWeek,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                orderBy: [{ broadcast: { startTime: 'asc' } }, { malRank: 'asc' }],
+                take: limit,
+                include: {
+                    broadcast: true,
+                    ...GENRE_INCLUDE
+                }
+            });
+
+            return animes.map((anime: any) =>
+                Anime.fromPersistence(this.withGenres(anime))
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findWeeklyAiring(limit: number): Promise<Anime[]> {
+        try {
+            const animes = await this.db.anime.findMany({
+                where: {
+                    status: 'currently_airing',
+                    broadcast: {
+                        is: {
+                            dayOfWeek: { not: '' },
+                            startTime: { not: '' }
+                        }
+                    }
+                },
+                orderBy: [
+                    { broadcast: { dayOfWeek: 'asc' } },
+                    { broadcast: { startTime: 'asc' } },
+                    { malRank: 'asc' }
+                ],
+                take: limit,
+                include: {
+                    broadcast: true,
+                    ...GENRE_INCLUDE
+                }
+            });
+
+            return animes.map((anime: any) =>
+                Anime.fromPersistence(this.withGenres(anime))
+            );
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async findTopByStatus(
+        status: string,
+        limit: number
+    ): Promise<Anime[]> {
+        try {
+            const animes = await this.db.anime.findMany({
+                where: { status },
+                orderBy: [
+                    { malMean: 'desc' },
+                    { malRank: 'asc' },
+                    { members: 'desc' }
+                ],
+                take: limit,
                 include: {
                     broadcast: true,
                     ...GENRE_INCLUDE

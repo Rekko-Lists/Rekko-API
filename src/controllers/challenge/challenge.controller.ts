@@ -1,8 +1,13 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../../utils/http/catchAsync';
 import { ok } from '../../utils/http/response';
-import { challengeFiltersSchema } from '../../domain/schemas/challenge/challenge.schemas';
-import { ValidationError } from '../../exceptions/ValidationError';
+import {
+    challengeFiltersSchema,
+    dateStringSchema,
+    ChallengeWithRelations,
+    CreateChallengeDto
+} from '../../domain/schemas/challenge/challenge.schemas';
+import { ValidationError } from '../../exceptions/exceptions';
 import { ChallengeResponseMapper } from '../../infraestructure/services/challenge/challengeResponse.mapper';
 
 export const createChallenges = catchAsync(
@@ -23,29 +28,14 @@ export const createChallenges = catchAsync(
                 validated.date
             );
 
-        validateDateFormat(validated.date);
-
-        if (validated.challenges.length !== 4) {
-            throw new ValidationError(
-                'Exactly 4 challenges are required'
-            );
-        }
-
-        const createdChallenges =
+        const created =
             await services.challenge.createDailyChallenges({
                 date: validated.date,
                 challenges: enrichedChallenges
             });
 
-        const created =
-            await services.challenge.getChallengesByDate(
-                validated.date
-            );
-
         ok(res, 'Challenges created successfully', {
-            challenges: ChallengeResponseMapper.toDTOArray(
-                created
-            )
+            challenges: ChallengeResponseMapper.toDTOArray(created)
         });
     }
 );
@@ -98,9 +88,7 @@ export const getDailyChallenges = catchAsync(
 export const getChallengesByDate = catchAsync(
     async (req: Request, res: Response) => {
         const { services } = req.container!;
-        const date = req.params.date as string;
-
-        validateDateFormat(date);
+        const date = dateStringSchema.parse(req.params.date);
 
         const challenges =
             await services.challenge.getChallengesByDate(date);
@@ -117,9 +105,7 @@ export const getChallengesByDate = catchAsync(
 export const deleteChallengesByDate = catchAsync(
     async (req: Request, res: Response) => {
         const { services } = req.container!;
-        const date = req.params.date as string;
-
-        validateDateFormat(date);
+        const date = dateStringSchema.parse(req.params.date);
 
         await services.challenge.deleteChallengesByDate(date);
 
@@ -127,11 +113,79 @@ export const deleteChallengesByDate = catchAsync(
     }
 );
 
-const validateDateFormat = (date: string) => {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) {
-        throw new ValidationError(
-            'Invalid date format. Expected YYYY-MM-DD'
+export const updateChallenge = catchAsync(
+    async (req: Request, res: Response) => {
+        const { services, externalServices } = req.container!;
+        const challengeId = parseInt(
+            req.params.challengeId as string,
+            10
         );
+        if (isNaN(challengeId) || challengeId <= 0) {
+            throw new ValidationError(
+                'challengeId must be a positive integer'
+            );
+        }
+
+        const files = (req.files as Express.Multer.File[]) || [];
+
+        let dataToUpdate: Record<string, any> = {};
+
+        if (files.length > 0) {
+            if (!req.body?.type) {
+                throw new ValidationError(
+                    'Field "type" is required when uploading files'
+                );
+            }
+            const filesMap =
+                externalServices.challengeRequestParser.buildFilesMap(
+                    files
+                );
+            const fakeChallenge: CreateChallengeDto = {
+                type: req.body.type as
+                    | 'anime'
+                    | 'character'
+                    | 'opening'
+                    | 'emoji',
+                malId: 0,
+                data: {}
+            };
+            const date =
+                req.body.date ||
+                new Date().toISOString().split('T')[0];
+            const enriched =
+                await externalServices.challengeDataEnricher.enrichChallenge(
+                    fakeChallenge,
+                    filesMap,
+                    0,
+                    date
+                );
+            dataToUpdate = enriched.data;
+        } else if (req.body?.data) {
+            try {
+                dataToUpdate =
+                    typeof req.body.data === 'string'
+                        ? JSON.parse(req.body.data)
+                        : req.body.data;
+            } catch {
+                throw new ValidationError(
+                    'Invalid JSON in "data" field'
+                );
+            }
+        } else {
+            throw new ValidationError(
+                'No data provided for update. Send files or a "data" JSON field.'
+            );
+        }
+
+        const updated = await services.challenge.updateChallenge(
+            challengeId,
+            dataToUpdate
+        );
+
+        ok(res, 'Challenge updated successfully', {
+            challenge: ChallengeResponseMapper.toDTO(
+                updated as ChallengeWithRelations
+            )
+        });
     }
-};
+);

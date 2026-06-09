@@ -2,8 +2,10 @@ import { Challenge } from '../../domain/entities/Challenge';
 import { ChallengeRepository } from '../../domain/repositories/challenge/Challenge.repository';
 import { DayRepository } from '../../domain/repositories/challenge/Day.repository';
 import {
-    CreateDailyChallengesBatch,
-    ChallengeFilters
+    CHALLENGE_TYPE_IDS,
+    ChallengeFilters,
+    ChallengeWithRelations,
+    CreateDailyChallengesBatch
 } from '../../domain/schemas/challenge/challenge.schemas';
 import {
     NotFoundError,
@@ -24,21 +26,25 @@ export class ChallengeService {
 
     async createDailyChallenges(
         batch: CreateDailyChallengesBatch
-    ): Promise<Challenge[]> {
+    ): Promise<ChallengeWithRelations[]> {
         const existingChallenges =
-            await this.challengeRepository.findByDate(
-                batch.date
-            );
+            await this.challengeRepository.findByDate(batch.date);
 
-        if (existingChallenges.length > 0) {
-            throw new ValidationError(
-                `Challenges already exist for date ${batch.date}`
-            );
+        const existingTypes = new Set(
+            existingChallenges.map((c: any) =>
+                (c.type?.name ?? '').toUpperCase()
+            )
+        );
+
+        for (const challengeDto of batch.challenges) {
+            if (existingTypes.has(challengeDto.type.toUpperCase())) {
+                throw new ValidationError(
+                    `Challenge of type '${challengeDto.type}' already exists for date ${batch.date}`
+                );
+            }
         }
 
-        const day = await this.dayRepository.findOrCreate(
-            batch.date
-        );
+        const day = await this.dayRepository.findOrCreate(batch.date);
 
         if (!day || day.getDayId() <= 0) {
             throw new ValidationError(
@@ -47,20 +53,11 @@ export class ChallengeService {
         }
 
         const challengesToCreate: Challenge[] = [];
-        const typeMap: Record<string, number> = {
-            anime: 1,
-            character: 2,
-            opening: 3,
-            emoji: 4
-        };
 
-        for (let i = 0; i < batch.challenges.length; i++) {
-            const challengeDto = batch.challenges[i];
-
-            const anime =
-                await this.animeService.getAnimeByMalId(
-                    challengeDto.malId
-                );
+        for (const challengeDto of batch.challenges) {
+            const anime = await this.animeService.getAnimeByMalId(
+                challengeDto.malId
+            );
 
             if (!anime || anime.getAnimeId() <= 0) {
                 throw new ValidationError(
@@ -68,60 +65,65 @@ export class ChallengeService {
                 );
             }
 
-            const typeId = typeMap[challengeDto.type] || 1;
+            const typeId = CHALLENGE_TYPE_IDS[challengeDto.type];
 
-            if (typeId <= 0 || typeId > 4) {
-                throw new ValidationError(
-                    `Invalid typeId: ${typeId}`
-                );
-            }
-
-            const challenge = Challenge.create(
-                typeId,
-                day.getDayId(),
-                anime.getAnimeId(),
-                challengeDto.data || {}
+            challengesToCreate.push(
+                Challenge.create(
+                    typeId,
+                    day.getDayId(),
+                    anime.getAnimeId(),
+                    challengeDto.data || {}
+                )
             );
-
-            challengesToCreate.push(challenge);
         }
 
-        const created =
-            await this.challengeRepository.createBatch(
-                challengesToCreate
-            );
+        return this.challengeRepository.createBatch(challengesToCreate);
+    }
 
-        return created;
+    async updateChallenge(
+        challengeId: number,
+        data: Record<string, any>
+    ): Promise<ChallengeWithRelations> {
+        const updated =
+            await this.challengeRepository.update(
+                challengeId,
+                data
+            );
+        if (!updated) {
+            throw new NotFoundError(
+                `Challenge with id ${challengeId} not found`
+            );
+        }
+        return updated;
     }
 
     async getChallenges(
         findOptions: FindOptions,
         filters?: ChallengeFilters
-    ): Promise<FindRepository<any>> {
-        return await (
-            this.challengeRepository as any
-        ).findWithFilters(findOptions, filters);
+    ): Promise<FindRepository<ChallengeWithRelations>> {
+        return this.challengeRepository.findWithFilters(
+            findOptions,
+            filters
+        );
     }
 
-    async getDailyChallenges(): Promise<any[]> {
+    async getDailyChallenges(): Promise<ChallengeWithRelations[]> {
         const today = new Date().toISOString().split('T')[0];
-        const challenges = await (
-            this.challengeRepository as any
-        ).findByDate(today);
+        const challenges =
+            await this.challengeRepository.findByDate(today);
 
         if (challenges.length === 0) {
-            throw new NotFoundError(
-                'No challenges found for today'
-            );
+            throw new NotFoundError('No challenges found for today');
         }
 
         return challenges;
     }
 
-    async getChallengesByDate(date: string): Promise<any[]> {
-        const challenges = await (
-            this.challengeRepository as any
-        ).findByDate(date);
+    async getChallengesByDate(
+        date: string
+    ): Promise<ChallengeWithRelations[]> {
+        const challenges =
+            await this.challengeRepository.findByDate(date);
 
         if (challenges.length === 0) {
             throw new NotFoundError(
@@ -132,16 +134,12 @@ export class ChallengeService {
         return challenges;
     }
 
-    async deleteChallengesByDate(
-        date: string
-    ): Promise<boolean> {
+    async deleteChallengesByDate(date: string): Promise<boolean> {
         const deleted =
             await this.challengeRepository.deleteByDate(date);
 
         if (!deleted) {
-            throw new NotFoundError(
-                `No challenges for ${date}.`
-            );
+            throw new NotFoundError(`No challenges for ${date}.`);
         }
         return deleted;
     }

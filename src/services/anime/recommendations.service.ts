@@ -97,6 +97,20 @@ export class RecommendationsService {
                 counts
             };
         } catch (error) {
+            const err = error as any;
+            // Pool exhaustion or missing table (migrations pending) — degrade
+            // gracefully so the anime detail page still renders.
+            if (!err?.code?.startsWith('P2')) {
+                console.error(
+                    '[Recommendations] getAnimesRelatedViaPosts degraded:',
+                    err?.message ?? err
+                );
+                return {
+                    data: [],
+                    pagination: { page, limit, total: 0, pages: 0 },
+                    counts: new Map()
+                };
+            }
             handlePrismaError(error);
         }
     }

@@ -12,7 +12,7 @@ import {
 
 export class MalService {
     private readonly animeFields =
-        'id,title,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type,average_episode_duration,start_season,rating,related_anime';
+        'id,title,alternative_titles,synopsis,main_picture,start_date,end_date,mean,rank,num_episodes,status,studios,genres,broadcast,media_type,average_episode_duration,start_season,rating,related_anime';
 
     /**
      * In-memory TTL cache for MAL trending results.

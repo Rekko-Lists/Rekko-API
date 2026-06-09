@@ -87,7 +87,9 @@ export class CommentPrismaRepository implements CommentRepository {
                                 profileImage: true
                             }
                         },
-                        replies: true
+                        _count: {
+                            select: { replies: true }
+                        }
                     }
                 }),
                 this.db.comment.count({
@@ -132,7 +134,9 @@ export class CommentPrismaRepository implements CommentRepository {
                                 profileImage: true
                             }
                         },
-                        replies: true
+                        _count: {
+                            select: { replies: true }
+                        }
                     }
                 }),
                 this.db.comment.count({
@@ -153,7 +157,7 @@ export class CommentPrismaRepository implements CommentRepository {
 
     private formatComments(comments: any[]): Comment[] {
         return comments.map((comment: any) => {
-            const replyCount = comment.replies?.length || 0;
+            const replyCount = comment._count?.replies || 0;
             return Comment.fromPersistence({
                 commentId: comment.commentId,
                 userId: comment.userId,

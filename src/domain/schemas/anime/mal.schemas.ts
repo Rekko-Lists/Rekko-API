@@ -34,6 +34,14 @@ export type MalTokenResult = z.infer<
 export const malAnimeDataSchema = z.object({
     id: z.number(),
     title: z.string(),
+    alternative_titles: z
+        .object({
+            synonyms: z.array(z.string()).optional(),
+            en: z.string().nullable().optional(),
+            ja: z.string().nullable().optional()
+        })
+        .nullable()
+        .optional(),
     synopsis: z.string().nullable().optional(),
     main_picture: z
         .object({
@@ -70,10 +78,7 @@ export const malAnimeDataSchema = z.object({
         })
         .optional(),
     media_type: z.string().optional(),
-    average_episode_duration: z
-        .number()
-        .nullable()
-        .optional(),
+    average_episode_duration: z.number().nullable().optional(),
     start_season: z
         .object({
             year: z.number().optional(),
@@ -90,7 +95,10 @@ export const malAnimeDataSchema = z.object({
                     title: z.string(),
                     main_picture: z
                         .object({
-                            medium: z.url().nullable().optional(),
+                            medium: z
+                                .url()
+                                .nullable()
+                                .optional(),
                             large: z.url().nullable().optional()
                         })
                         .optional()

@@ -67,7 +67,7 @@ export const uploadChallengesMiddleware = multer({
     storage,
     fileFilter: challengeFileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 10MB para audio
+        fileSize: 10 * 1024 * 1024 // 10MB para audio MP3
     }
 });
 

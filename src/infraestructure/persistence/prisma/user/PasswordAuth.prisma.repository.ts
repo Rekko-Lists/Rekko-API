@@ -28,12 +28,6 @@ export class PasswordAuthPrismaRepository implements PasswordAuthRepository<User
             const expiresAt = new Date(decoded.exp * 1000);
 
             if (existingRequest) {
-                if (existingRequest.confirmed) {
-                    throw new TokenAlreadyUsedError(
-                        'Password change already confirmed'
-                    );
-                }
-
                 await this.db.passwordChangeRequest.update({
                     where: { userId },
                     data: {
@@ -87,6 +81,12 @@ export class PasswordAuthPrismaRepository implements PasswordAuthRepository<User
                 );
             }
 
+            if (passwordReq.confirmed) {
+                throw new TokenAlreadyUsedError(
+                    'Password change token already used'
+                );
+            }
+
             const user = await this.db.user.update({
                 where: { userId },
                 data: { password: passwordHash }
@@ -101,7 +101,8 @@ export class PasswordAuthPrismaRepository implements PasswordAuthRepository<User
         } catch (error) {
             if (
                 error instanceof InvalidTokenError ||
-                error instanceof TokenExpiredError
+                error instanceof TokenExpiredError ||
+                error instanceof TokenAlreadyUsedError
             ) {
                 throw error;
             }

@@ -18,7 +18,7 @@ export interface AnimeRepository {
 
     createTransactionErrorHandling(
         animesData: Array<any>
-    ): Promise<void>;
+    ): Promise<number[]>;
 
     updateAnime(
         malId: number,
@@ -37,6 +37,20 @@ export interface AnimeRepository {
     findByMalId(malId: number): Promise<Anime | null>;
 
     findBySeason(year: number, season: string): Promise<Anime[]>;
+
+    findTopSeasonal(
+        year: number,
+        season: string,
+        limit: number
+    ): Promise<Anime[]>;
+
+    findPopularWeekly(limit: number, status?: string): Promise<Anime[]>;
+
+    findAiringTodayJst(dayOfWeek: string, limit: number): Promise<Anime[]>;
+
+    findWeeklyAiring(limit: number): Promise<Anime[]>;
+
+    findTopByStatus(status: string, limit: number): Promise<Anime[]>;
 
     findExistingMalIds(malIds: number[]): Promise<number[]>;
 

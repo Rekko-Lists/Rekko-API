@@ -21,16 +21,18 @@ export class PasswordAuthService {
         const user =
             await this.userRepository.findByUsername(username);
 
+        if (!user) return;
+
         const token = sign10MinToken('change-password');
 
         await this.passwordAuthRepository.updatePasswordRequest(
-            user!.getUserId(),
+            user.getUserId(),
             token
         );
 
         await this.emailHandler.sendChangePasswordConfirmation(
-            user!.getEmail(),
-            user!.getUsername(),
+            user.getEmail(),
+            user.getUsername(),
             token
         );
     }

@@ -33,6 +33,8 @@ export interface PostRepository {
         findOptions: FindOptions
     ): Promise<FindRepository<Post>>;
 
+    findPopularWeekly(limit: number): Promise<Post[]>;
+
     delete(where: PostWhereUnique): Promise<boolean>;
 
     searchByTitle(query: string, limit: number): Promise<Post[]>;

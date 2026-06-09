@@ -67,19 +67,14 @@ export class PostService {
         const result =
             await this.postRepository.find(findOptions);
 
-        if (
-            !result ||
-            !result.data ||
-            result.data.length === 0
-        ) {
-            throw new NotFoundError('No posts found');
-        }
-
         const maxPages = Math.ceil(
             result.total / findOptions.pagination.limit
         );
 
-        if (findOptions.pagination.page > maxPages) {
+        if (
+            maxPages > 0 &&
+            findOptions.pagination.page > maxPages
+        ) {
             throw new NotFoundError(
                 `Page ${findOptions.pagination.page} does not exist. Max pages: ${maxPages}`
             );
@@ -206,6 +201,10 @@ export class PostService {
         };
     }
 
+    async getPopularPosts(limit: number): Promise<Post[]> {
+        return this.postRepository.findPopularWeekly(limit);
+    }
+
     /**
      * Variante de `getPostsByMalId` para la vista de detalle de anime.
      * - Devuelve `data: []` con `total: 0` en lugar de lanzar NotFoundError
@@ -258,6 +257,8 @@ export class PostService {
             description: post.getDescription(),
             photo: post.getPhoto(),
             likes: post.getLikes(),
+            createdAt: post.getCreatedAt(),
+            commentCount: post.getCommentCount(),
             userId: post.getUserId(),
             user: post.getUser(),
             animes: post.getAnimes(),

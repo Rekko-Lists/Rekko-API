@@ -45,6 +45,7 @@ import {
     validateImageType
 } from '../../../middlewares/upload.middleware';
 import { ownershipMiddleware } from '../../../middlewares/ownership.middleware';
+import { roleMiddleware } from '../../../middlewares/role.middleware';
 
 const router = Router();
 
@@ -106,7 +107,10 @@ router.route('/:username/reset-password').post(resetPassword);
 
 router
     .route('/:username/reputation')
-    .patch(ownershipMiddleware, patchReputation);
+    .patch(
+        roleMiddleware(['ADMIN', 'MODERATOR']),
+        patchReputation
+    );
 
 router
     .route('/:username/upload-profile-image')

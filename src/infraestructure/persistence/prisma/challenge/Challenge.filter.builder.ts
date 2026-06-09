@@ -1,19 +1,16 @@
-import { ChallengeFilters } from '../../../../domain/schemas/challenge/challenge.schemas';
+import {
+    CHALLENGE_TYPE_IDS,
+    ChallengeFilters
+} from '../../../../domain/schemas/challenge/challenge.schemas';
 import { prisma } from '../../../database/prisma.client';
 
 export class ChallengeFilterBuilder {
-    private readonly typeMap: Record<string, number> = {
-        anime: 1,
-        character: 2,
-        opening: 3,
-        emoji: 4
-    };
 
     async build(filters: ChallengeFilters): Promise<any> {
         const where: any = {};
 
         if (filters.type) {
-            where.typeId = this.typeMap[filters.type];
+            where.typeId = CHALLENGE_TYPE_IDS[filters.type];
         }
 
         if (filters.fromDate || filters.toDate) {
