@@ -88,16 +88,50 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
 </html>`;
 }
 
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+
+interface SendOptions {
+    from: string;
+    to: string;
+    subject: string;
+    html: string;
+}
+
+/**
+ * Envia emails por dos vias, elegidas por entorno:
+ *
+ * 1. **Brevo HTTP API** (si existe `BREVO_API_KEY`) — recomendado en
+ *    produccion: gratis (300 emails/dia), va por HTTPS (Railway bloquea
+ *    los puertos SMTP en planes trial) y solo requiere verificar el email
+ *    del remitente en Brevo, sin dominio propio.
+ * 2. **SMTP via nodemailer** (fallback) — util en desarrollo local
+ *    (p. ej. Gmail con app password).
+ */
 export class EmailHandler {
-    private transporter: Transporter;
+    private transporter: Transporter | null = null;
+    private readonly brevoApiKey =
+        process.env.BREVO_API_KEY?.trim() || undefined;
 
     constructor() {
+        if (this.brevoApiKey) {
+            console.log(
+                `[mailer] using Brevo HTTP API (sender: ${this.getSender().email})`
+            );
+            return;
+        }
+
+        const port = Number(process.env.MAIL_PORT) || 587;
+        // 465 = TLS implícito (secure:true); 587 = STARTTLS (secure:false + requireTLS).
+        // Con secure:false fijo, MAIL_PORT=465 cuelga el handshake TLS en producción.
+        const secure = port === 465;
+
         const transportOptions: SMTPTransport.Options & {
             family: 4;
         } = {
             host: process.env.MAIL_HOST,
-            port: Number(process.env.MAIL_PORT) || 587,
-            secure: false,
+            port,
+            secure,
+            requireTLS: !secure,
             family: 4,
             connectionTimeout: 15_000,
             greetingTimeout: 15_000,
@@ -110,6 +144,102 @@ export class EmailHandler {
 
         this.transporter =
             nodemailer.createTransport(transportOptions);
+
+        // Valida credenciales y conectividad SMTP al arrancar para que un fallo
+        // de config aparezca en los logs del deploy, no como 500 en el primer envío.
+        this.transporter
+            .verify()
+            .then(() => {
+                console.log(
+                    `[mailer] SMTP ready (${process.env.MAIL_HOST}:${port}, secure=${secure}, user=${process.env.MAIL_USER})`
+                );
+            })
+            .catch((err: unknown) => {
+                console.error(
+                    '[mailer] SMTP verify FAILED — los emails no se enviaran:',
+                    err instanceof Error ? err.message : err
+                );
+            });
+    }
+
+    /**
+     * Gmail rechaza o reescribe el From si no coincide con la cuenta
+     * autenticada (o un alias registrado en ella). Si MAIL_FROM no esta
+     * definido se usa MAIL_USER con nombre visible.
+     */
+    private getFrom(): string {
+        return (
+            process.env.MAIL_FROM ||
+            `"Rekko" <${process.env.MAIL_USER}>`
+        );
+    }
+
+    /**
+     * Remitente para Brevo: acepta MAIL_FROM en formato `"Nombre" <mail>`
+     * o email plano; si no hay MAIL_FROM usa MAIL_USER. El email debe estar
+     * verificado como sender en la cuenta de Brevo.
+     */
+    private getSender(): { name: string; email: string } {
+        const raw = (
+            process.env.MAIL_FROM ||
+            process.env.MAIL_USER ||
+            ''
+        ).trim();
+        const match = raw.match(/^"?([^"<]*)"?\s*<([^>]+)>$/);
+        if (match) {
+            return {
+                name: match[1].trim() || 'Rekko',
+                email: match[2].trim()
+            };
+        }
+        return { name: 'Rekko', email: raw };
+    }
+
+    private async sendViaBrevo(
+        options: SendOptions
+    ): Promise<void> {
+        const response = await fetch(BREVO_API_URL, {
+            method: 'POST',
+            headers: {
+                'api-key': this.brevoApiKey!,
+                'content-type': 'application/json',
+                accept: 'application/json'
+            },
+            body: JSON.stringify({
+                sender: this.getSender(),
+                to: [{ email: options.to }],
+                subject: options.subject,
+                htmlContent: options.html
+            })
+        });
+
+        if (!response.ok) {
+            const body = await response
+                .text()
+                .catch(() => '<sin cuerpo>');
+            throw new Error(
+                `Brevo API ${response.status}: ${body}`
+            );
+        }
+    }
+
+    private async send(options: SendOptions): Promise<void> {
+        try {
+            if (this.brevoApiKey) {
+                await this.sendViaBrevo(options);
+            } else {
+                await this.transporter!.sendMail(options);
+            }
+            console.log(
+                `[mailer] sent "${options.subject}" to ${options.to}`
+            );
+        } catch (err: unknown) {
+            console.error(
+                `[mailer] FAILED "${options.subject}" to ${options.to}:`,
+                err instanceof Error ? err.message : err
+            );
+            throw err;
+        }
     }
 
     async sendVerifyEmail(
@@ -128,8 +258,8 @@ export class EmailHandler {
             params: { token }
         });
 
-        await this.transporter.sendMail({
-            from: process.env.MAIL_FROM,
+        await this.send({
+            from: this.getFrom(),
             to: email,
             subject: 'Verifica tu correo electronico — Rekko',
             html: buildEmailHtml({
@@ -161,8 +291,8 @@ export class EmailHandler {
             params: { token }
         });
 
-        await this.transporter.sendMail({
-            from: process.env.MAIL_FROM,
+        await this.send({
+            from: this.getFrom(),
             to: email,
             subject: 'Confirma tu cambio de email — Rekko',
             html: buildEmailHtml({
@@ -193,8 +323,8 @@ export class EmailHandler {
             params: { token, username }
         });
 
-        await this.transporter.sendMail({
-            from: process.env.MAIL_FROM,
+        await this.send({
+            from: this.getFrom(),
             to: email,
             subject: 'Restablece tu contraseña — Rekko',
             html: buildEmailHtml({
