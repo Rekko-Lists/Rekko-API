@@ -149,3 +149,21 @@ export const getUserById = catchAsync(
         ok(res, 'User found', user);
     }
 );
+
+export const completeDaily = catchAsync(
+    async (req: Request, res: Response) => {
+        const { services } = req.container!;
+        const username = req.params.username as string;
+
+        const result =
+            await services.user.completeDailyChallenge(username);
+
+        ok(
+            res,
+            result.alreadyCompleted
+                ? 'Daily already completed today'
+                : 'Daily completed, streak updated',
+            result
+        );
+    }
+);

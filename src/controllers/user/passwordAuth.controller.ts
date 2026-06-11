@@ -1,10 +1,36 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 
 import { catchAsync } from '../../utils/http/catchAsync';
 import { buildUrl } from '../../utils/http/redirect';
+import { ok } from '../../utils/http/response';
 
 import { userResetPassword } from '../../domain/schemas/user/user.schemas';
 import { AppError } from '../../exceptions/exceptions';
+
+const forgotPasswordByEmailSchema = z.object({
+    email: z.string().email()
+});
+
+/**
+ * Flujo "Forgot password?" del login: el SPA envía solo el email. Responde
+ * SIEMPRE 200 con el mismo mensaje, exista o no la cuenta (anti-enumeración).
+ */
+export const forgotPasswordByEmail = catchAsync(
+    async (req: Request, res: Response) => {
+        const { services } = req.container!;
+        const { email } = forgotPasswordByEmailSchema.parse(
+            req.body
+        );
+
+        await services.passwordAuth.forgotPasswordByEmail(email);
+
+        ok(
+            res,
+            'If an account exists for that email, a reset link has been sent.'
+        );
+    }
+);
 
 export const forgotPassword = catchAsync(
     async (req: Request, res: Response) => {

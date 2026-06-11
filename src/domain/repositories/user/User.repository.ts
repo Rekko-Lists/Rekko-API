@@ -12,6 +12,8 @@ export interface UserRepository<User> extends Repository<
 > {
     findByUsername(username: string): Promise<User | null>;
 
+    findByEmail(email: string): Promise<User | null>;
+
     updateUsername(
         userId: number,
         username: string
@@ -35,4 +37,10 @@ export interface UserRepository<User> extends Repository<
     searchByName(query: string, limit: number): Promise<User[]>;
 
     resetStreak(userId: number): Promise<User | null>;
+
+    setStreak(
+        userId: number,
+        streak: number,
+        streakUpdatedAt: Date
+    ): Promise<User | null>;
 }
