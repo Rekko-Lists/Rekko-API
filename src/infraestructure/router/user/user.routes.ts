@@ -13,7 +13,8 @@ import {
     changeUsername,
     socialAccounts,
     patchReputation,
-    getUserById
+    getUserById,
+    completeDaily
 } from '../../../controllers/user/user.controller';
 import {
     changeEmail,
@@ -111,6 +112,10 @@ router
         roleMiddleware(['ADMIN', 'MODERATOR']),
         patchReputation
     );
+
+router
+    .route('/:username/complete-daily')
+    .post(ownershipMiddleware, completeDaily);
 
 router
     .route('/:username/upload-profile-image')

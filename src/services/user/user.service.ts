@@ -17,11 +17,33 @@ import {
     PaginatedResponse
 } from '../../domain/schemas/find.schemas';
 
-const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+/**
+ * Diferencia en días-calendario UTC entre dos fechas. El "día" del Animedle
+ * se define en UTC (los retos diarios usan `new Date().toISOString()`), así que
+ * la racha usa la misma referencia para que ambos cuadren.
+ *  0 = mismo día, 1 = ayer, >=2 = se saltó al menos un día completo.
+ */
+function utcDayDiff(from: Date, to: Date): number {
+    const a = Date.UTC(
+        from.getUTCFullYear(),
+        from.getUTCMonth(),
+        from.getUTCDate()
+    );
+    const b = Date.UTC(
+        to.getUTCFullYear(),
+        to.getUTCMonth(),
+        to.getUTCDate()
+    );
+    return Math.floor((b - a) / (24 * 60 * 60 * 1000));
+}
 
+/**
+ * La racha se considera caducada cuando la última actualización fue antes de
+ * ayer (se perdió al menos un día completo). Si fue hoy o ayer sigue viva.
+ */
 function isStreakStale(streakUpdatedAt: Date | null): boolean {
     if (!streakUpdatedAt) return false;
-    return Date.now() - streakUpdatedAt.getTime() > TWENTY_FOUR_HOURS_MS;
+    return utcDayDiff(streakUpdatedAt, new Date()) >= 2;
 }
 
 export class UserService {
@@ -130,6 +152,14 @@ export class UserService {
 
         const id = user.getUserId();
 
+        // Consultar el perfil también comprueba la racha: si caducó (se saltó
+        // un día), se resetea antes de proyectar para no devolver un valor
+        // obsoleto. La proyección por `fields` puede no incluir streakUpdatedAt,
+        // por eso se evalúa sobre la entidad completa de findByUsername.
+        if (isStreakStale(user.getStreakUpdatedAt())) {
+            await this.userRepository.resetStreak(id);
+        }
+
         const userData = await this.userRepository.findById(
             id,
             fields
@@ -207,5 +237,44 @@ export class UserService {
             user!.getUserId(),
             reason
         );
+    }
+
+    /**
+     * Suma un punto de racha al completar el Animedle del día. Guard
+     * server-side anti-trampas: si la racha ya se actualizó hoy no vuelve a
+     * sumar (idempotente, devuelve `alreadyCompleted: true`). Si el último día
+     * jugado fue ayer continúa la racha; si fue antes (o nunca) empieza en 1.
+     */
+    async completeDailyChallenge(
+        username: string
+    ): Promise<{ streak: number; alreadyCompleted: boolean }> {
+        const user =
+            await this.userRepository.findByUsername(username);
+
+        if (!user) throw new NotFoundError('User not found.');
+
+        const last = user.getStreakUpdatedAt();
+        const now = new Date();
+
+        if (last && utcDayDiff(last, now) === 0) {
+            return {
+                streak: user.getStreak(),
+                alreadyCompleted: true
+            };
+        }
+
+        const continues = last !== null && utcDayDiff(last, now) === 1;
+        const newStreak = continues ? user.getStreak() + 1 : 1;
+
+        const updated = await this.userRepository.setStreak(
+            user.getUserId(),
+            newStreak,
+            now
+        );
+
+        return {
+            streak: updated?.getStreak() ?? newStreak,
+            alreadyCompleted: false
+        };
     }
 }

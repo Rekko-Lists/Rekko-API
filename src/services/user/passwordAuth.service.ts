@@ -21,6 +21,23 @@ export class PasswordAuthService {
         const user =
             await this.userRepository.findByUsername(username);
 
+        await this.sendResetForUser(user);
+    }
+
+    /**
+     * Variante por email (la usa el flujo "Forgot password?" del login, que
+     * solo conoce el email). No revela si el email existe: si no hay usuario
+     * termina en silencio, para no permitir enumeración de cuentas.
+     */
+    async forgotPasswordByEmail(email: string): Promise<void> {
+        const user = await this.userRepository.findByEmail(email);
+
+        await this.sendResetForUser(user);
+    }
+
+    private async sendResetForUser(
+        user: User | null
+    ): Promise<void> {
         if (!user) return;
 
         const token = sign10MinToken('change-password');

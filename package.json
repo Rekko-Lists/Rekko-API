@@ -7,6 +7,7 @@
         "migrate": "prisma migrate deploy",
         "start": "node dist/server.js",
         "dev": "nodemon --watch src --ext ts,json --exec tsx src/server.ts",
+        "mal:auth": "tsx scripts/mal-auth.ts",
         "format": "prettier . --write",
         "format:check": "prettier . --check"
     },
@@ -19,6 +20,7 @@
         "@types/nodemailer": "^8.0.0",
         "@types/sharp": "^0.31.1",
         "nodemon": "^3.1.14",
+        "playwright": "^1.49.0",
         "prettier": "^3.8.1",
         "prisma": "^6.19.3",
         "tsx": "^4.21.0"

@@ -155,6 +155,20 @@ export class UserPrismaRepository implements UserRepository<User> {
             handlePrismaError(error);
         }
     }
+
+    async findByEmail(email: string): Promise<User | null> {
+        try {
+            const user = await this.db.user.findUnique({
+                where: { email }
+            });
+
+            if (!user) return null;
+
+            return User.fromPersistence(user);
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
     async updateUsername(
         userId: number,
         username: string
@@ -283,11 +297,30 @@ export class UserPrismaRepository implements UserRepository<User> {
 
     async resetStreak(userId: number): Promise<User | null> {
         try {
+            // streakUpdatedAt vuelve a null para no bloquear que el usuario
+            // gane racha hoy: tras un reset, completar el reto empieza en 1.
             const user = await this.db.user.update({
                 data: {
                     streak: 0,
-                    streakUpdatedAt: new Date()
+                    streakUpdatedAt: null
                 },
+                where: { userId }
+            });
+
+            return User.fromPersistence(user);
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
+    async setStreak(
+        userId: number,
+        streak: number,
+        streakUpdatedAt: Date
+    ): Promise<User | null> {
+        try {
+            const user = await this.db.user.update({
+                data: { streak, streakUpdatedAt },
                 where: { userId }
             });
 

@@ -101,7 +101,7 @@ export const authAuthMiddleware = (
     res: Response,
     next: NextFunction
 ): void => {
-    const paths = ['/login', '/refresh'];
+    const paths = ['/login', '/refresh', '/forgot-password'];
 
     if (paths.includes(req.path) && req.method === 'POST')
         return next();
