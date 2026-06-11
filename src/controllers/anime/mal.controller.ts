@@ -9,10 +9,11 @@ export const getAuthUrl = catchAsync(
     async (req: Request, res: Response) => {
         const { externalServices } = req.container!;
         const state = randomUUID();
-        const redirectUri =
+        const baseUrl =
             process.env.NODE_ENV === 'development'
-                ? `${process.env.APP_URL_DEV}:${process.env.SERVER_PORT}/mal/auth/callback`
-                : `${process.env.APP_URL_PROD}/mal/auth/callback`;
+                ? `${process.env.APP_URL_DEV}:${process.env.SERVER_PORT}`
+                : (process.env.APP_URL_PROD ?? '').replace(/\/$/, '');
+        const redirectUri = `${baseUrl}/mal/auth/callback`;
 
         const authUrl =
             externalServices.malAuth.getAuthorizationUrl(
