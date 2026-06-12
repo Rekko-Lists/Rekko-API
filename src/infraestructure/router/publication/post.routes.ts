@@ -21,6 +21,7 @@ import {
     authMiddleware,
     optionalAuthMiddleware
 } from '../../../middlewares/auth.middleware';
+import { emailVerifyMiddleware } from '../../../middlewares/emailVerify.middleware';
 
 const router = Router();
 
@@ -29,6 +30,9 @@ router
     .get(optionalAuthMiddleware, parseQueryOptions, getPosts)
     .post(
         authMiddleware,
+        // Solo posts/comments requieren email verificado (contenido publico);
+        // likes, ratings y watch-list quedan libres a proposito.
+        emailVerifyMiddleware,
         uploadMiddleware.single('postImage'),
         validateImageType('postImage'),
         postPost

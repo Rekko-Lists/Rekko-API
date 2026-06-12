@@ -211,10 +211,11 @@ export const userSelectableField = z.enum([
 export const userRole = z.enum(['USER', 'MODERATOR', 'ADMIN']);
 export type UserRole = z.infer<typeof userRole>;
 
+// 'email' excluido a proposito: las rutas que usan este select son publicas.
+// El propio usuario obtiene su email autenticado via GET /auth/me.
 export const userDefaultSelect = [
     'userId',
     'username',
-    'email',
     'profileImage',
     'bannerImage',
     'backgroundImage',

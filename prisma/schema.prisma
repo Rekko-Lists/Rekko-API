@@ -7,6 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Tabla de una sola fila (id = 1) con el token OAuth de MyAnimeList.
+// Sustituye al archivo .mal-token.json, que se perdia en cada redeploy
+// de Railway por el filesystem efimero.
+model MalToken {
+  id           Int      @id @default(1)
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    BigInt   @map("expires_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("mal_token")
+}
+
 model RefreshToken {
   refreshTokenId Int       @id @default(autoincrement()) @map("refresh_token_id")
   userId         Int       @map("user_id")

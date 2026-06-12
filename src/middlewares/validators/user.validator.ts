@@ -45,7 +45,18 @@ export const validateUserQuery = (
         .findOptions as FindOptions;
 
     if (findOptions.select) {
-        findOptions.select.forEach((field: string) => {
+        // Strip silencioso (sin 400) de campos sensibles en rutas publicas:
+        // clientes antiguos que aun pidan email siguen funcionando sin recibirlo.
+        findOptions.select = findOptions.select.filter(
+            (field: string) => field !== 'email'
+        );
+
+        // Si solo pedia email, cae al select por defecto.
+        if (findOptions.select.length === 0) {
+            findOptions.select = undefined;
+        }
+
+        findOptions.select?.forEach((field: string) => {
             userSelectableField.parse(field);
         });
     }

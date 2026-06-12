@@ -135,8 +135,10 @@ export class AnimeService {
             return dbAnime;
         }
 
+        // Fetch inline (el usuario espera la respuesta): timeout corto.
+        // El refresh en background mantiene el default de 15s.
         const malAnime =
-            await this.malService.getAnimeById(malId);
+            await this.malService.getAnimeById(malId, 5000);
         const mappedAnime =
             this.malService.mapMalToAnime(malAnime);
 

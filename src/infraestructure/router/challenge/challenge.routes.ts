@@ -14,9 +14,16 @@ import { uploadChallengesMiddleware } from '../../../middlewares/upload.middlewa
 
 const router = Router();
 
+// Los GET de listado/por-fecha exponen las respuestas del Animedle:
+// solo ADMIN. El juego publico consume unicamente /daily.
 router
     .route('/')
-    .get(parseQueryOptions, getChallenges)
+    .get(
+        authMiddleware,
+        roleMiddleware(['ADMIN']),
+        parseQueryOptions,
+        getChallenges
+    )
     .post(
         authMiddleware,
         roleMiddleware(['ADMIN']),
@@ -28,7 +35,11 @@ router.route('/daily').get(getDailyChallenges);
 
 router
     .route('/:date')
-    .get(getChallengesByDate)
+    .get(
+        authMiddleware,
+        roleMiddleware(['ADMIN']),
+        getChallengesByDate
+    )
     .delete(
         authMiddleware,
         roleMiddleware(['ADMIN']),

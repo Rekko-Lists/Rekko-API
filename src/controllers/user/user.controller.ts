@@ -146,7 +146,21 @@ export const getUserById = catchAsync(
 
         const user = await services.user.getUserById(id);
 
-        ok(res, 'User found', user);
+        // Ruta publica: solo datos de perfil. El email del propio usuario
+        // se obtiene autenticado via GET /auth/me.
+        ok(res, 'User found', {
+            userId: user.getUserId(),
+            username: user.getUsername(),
+            reputation: user.getReputation(),
+            profileImage: user.getProfileImage(),
+            bannerImage: user.getBannerImage(),
+            backgroundImage: user.getBackgroundImage(),
+            role: user.getRole(),
+            emailVerified: user.getEmailVerified(),
+            createdAt: user.getCreatedAt(),
+            biography: user.getBiography(),
+            streak: user.getStreak()
+        });
     }
 );
 
