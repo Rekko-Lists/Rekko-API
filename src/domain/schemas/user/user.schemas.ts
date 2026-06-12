@@ -65,7 +65,6 @@ export type UserWhereUnique = z.infer<
 
 export const userUpdateUsername = z
     .object({
-        email: z.email('Email must be valid'),
         username: z.string().min(1, 'Username is required')
     })
     .strict();
