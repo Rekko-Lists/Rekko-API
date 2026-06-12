@@ -97,7 +97,10 @@ export class MalService {
         return result;
     }
 
-    async getAnimeById(malId: number): Promise<MalAnime> {
+    async getAnimeById(
+        malId: number,
+        timeoutMs?: number
+    ): Promise<MalAnime> {
         let response: Response;
 
         try {
@@ -105,7 +108,8 @@ export class MalService {
                 `/anime/${malId}`,
                 {
                     fields: this.animeFields
-                }
+                },
+                timeoutMs
             );
         } catch (error) {
             if (error instanceof NotFoundError) {

@@ -12,13 +12,7 @@ import {
     MalApiError
 } from '../../../exceptions/exceptions';
 import { randomBytes } from 'crypto';
-import {
-    mkdir,
-    readFile,
-    writeFile,
-} from 'fs/promises';
-import { dirname, resolve } from 'path';
-import { existsSync } from 'fs';
+import { prisma } from '../../database/prisma.client';
 
 export class MalService {
     private baseUrl = 'https://api.myanimelist.net/v2';
@@ -29,7 +23,6 @@ export class MalService {
     private refreshToken: string;
     private tokenExpiresAt: number | null = null;
     private tokenStoreLoaded = false;
-    private tokenStorePath: string;
     // Lock para serializar refreshes: si ya hay uno en curso, los demás
     // await sobre la misma promise en lugar de lanzar uno nuevo.
     private refreshLock: Promise<void> | null = null;
@@ -42,39 +35,11 @@ export class MalService {
         this.clientId = process.env.MAL_CLIENT_ID!;
         this.clientSecret = process.env.MAL_CLIENT_SECRET!;
         this.refreshToken = process.env.MAL_REFRESH_TOKEN!;
-        this.tokenStorePath = resolve(
-            process.env.MAL_TOKEN_STORE_PATH || '.mal-token.json'
-        );
 
-        this.loadTokenStoreSync();
-
-        if (!this.accessToken) {
-            this.accessToken =
-                process.env.MAL_ACCESS_TOKEN || null;
-            this.tokenExpiresAt = process.env
-                .MAL_TOKEN_EXPIRES_AT
-                ? Number(process.env.MAL_TOKEN_EXPIRES_AT)
-                : null;
-        }
-    }
-
-    private loadTokenStoreSync(): void {
-        try {
-            if (!existsSync(this.tokenStorePath)) return;
-
-            const content = require('fs').readFileSync(
-                this.tokenStorePath,
-                'utf8'
-            );
-            const tokenData = malTokenDataSchema.parse(
-                JSON.parse(content)
-            );
-
-            this.accessToken = tokenData.accessToken;
-            this.refreshToken = tokenData.refreshToken;
-            this.tokenExpiresAt = tokenData.tokenExpiresAt;
-            this.tokenStoreLoaded = true;
-        } catch (error) {}
+        this.accessToken = process.env.MAL_ACCESS_TOKEN || null;
+        this.tokenExpiresAt = process.env.MAL_TOKEN_EXPIRES_AT
+            ? Number(process.env.MAL_TOKEN_EXPIRES_AT)
+            : null;
     }
 
     getAuthorizationUrl(
@@ -145,7 +110,8 @@ export class MalService {
 
     async fetchFromMal(
         endpoint: string,
-        params?: Record<string, string | number>
+        params?: Record<string, string | number>,
+        timeoutMs = 15000
     ): Promise<Response> {
         await this.ensureAccessToken();
 
@@ -159,9 +125,9 @@ export class MalService {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.accessToken}`
             },
-            // Cap total request a 15s — MAL puede ser lento pero raramente
-            // tarda más de esto. Antes era 8s y provocaba timeouts espurios.
-            signal: AbortSignal.timeout(15000)
+            // Default 15s para tareas en background; las rutas que bloquean
+            // al usuario pasan un timeout menor.
+            signal: AbortSignal.timeout(timeoutMs)
         });
 
         if (response.status === 404) {
@@ -274,21 +240,21 @@ export class MalService {
 
         this.tokenStoreLoaded = true;
 
-        try {
-            const tokenData = malTokenDataSchema.parse(
-                JSON.parse(
-                    await readFile(this.tokenStorePath, 'utf8')
-                )
-            );
+        const row = await prisma.malToken.findUnique({
+            where: { id: 1 }
+        });
 
-            this.accessToken = tokenData.accessToken;
-            this.refreshToken = tokenData.refreshToken;
-            this.tokenExpiresAt = tokenData.tokenExpiresAt;
-        } catch (error: any) {
-            if (error?.code !== 'ENOENT') {
-                throw error;
-            }
-        }
+        if (!row) return;
+
+        const tokenData = malTokenDataSchema.parse({
+            accessToken: row.accessToken,
+            refreshToken: row.refreshToken,
+            tokenExpiresAt: Number(row.expiresAt)
+        });
+
+        this.accessToken = tokenData.accessToken;
+        this.refreshToken = tokenData.refreshToken;
+        this.tokenExpiresAt = tokenData.tokenExpiresAt;
     }
 
     private async persistTokenStore(): Promise<void> {
@@ -300,19 +266,16 @@ export class MalService {
             return;
         }
 
-        const tokenData = malTokenDataSchema.parse({
+        const data = {
             accessToken: this.accessToken,
             refreshToken: this.refreshToken,
-            tokenExpiresAt: this.tokenExpiresAt
-        });
+            expiresAt: BigInt(this.tokenExpiresAt)
+        };
 
-        await mkdir(dirname(this.tokenStorePath), {
-            recursive: true
+        await prisma.malToken.upsert({
+            where: { id: 1 },
+            create: { id: 1, ...data },
+            update: data
         });
-        await writeFile(
-            this.tokenStorePath,
-            JSON.stringify(tokenData, null, 2),
-            'utf8'
-        );
     }
 }

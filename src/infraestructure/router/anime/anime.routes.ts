@@ -38,6 +38,11 @@ import {
     getPostsByAnime
 } from '../../../controllers/anime/recommendations.controller';
 import { getRelatedAnimes } from '../../../controllers/anime/animeRelation.controller';
+import { cacheMiddleware } from '../../../middlewares/cache.middleware';
+
+const CACHE_15_MIN = 15 * 60;
+const CACHE_1_HOUR = 60 * 60;
+const CACHE_24_HOURS = 24 * 60 * 60;
 
 const router = Router();
 
@@ -45,14 +50,33 @@ router
     .route('/')
     .get(optionalAuthMiddleware, parseQueryOptions, getAnimes);
 
-router.route('/genres').get(getGenres);
-router.route('/seasonal/top').get(getTopSeasonalAnimes);
-router.route('/popular').get(getPopularAnimes);
-router.route('/airing-today').get(getAiringTodayAnimes);
-router.route('/weekly-airing').get(getWeeklyAiringAnimes);
-router.route('/top-upcoming').get(getTopUpcomingAnimes);
-router.route('/popular-upcoming').get(getPopularUpcomingAnimes);
-router.route('/top-airing').get(getTopAiringAnimes);
+router
+    .route('/genres')
+    .get(cacheMiddleware(CACHE_24_HOURS), getGenres);
+router
+    .route('/seasonal/top')
+    .get(cacheMiddleware(CACHE_15_MIN), getTopSeasonalAnimes);
+router
+    .route('/popular')
+    .get(cacheMiddleware(CACHE_1_HOUR), getPopularAnimes);
+router
+    .route('/airing-today')
+    .get(cacheMiddleware(CACHE_15_MIN), getAiringTodayAnimes);
+router
+    .route('/weekly-airing')
+    .get(cacheMiddleware(CACHE_15_MIN), getWeeklyAiringAnimes);
+router
+    .route('/top-upcoming')
+    .get(cacheMiddleware(CACHE_1_HOUR), getTopUpcomingAnimes);
+router
+    .route('/popular-upcoming')
+    .get(
+        cacheMiddleware(CACHE_1_HOUR),
+        getPopularUpcomingAnimes
+    );
+router
+    .route('/top-airing')
+    .get(cacheMiddleware(CACHE_15_MIN), getTopAiringAnimes);
 router
     .route('/seed')
     .get(authMiddleware, roleMiddleware(['ADMIN']), seedAnimes);
@@ -60,6 +84,7 @@ router
 router
     .route('/season')
     .get(
+        cacheMiddleware(CACHE_1_HOUR),
         parseQueryOptions,
         validateSeasonParams,
         getSeasonalAnimes

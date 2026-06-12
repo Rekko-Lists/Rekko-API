@@ -74,6 +74,26 @@ export const refreshToken = catchAsync(
     }
 );
 
+export const getMe = catchAsync(
+    async (req: Request, res: Response) => {
+        const { services } = req.container!;
+
+        const user = await services.user.getUserById(
+            req.user!.userId
+        );
+
+        ok(res, 'User found', {
+            userId: user.getUserId(),
+            email: user.getEmail(),
+            username: user.getUsername(),
+            emailVerified: user.getEmailVerified(),
+            profileImage: user.getProfileImage(),
+            role: user.getRole(),
+            streak: user.getStreak()
+        });
+    }
+);
+
 export const getSessions = catchAsync(
     async (req: Request, res: Response) => {
         res.status(501).json({

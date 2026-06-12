@@ -12,10 +12,13 @@ import {
     optionalAuthMiddleware
 } from '../../../middlewares/auth.middleware';
 import { parseQueryOptions } from '../../../middlewares/queryOptions.middleware';
+import { emailVerifyMiddleware } from '../../../middlewares/emailVerify.middleware';
 
 const router = Router();
 
-router.route('/').post(authMiddleware, createComment);
+router
+    .route('/')
+    .post(authMiddleware, emailVerifyMiddleware, createComment);
 
 router
     .route('/by-post/:postId')
