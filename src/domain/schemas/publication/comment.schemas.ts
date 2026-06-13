@@ -29,4 +29,7 @@ export type EnrichedComment = {
     replyCount: number | undefined;
     hasReplies: boolean | undefined;
     hasLiked: boolean;
+    // Present only on the thread endpoint: the full nested subtree of replies,
+    // already enriched, so the client can render the whole tree in one render.
+    replies?: EnrichedComment[];
 };

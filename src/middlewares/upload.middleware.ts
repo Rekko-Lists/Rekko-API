@@ -71,6 +71,33 @@ export const uploadChallengesMiddleware = multer({
     }
 });
 
+const xmlFileFilter = (
+    req: Request,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback
+) => {
+    const isXml =
+        file.mimetype.includes('xml') ||
+        file.originalname.toLowerCase().endsWith('.xml');
+    if (!isXml) {
+        cb(
+            new ValidationError(
+                'Solo se permiten archivos XML exportados de MyAnimeList'
+            )
+        );
+    } else {
+        cb(null, true);
+    }
+};
+
+export const uploadXmlMiddleware = multer({
+    storage,
+    fileFilter: xmlFileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB — large MAL lists
+    }
+});
+
 export const validateImage = (config: ImgValidation) => {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.file)

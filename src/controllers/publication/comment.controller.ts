@@ -81,6 +81,39 @@ export const getCommentsByPostId = catchAsync(
     }
 );
 
+export const getCommentThreadByPostId = catchAsync(
+    async (req: Request, res: Response) => {
+        const postId = parseInt(req.params.postId as string);
+
+        if (isNaN(postId)) {
+            throw new ValidationError('Invalid post ID', {
+                received: req.params.postId
+            });
+        }
+
+        const findOptions = (req as any).findOptions;
+        const { services } = req.container!;
+        const userId = req.user?.userId;
+
+        const result =
+            await services.comment.getCommentThreadByPostId(
+                postId,
+                findOptions,
+                userId
+            );
+
+        ok(res, 'Comments found', {
+            comments: result.data,
+            pagination: {
+                page: result.pagination.page,
+                limit: result.pagination.limit,
+                total: result.pagination.total,
+                pages: result.pagination.pages
+            }
+        });
+    }
+);
+
 export const getCommentsByParentId = catchAsync(
     async (req: Request, res: Response) => {
         const parentId = parseInt(req.params.parentId as string);

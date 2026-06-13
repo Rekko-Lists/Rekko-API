@@ -29,6 +29,7 @@ import { MalService } from '../../services/anime/mal.service';
 import { AnimeService } from '../../services/anime/anime.service';
 import { RateService } from '../../services/anime/rate.service';
 import { WatchService } from '../../services/anime/watch.service';
+import { ImportService } from '../../services/anime/import.service';
 import { SearchService } from '../../services/search/search.service';
 import { UserService } from '../../services/user/user.service';
 import { EmailAuthService } from '../../services/user/emailAuth.service';
@@ -102,6 +103,10 @@ const watchService = new WatchService(
     userWatchAnimeRepository,
     animeRepository,
     animeService
+);
+const importService = new ImportService(
+    watchService,
+    rateService
 );
 const searchService = new SearchService(
     animeRepository,
@@ -204,6 +209,7 @@ export const container = {
         mal: malService,
         rate: rateService,
         watch: watchService,
+        import: importService,
         recommendations: recommendationsService,
         challenge: challengeService
     }

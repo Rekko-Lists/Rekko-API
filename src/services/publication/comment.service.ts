@@ -164,6 +164,97 @@ export class CommentService {
         };
     }
 
+    /**
+     * Returns the paginated top-level comments of a post, each carrying its
+     * full nested `replies` subtree already enriched with like status. The
+     * whole tree is fetched and enriched in a single pass so the client can
+     * render every nesting level without extra requests or clicks.
+     */
+    async getCommentThreadByPostId(
+        postId: number,
+        findOptions: FindOptions,
+        userId?: number
+    ): Promise<PaginatedResponse<EnrichedComment>> {
+        const post = await this.postRepository.findById(postId);
+
+        if (!post) {
+            throw new NotFoundError('Post not found');
+        }
+
+        const { topLevel, descendants, total } =
+            await this.commentRepository.findThreadByPostId(
+                postId,
+                findOptions
+            );
+
+        const maxPages = Math.ceil(
+            total / findOptions.pagination.limit
+        );
+
+        if (
+            maxPages > 0 &&
+            findOptions.pagination.page > maxPages
+        ) {
+            throw new NotFoundError(
+                `Page ${findOptions.pagination.page} does not exist. Max pages: ${maxPages}`
+            );
+        }
+
+        // parentCommentId -> direct children
+        const childrenByParent = new Map<number, Comment[]>();
+        for (const reply of descendants) {
+            const parentId = reply.getParentCommentId();
+            if (parentId === null) continue;
+            const bucket = childrenByParent.get(parentId);
+            if (bucket) {
+                bucket.push(reply);
+            } else {
+                childrenByParent.set(parentId, [reply]);
+            }
+        }
+
+        // Collect every comment reachable from the paginated roots so likes are
+        // resolved in one query for the entire visible tree.
+        const reachable: Comment[] = [];
+        const collect = (comment: Comment): void => {
+            reachable.push(comment);
+            const children = childrenByParent.get(
+                comment.getCommentId()
+            );
+            if (children) children.forEach(collect);
+        };
+        topLevel.forEach(collect);
+
+        const likedIds = userId
+            ? await this.likeService.getLikedCommentIds(
+                  reachable.map((c) => c.getCommentId()),
+                  userId
+              )
+            : new Set<number>();
+
+        const toTree = (comment: Comment): EnrichedComment => {
+            const children =
+                childrenByParent.get(comment.getCommentId()) ?? [];
+            return {
+                ...this.toEnrichedComment(
+                    comment,
+                    likedIds.has(comment.getCommentId())
+                ),
+                replies: children.map(toTree)
+            };
+        };
+
+        return {
+            data: topLevel.map(toTree),
+            pagination: {
+                page: findOptions.pagination.page,
+                limit: findOptions.pagination.limit,
+                total,
+                pages: maxPages
+            }
+        };
+    }
+
     private toEnrichedComment(
         comment: Comment,
         hasLiked: boolean

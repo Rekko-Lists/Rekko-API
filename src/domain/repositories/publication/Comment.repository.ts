@@ -28,4 +28,13 @@ export interface CommentRepository {
         parentCommentId: number,
         findOptions: FindOptions
     ): Promise<FindRepository<Comment>>;
+
+    findThreadByPostId(
+        postId: number,
+        findOptions: FindOptions
+    ): Promise<{
+        topLevel: Comment[];
+        descendants: Comment[];
+        total: number;
+    }>;
 }

@@ -63,22 +63,19 @@ export const getPost = catchAsync(
                 userId
             );
 
+        // Returns top-level comments already carrying their full nested
+        // `replies` subtree, so the client renders the whole thread in one go.
         const comments =
-            await services.comment.getCommentsByPostId(
+            await services.comment.getCommentThreadByPostId(
                 post.getPostId(),
-                findOptions
-            );
-
-        const formattedComments =
-            await services.comment.enrichCommentsWithLikesStatus(
-                comments.data,
+                findOptions,
                 userId
             );
 
         ok(res, 'Post found', {
             post: formattedPost,
             comments: {
-                data: formattedComments,
+                data: comments.data,
                 pagination: {
                     page: comments.pagination.page,
                     limit: comments.pagination.limit,

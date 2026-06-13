@@ -3,6 +3,7 @@ import {
     createComment,
     deleteComment,
     getCommentsByPostId,
+    getCommentThreadByPostId,
     getCommentsByParentId,
     likeComment,
     unlikeComment
@@ -19,6 +20,14 @@ const router = Router();
 router
     .route('/')
     .post(authMiddleware, emailVerifyMiddleware, createComment);
+
+router
+    .route('/by-post/:postId/thread')
+    .get(
+        optionalAuthMiddleware,
+        parseQueryOptions,
+        getCommentThreadByPostId
+    );
 
 router
     .route('/by-post/:postId')

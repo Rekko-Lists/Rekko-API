@@ -24,6 +24,8 @@ export class Anime {
     private premieredSeason: string | null;
     private premieredYear: number | null;
     private rating: string | null;
+    private titleEnglish: string | null;
+    private titleSynonyms: string[];
     private broadcast?: { dayOfWeek: string; startTime: string };
 
     private constructor(
@@ -50,6 +52,8 @@ export class Anime {
         premieredSeason: string | null,
         premieredYear: number | null,
         rating: string | null,
+        titleEnglish: string | null,
+        titleSynonyms: string[],
         broadcast?: { dayOfWeek: string; startTime: string }
     ) {
         this.animeId = animeId;
@@ -75,6 +79,8 @@ export class Anime {
         this.premieredSeason = premieredSeason;
         this.premieredYear = premieredYear;
         this.rating = rating;
+        this.titleEnglish = titleEnglish;
+        this.titleSynonyms = titleSynonyms;
         this.broadcast = broadcast;
     }
 
@@ -102,6 +108,8 @@ export class Anime {
         premieredSeason?: string | null;
         premieredYear?: number | null;
         rating?: string | null;
+        titleEnglish?: string | null;
+        titleSynonyms?: string[] | null;
         broadcast?: { dayOfWeek: string; startTime: string };
     }): Anime {
         return new Anime(
@@ -128,6 +136,8 @@ export class Anime {
             data.premieredSeason ?? null,
             data.premieredYear ?? null,
             data.rating ?? null,
+            data.titleEnglish ?? null,
+            data.titleSynonyms ?? [],
             data.broadcast
         );
     }
@@ -224,6 +234,14 @@ export class Anime {
         return this.rating;
     }
 
+    getTitleEnglish(): string | null {
+        return this.titleEnglish;
+    }
+
+    getTitleSynonyms(): string[] {
+        return this.titleSynonyms;
+    }
+
     getBroadcast():
         | { dayOfWeek: string; startTime: string }
         | undefined {
@@ -257,6 +275,8 @@ export class Anime {
             premieredSeason: this.premieredSeason,
             premieredYear: this.premieredYear,
             rating: this.rating,
+            titleEnglish: this.titleEnglish,
+            titleSynonyms: this.titleSynonyms,
             broadcast: this.broadcast
                 ? {
                       dayOfWeek: this.broadcast.dayOfWeek,

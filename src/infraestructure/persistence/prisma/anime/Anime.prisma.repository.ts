@@ -9,6 +9,7 @@ import {
     buildPrismaPageQueryArray
 } from '../../../../utils/prisma/prismaHelper';
 import { Broadcast } from '../../../../domain/entities/Broadcast';
+import { normalizeTitle } from '../../../../utils/search/normalize';
 
 const GENRE_INCLUDE = {
     animeGenres: { include: { genre: true } }
@@ -219,13 +220,29 @@ export class AnimePrismaRepository implements AnimeRepository {
         limit: number
     ): Promise<Anime[]> {
         try {
+            const normalized = normalizeTitle(query);
+
+            // Match the normalized search field (tolerant to spacing/aliases)
+            // and keep a case-insensitive `name` fallback so rows that have not
+            // been backfilled yet, or partial raw matches, still resolve.
+            const where: any = query.trim()
+                ? {
+                      OR: [
+                          ...(normalized
+                              ? [{ searchText: { contains: normalized } }]
+                              : []),
+                          {
+                              name: {
+                                  contains: query,
+                                  mode: 'insensitive'
+                              }
+                          }
+                      ]
+                  }
+                : {};
+
             const animes = await this.db.anime.findMany({
-                where: {
-                    name: {
-                        contains: query,
-                        mode: 'insensitive'
-                    }
-                },
+                where,
                 include: {
                     broadcast: true,
                     ...GENRE_INCLUDE
