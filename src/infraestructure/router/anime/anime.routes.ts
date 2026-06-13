@@ -39,6 +39,11 @@ import {
 } from '../../../controllers/anime/recommendations.controller';
 import { getRelatedAnimes } from '../../../controllers/anime/animeRelation.controller';
 import { cacheMiddleware } from '../../../middlewares/cache.middleware';
+import {
+    importMalXml,
+    importAnilist
+} from '../../../controllers/anime/import.controller';
+import { uploadXmlMiddleware } from '../../../middlewares/upload.middleware';
 
 const CACHE_15_MIN = 15 * 60;
 const CACHE_1_HOUR = 60 * 60;
@@ -49,6 +54,19 @@ const router = Router();
 router
     .route('/')
     .get(optionalAuthMiddleware, parseQueryOptions, getAnimes);
+
+// ── List import (MyAnimeList XML / AniList username) ──
+router
+    .route('/import/mal/xml')
+    .post(
+        authMiddleware,
+        uploadXmlMiddleware.single('list'),
+        importMalXml
+    );
+
+router
+    .route('/import/anilist')
+    .post(authMiddleware, importAnilist);
 
 router
     .route('/genres')

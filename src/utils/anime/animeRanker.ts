@@ -12,6 +12,8 @@ export class AnimeRanker {
             query,
             (anime) => [
                 anime.getName(),
+                anime.getTitleEnglish() ?? '',
+                ...anime.getTitleSynonyms(),
                 ...(aliasesByMalId.get(anime.getMalId()) ?? [])
             ],
             (anime) => anime.getMalId(),

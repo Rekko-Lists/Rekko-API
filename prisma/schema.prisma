@@ -146,6 +146,11 @@ model Anime {
   premieredYear       Int?                      @map("premiered_year")
   rating              String?                   @map("rating")
   members             Int                       @default(0)
+  titleEnglish        String?                   @map("title_english")
+  titleSynonyms       String[]                  @default([]) @map("title_synonyms")
+  // Normalized concatenation of name + english + synonyms (lowercase, no
+  // spaces/diacritics/punctuation) so search tolerates spacing/alias variants.
+  searchText          String                    @default("") @map("search_text")
   broadcast           Broadcast                 @relation(fields: [broadcastId], references: [broadcastId])
   animeGenres         AnimeGenre[]
   animes              AnimePost[]

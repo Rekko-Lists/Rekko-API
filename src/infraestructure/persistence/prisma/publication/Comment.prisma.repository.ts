@@ -155,6 +155,70 @@ export class CommentPrismaRepository implements CommentRepository {
         }
     }
 
+    async findThreadByPostId(
+        postId: number,
+        findOptions: FindOptions
+    ): Promise<{
+        topLevel: Comment[];
+        descendants: Comment[];
+        total: number;
+    }> {
+        try {
+            const { skip, take, orderBy } = buildPrismaPageQuery(
+                findOptions,
+                'commentId'
+            );
+
+            const include = {
+                user: {
+                    select: {
+                        username: true,
+                        profileImage: true
+                    }
+                },
+                _count: {
+                    select: { replies: true }
+                }
+            } as const;
+
+            // Top-level comments are paginated; every reply of the post is
+            // fetched once so the service can assemble each root's full subtree
+            // in memory without an extra round-trip per nesting level.
+            const [topLevel, total, descendants] =
+                await Promise.all([
+                    this.db.comment.findMany({
+                        where: { postId, parentCommentId: null },
+                        skip,
+                        take,
+                        orderBy,
+                        include
+                    }),
+                    this.db.comment.count({
+                        where: {
+                            postId,
+                            parentCommentId: null
+                        }
+                    }),
+                    this.db.comment.findMany({
+                        where: {
+                            postId,
+                            parentCommentId: { not: null }
+                        },
+                        orderBy: { commentId: 'asc' },
+                        include
+                    })
+                ]);
+
+            return {
+                topLevel: this.formatComments(topLevel),
+                descendants: this.formatComments(descendants),
+                total
+            };
+        } catch (error) {
+            handlePrismaError(error);
+        }
+    }
+
     private formatComments(comments: any[]): Comment[] {
         return comments.map((comment: any) => {
             const replyCount = comment._count?.replies || 0;

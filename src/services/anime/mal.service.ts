@@ -9,6 +9,7 @@ import {
     malAnimeDataSchema,
     validSeasons
 } from '../../domain/schemas/anime/mal.schemas';
+import { buildSearchText } from '../../utils/search/normalize';
 
 export class MalService {
     private readonly animeFields =
@@ -187,9 +188,23 @@ export class MalService {
     }
 
     mapMalToAnime(malData: MalAnimeData) {
+        const titleEnglish =
+            malData.alternative_titles?.en || null;
+        const titleSynonyms = [
+            ...(malData.alternative_titles?.synonyms ?? []),
+            malData.alternative_titles?.ja
+        ].filter((t): t is string => Boolean(t));
+
         return {
             malId: malData.id,
             name: malData.title,
+            titleEnglish,
+            titleSynonyms,
+            searchText: buildSearchText(
+                malData.title,
+                titleEnglish,
+                titleSynonyms
+            ),
             synopsis: malData.synopsis || '',
             imgMedium: malData.main_picture?.medium || '',
             imgLarge: malData.main_picture?.large || '',

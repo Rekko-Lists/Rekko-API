@@ -89,7 +89,8 @@ export const getMe = catchAsync(
             emailVerified: user.getEmailVerified(),
             profileImage: user.getProfileImage(),
             role: user.getRole(),
-            streak: user.getStreak()
+            streak: user.getStreak(),
+            createdAt: user.getCreatedAt()
         });
     }
 );
