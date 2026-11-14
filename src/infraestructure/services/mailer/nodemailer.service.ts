@@ -315,10 +315,7 @@ export class EmailHandler {
         token: string
     ): Promise<void> {
         const url = buildUrl({
-            domain:
-                process.env.NODE_ENV! === 'development'
-                    ? process.env.APP_URL_DEV!
-                    : process.env.APP_URL_PROD!,
+            domain: getClientUrl(),
             path: process.env.CLIENT_PATH_RESET_PASSWORD!,
             params: { token, username }
         });
