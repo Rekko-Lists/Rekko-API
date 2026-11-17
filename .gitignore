@@ -17,6 +17,11 @@ serviceAccountKey.json
 # Claude settings
 .claude/
 
+# Local agent tooling
+.serena/
+.beads/
+.beads.gate.lock
+
 .agents
 
 # Scripts locales (no forman parte del servidor)
