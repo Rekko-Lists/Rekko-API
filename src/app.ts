@@ -43,7 +43,8 @@ app.use('/user', (req, res, next) => {
 
 const configuredOrigins = [
     process.env.CLIENT_URL_DEV?.trim(),
-    process.env.CLIENT_URL_PROD?.trim()
+    process.env.CLIENT_URL_PROD?.trim(),
+    process.env.CLIENT_URL_PREVIEW?.trim()
 ];
 
 if (process.env.NODE_ENV !== 'production') {
