@@ -5,10 +5,12 @@ import {
     getAuthUrl,
     handleAuthCallback
 } from '../../../controllers/anime/mal.controller';
+import { authMiddleware } from '../../../middlewares/auth.middleware';
+import { roleMiddleware } from '../../../middlewares/role.middleware';
 
 const router = Router();
 
-router.route('/auth/url').get(getAuthUrl);
+router.route('/auth/url').get(authMiddleware, roleMiddleware(['ADMIN']), getAuthUrl);
 
 router.route('/auth/callback').get(handleAuthCallback);
 

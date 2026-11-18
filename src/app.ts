@@ -75,7 +75,8 @@ app.use(
     morgan(
         process.env.NODE_ENV === 'production'
             ? 'combined'
-            : 'dev'
+            : 'dev',
+        { skip: (req) => req.path === '/mal/auth/callback' }
     )
 );
 app.use(express.json());
