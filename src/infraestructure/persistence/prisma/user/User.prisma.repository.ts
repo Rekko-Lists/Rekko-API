@@ -3,6 +3,7 @@ import { handlePrismaError } from '../../../errors/prisma.errors';
 import { UserRepository } from '../../../../domain/repositories/user/User.repository';
 import {
     UserUpdateProfile,
+    UserTheme,
     UserUpdateSocialAccounts,
     UserWhereUnique
 } from '../../../../domain/schemas/user/user.schemas';
@@ -107,7 +108,7 @@ export class UserPrismaRepository implements UserRepository<User> {
 
     async update(
         where: UserWhereUnique,
-        entity: UserUpdateProfile
+        entity: UserUpdateProfile | UserTheme
     ): Promise<User | null> {
         try {
             const user = await this.db.user.update({

@@ -1,5 +1,6 @@
 import {
     UserUpdateProfile,
+    UserTheme,
     UserUpdateSocialAccounts,
     UserWhereUnique
 } from '../../schemas/user/user.schemas';
@@ -8,7 +9,7 @@ import { Repository } from '../repository';
 export interface UserRepository<User> extends Repository<
     User,
     UserWhereUnique,
-    UserUpdateProfile
+    UserUpdateProfile | UserTheme
 > {
     findByUsername(username: string): Promise<User | null>;
 

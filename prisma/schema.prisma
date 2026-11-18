@@ -74,6 +74,7 @@ model User {
   biography               String?
   reputation              Int                       @default(0)
   emailVerified           Boolean                   @default(false) @map("email_verified")
+  darkMode                Boolean                   @default(false) @map("dark_mode")
   backgroundImagePublicId String?                   @map("background_image_public_id")
   bannerImagePublicId     String?                   @map("banner_image_public_id")
   profileImagePublicId    String?                   @map("profile_image_public_id")

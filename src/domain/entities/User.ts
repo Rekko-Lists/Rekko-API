@@ -18,6 +18,7 @@ export class User {
     private backgroundImagePublicId?: string;
     private role: UserRole = UserRole.USER;
     private emailVerified: boolean = false;
+    private darkMode: boolean = false;
     private readonly createdAt: Date;
     private biography?: string;
     private socialAccounts: SocialAccount[] = [];
@@ -72,6 +73,7 @@ export class User {
         backgroundImagePublicId?: string;
         role?: UserRole;
         emailVerified?: boolean;
+        darkMode?: boolean;
         createdAt: Date;
         biography?: string;
         userSocialAccount?: any[];
@@ -97,6 +99,7 @@ export class User {
         );
 
         user.streak = data.streak ?? 0;
+        user.darkMode = data.darkMode ?? false;
         user.streakUpdatedAt = data.streakUpdatedAt ?? null;
 
         if (
@@ -203,6 +206,10 @@ export class User {
 
     getEmailVerified(): boolean {
         return this.emailVerified;
+    }
+
+    getDarkMode(): boolean {
+        return this.darkMode;
     }
 
     getCreatedAt(): Date {
