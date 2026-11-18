@@ -8,7 +8,7 @@ generated/
 dist/
 
 # Environment variables
-.env
+.env*
 .mal-token.json
 
 # Firebase Service Account Key
