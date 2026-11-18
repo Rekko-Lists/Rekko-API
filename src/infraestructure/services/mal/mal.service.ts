@@ -211,9 +211,8 @@ export class MalService {
         });
 
         if (!response.ok) {
-            const errorBody = await response.text();
             throw new MalApiError(
-                `${errorMessage}: ${response.status} - ${response.statusText} - ${errorBody}`,
+                `${errorMessage}: ${response.status}`,
                 response.status
             );
         }
@@ -238,13 +237,14 @@ export class MalService {
     private async loadTokenStore(): Promise<void> {
         if (this.tokenStoreLoaded) return;
 
-        this.tokenStoreLoaded = true;
-
         const row = await prisma.malToken.findUnique({
             where: { id: 1 }
         });
 
-        if (!row) return;
+        if (!row) {
+            this.tokenStoreLoaded = true;
+            return;
+        }
 
         const tokenData = malTokenDataSchema.parse({
             accessToken: row.accessToken,
@@ -255,6 +255,7 @@ export class MalService {
         this.accessToken = tokenData.accessToken;
         this.refreshToken = tokenData.refreshToken;
         this.tokenExpiresAt = tokenData.tokenExpiresAt;
+        this.tokenStoreLoaded = true;
     }
 
     private async persistTokenStore(): Promise<void> {

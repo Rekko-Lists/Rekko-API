@@ -47,15 +47,12 @@ export const handleAuthCallback = catchAsync(
             );
         }
 
-        const tokenData =
-            await externalServices.malAuth.getAccessToken(
+        await externalServices.malAuth.getAccessToken(
                 code,
                 state
             );
 
-        ok(res, 'Access token obtained successfully', {
-            ...tokenData
-        });
+        ok(res, 'MyAnimeList authorization completed');
     }
 );
 
