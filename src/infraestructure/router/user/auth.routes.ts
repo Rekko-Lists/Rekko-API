@@ -5,7 +5,8 @@ import {
     login,
     logout,
     refreshToken,
-    revokeSession
+    revokeSession,
+    updateTheme
 } from '../../../controllers/user/auth.controller';
 import { forgotPasswordByEmail } from '../../../controllers/user/passwordAuth.controller';
 
@@ -20,6 +21,7 @@ router.route('/logout').post(logout);
 router.route('/refresh').post(refreshToken);
 
 router.route('/me').get(getMe);
+router.route('/me/theme').patch(updateTheme);
 
 router.route('/sessions').get(getSessions);
 

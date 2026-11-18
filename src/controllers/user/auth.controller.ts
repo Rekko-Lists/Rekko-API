@@ -6,6 +6,7 @@ import {
     refreshTokenSchema
 } from '../../domain/schemas/user/auth.schemas';
 import { getClientInfo } from '../../utils/http/http.util';
+import { userThemeSchema } from '../../domain/schemas/user/user.schemas';
 
 export const login = catchAsync(
     async (req: Request, res: Response) => {
@@ -34,7 +35,8 @@ export const login = catchAsync(
                 userId: user.getUserId(),
                 email: user.getEmail(),
                 username: user.getUsername(),
-                role: user.getRole()
+                role: user.getRole(),
+                darkMode: user.getDarkMode()
             }
         });
     }
@@ -89,9 +91,18 @@ export const getMe = catchAsync(
             emailVerified: user.getEmailVerified(),
             profileImage: user.getProfileImage(),
             role: user.getRole(),
+            darkMode: user.getDarkMode(),
             streak: user.getStreak(),
             createdAt: user.getCreatedAt()
         });
+    }
+);
+
+export const updateTheme = catchAsync(
+    async (req: Request, res: Response) => {
+        const { darkMode } = userThemeSchema.parse(req.body);
+        const user = await req.container!.services.user.updateTheme(req.user!.userId, darkMode);
+        ok(res, 'Theme updated', { darkMode: user.getDarkMode() });
     }
 );
 

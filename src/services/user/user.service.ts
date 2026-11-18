@@ -129,7 +129,7 @@ export class UserService {
     }
 
     async getUserById(id: number): Promise<User> {
-        const user = await this.userRepository.findById(id);
+        const user = await this.userRepository.findById(id, ['email', 'createdAt', 'darkMode']);
 
         if (!user) throw new NotFoundError('User not found');
 
@@ -138,6 +138,12 @@ export class UserService {
             if (resetUser) return resetUser;
         }
 
+        return user;
+    }
+
+    async updateTheme(userId: number, darkMode: boolean): Promise<User> {
+        const user = await this.userRepository.update({ userId }, { darkMode });
+        if (!user) throw new NotFoundError('User not found.');
         return user;
     }
 

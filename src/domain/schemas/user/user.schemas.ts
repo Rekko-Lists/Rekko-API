@@ -54,6 +54,11 @@ export type UserUpdateProfile = z.infer<
     typeof userUpdateProfileSchema
 >;
 
+export const userThemeSchema = z.object({
+    darkMode: z.boolean()
+}).strict();
+export type UserTheme = z.infer<typeof userThemeSchema>;
+
 export const userWhereUniqueSchema = z.union([
     z.object({ userId: z.number() }),
     z.object({ username: z.string() }),
